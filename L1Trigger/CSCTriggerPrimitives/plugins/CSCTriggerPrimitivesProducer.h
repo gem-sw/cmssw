@@ -17,7 +17,7 @@
  *
  * \author Slava Valuev, UCLA.
  *
- * $Id: CSCTriggerPrimitivesProducer.h,v 1.5 2012/12/05 21:16:16 khotilov Exp $
+ * $Id: CSCTriggerPrimitivesProducer.h,v 1.5.2.1 2013/05/21 12:02:24 khotilov Exp $
  *
  */
 
@@ -42,6 +42,7 @@ class CSCTriggerPrimitivesProducer : public edm::EDProducer
   int iev; // event number
   edm::InputTag compDigiProducer_;
   edm::InputTag wireDigiProducer_;
+  edm::InputTag gemPadProducer_;
   // swich to force the use of parameters from config file rather then from DB
   bool debugParameters_;
   // switch to for enabling checking against the list of bad chambers
