@@ -280,14 +280,14 @@ FWRPZViewGeometry::makeMuonGeometryRhoZ( void )
                // the same way as the two top ones and the two bottom ones
                for( Int_t iChamber = step; iChamber <= maxChambers; iChamber += step )
                {
-		 GEMDetId id( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
-		 FWGeometry::IdToInfoItr det = m_geom->find( id.rawId() );
-		 estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
+                 GEMDetId id( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
+                 FWGeometry::IdToInfoItr det = m_geom->find( id.rawId() );
+                 estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
 		 
-		 // and a chamber next to it
-		 ++iChamber;
-		 GEMDetId nextid( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
-		 det = m_geom->find( nextid.rawId() );
+                 // and a chamber next to it
+                 ++iChamber;
+                 GEMDetId nextid( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
+                 det = m_geom->find( nextid.rawId() );
 		 estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
                }
                if ( min_rho > max_rho || min_z > max_z ) continue;

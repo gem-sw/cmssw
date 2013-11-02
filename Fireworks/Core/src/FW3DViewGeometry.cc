@@ -215,13 +215,13 @@ FW3DViewGeometry::showMuonEndcap( bool showMuonEndcap )
                for( Int_t iChamber = 1; iChamber <= maxChambers; ++iChamber )
                {
                   Int_t iLayer = 1; // Actually it should be GEM super chambers
-		  GEMDetId id( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
-		  TEveGeoShape* shape = m_geom->getEveShape( id.rawId() );
+                  GEMDetId id( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
+                  TEveGeoShape* shape = m_geom->getEveShape( id.rawId() );
                   shape->SetTitle(TString::Format("GEM: %s, R=%d, S=%d, C=%d\ndet-id=%u",
                                                   cEndcap->GetName(), iRing, iStation, iChamber, id.rawId()));
  	  	            
                   addToCompound(shape, kFWMuonEndcapLineColorIndex);
-		  cRing->AddElement( shape );
+                  cRing->AddElement( shape );
                }
 	    }
 	 }
