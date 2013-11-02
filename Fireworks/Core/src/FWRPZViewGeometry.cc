@@ -288,7 +288,7 @@ FWRPZViewGeometry::makeMuonGeometryRhoZ( void )
                  ++iChamber;
                  GEMDetId nextid( iEndcap, iRing, iStation, iLayer, iChamber, 0 );
                  det = m_geom->find( nextid.rawId() );
-		 estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
+                 estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
                }
                if ( min_rho > max_rho || min_z > max_z ) continue;
 
