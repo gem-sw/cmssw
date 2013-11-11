@@ -9,6 +9,7 @@
 // Original Author:  Alja Mrak-Tadel
 //         Created:  Thu Mar 25 20:33:06 CET 2010
 // $Id: FWRPZViewGeometry.cc,v 1.19 2011/10/15 02:33:30 amraktad Exp $
+// $Id: FWRPZViewGeometry.cc,v 1.20 2013/11/01 16:06:00 Yusang Kim   $
 //
 
 // system include files
@@ -35,6 +36,7 @@
 
 #include "DataFormats/MuonDetId/interface/DTChamberId.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
+#include "DataFormats/MuonDetId/interface/GEMDetId.h"
 
 //
 //
@@ -258,6 +260,55 @@ FWRPZViewGeometry::makeMuonGeometryRhoZ( void )
       }
       container->AddElement( cscContainer );
    }
+   {
+      TEveCompound* gemContainer = new TEveCompound( "GEM" );
+   
+      Int_t maxChambers = 36;
+      Int_t step = 18;
+      Int_t iRing = 1;
+      Int_t maxRolls = 8;
+      for( Int_t iRegionId = -1; iRegionId <= 1; iRegionId+=2 )
+      {
+         // Actual GEM geometry:
+         // Station 1 has 1 rings with 36 chambers with 2 layers in each
+         // Station 2 has 1 rings with 36 chambers with 2 layers in each
+         for( Int_t iStation = 1; iStation <= 4; ++iStation )
+         {
+            for( Int_t iLayer = 1; iLayer <= 2; ++iLayer )
+            {
+               float min_rho(1000), max_rho(0), min_z(2000), max_z(-2000);
+	    
+               // Skip most of the chambers since they will project
+               // the same way as the two top ones and the two bottom ones
+               for( Int_t iChamber = step; iChamber <= maxChambers; iChamber += step )
+               {
+               for( Int_t iRoll = 1; iRoll <= maxRolls; ++iRoll )
+               {
+                  GEMDetId id( iRegionId, iRing, iStation, iLayer, iChamber, iRoll );
+		  FWGeometry::IdToInfoItr det = m_geom->find( id.rawId() );
+		  estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
+
+		  // and a chamber next to it
+		  ++iChamber;
+		  GEMDetId nextid( iRegionId, iRing, iStation, iLayer, iChamber, iRoll );
+		  det = m_geom->find( nextid.rawId() );
+		  estimateProjectionSizeGEM( *det, min_rho, max_rho, min_z, max_z );
+               }
+               }
+               if ( min_rho > max_rho || min_z > max_z ) continue;
+
+               TEveElement* se = makeShape( min_rho, max_rho, min_z, max_z);
+               addToCompound(se, kFWMuonEndcapLineColorIndex);
+               gemContainer->AddElement(se);
+
+               se = makeShape( -max_rho, -min_rho, min_z, max_z );
+               addToCompound(se, kFWMuonEndcapLineColorIndex);
+               gemContainer->AddElement(se);
+            }
+         }
+      }
+      container->AddElement( gemContainer );
+   }
    return container;
 }
 
@@ -339,6 +390,34 @@ FWRPZViewGeometry::estimateProjectionSizeDT( const FWGeometry::GeomDetInfo& info
 
 void
 FWRPZViewGeometry::estimateProjectionSizeCSC( const FWGeometry::GeomDetInfo& info,
+					      float& min_rho, float& max_rho, float& min_z, float& max_z )
+{
+   float local[3], global[3];
+
+   float dX = info.shape[2] - info.shape[1];
+   float dY = info.shape[4];
+   float ddY = sqrt( 4 * dY * dY + dX * dX ) * 0.5;
+   float dZ = info.shape[3];
+   
+   local[0] = info.shape[2]; local[1] = ddY; local[2] = -dZ;
+   m_geom->localToGlobal( info, local, global );
+   estimateProjectionSize( global, min_rho, max_rho, min_z, max_z );
+
+   local[0] = info.shape[1]; local[1] = -ddY; local[2] = -dZ;
+   m_geom->localToGlobal( info, local, global );
+   estimateProjectionSize( global, min_rho, max_rho, min_z, max_z );
+
+   local[0] = info.shape[1]; local[1] = -ddY; local[2] = dZ;
+   m_geom->localToGlobal( info, local, global );
+   estimateProjectionSize( global, min_rho, max_rho, min_z, max_z );
+
+   local[0] = info.shape[2]; local[1] = ddY; local[2] = dZ;
+   m_geom->localToGlobal( info, local, global );
+   estimateProjectionSize( global, min_rho, max_rho, min_z, max_z );
+}
+
+void
+FWRPZViewGeometry::estimateProjectionSizeGEM( const FWGeometry::GeomDetInfo& info,
 					      float& min_rho, float& max_rho, float& min_z, float& max_z )
 {
    float local[3], global[3];

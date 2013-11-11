@@ -17,6 +17,7 @@
 // Original Author:  Alja Mrak-Tadel
 //         Created:  Thu Mar 25 21:01:12 CET 2010
 // $Id: FWRPZViewGeometry.h,v 1.10 2011/10/15 02:33:29 amraktad Exp $
+// $Id: FWRPZViewGeometry.h,v 1.11 2013/11/01 16:04:00 Yusang Kim   $
 //
 
 // system include files
@@ -60,6 +61,7 @@ private:
    TEveElement* makeCaloOutlineRhoZ();
    void estimateProjectionSizeDT( const FWGeometry::GeomDetInfo& info, float&, float&, float&, float& );
    void estimateProjectionSizeCSC( const FWGeometry::GeomDetInfo& info, float&, float&, float&, float& );
+   void estimateProjectionSizeGEM( const FWGeometry::GeomDetInfo& info, float&, float&, float&, float& );
    void estimateProjectionSize( const float*, float&, float&, float&, float& );
 
    void importNew(TEveElementList* x);
