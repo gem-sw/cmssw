@@ -61,7 +61,11 @@ def customise_csc_cond_ungangedME11A_mc(process):
 def customise_csc_Indexing(process):
     """Settings for the upgrade raw vs offline condition channel translation
     """
+    from CalibMuon.CSCCalibration.CSCIndexer_cfi import CSCIndexerESProducer
+    process.CSCIndexerESProducer= CSCIndexerESProducer
     process.CSCIndexerESProducer.AlgoName=cms.string("CSCIndexerPostls1")
+    from CalibMuon.CSCCalibration.CSCChannelMapper_cfi import CSCChannelMapperESProducer
+    process.CSCChannelMapperESProducer= CSCChannelMapperESProducer
     process.CSCChannelMapperESProducer.AlgoName=cms.string("CSCChannelMapperPostls1")
     return process
 
