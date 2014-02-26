@@ -39,21 +39,21 @@ process.MEtoEDMConverter.Verbosity= cms.untracked.int32(1)
 process.MEtoEDMConverter.Frequency= cms.untracked.int32(1)
 process.MEtoEDMConverter.deleteAfterCopy = cms.untracked.bool(False)
 
-
-
 process.source = cms.Source("PoolSource",
+    # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
-        'file:out_sim.root'   
-    )
+         'file:out_sim.root'   
+ )
 )
 
 process.o1 = cms.OutputModule("PoolOutputModule",
-    outputCommands = cms.untracked.vstring('keep *'),
-    fileName = cms.untracked.string('out_simhit_validation.root')
+	outputCommands = cms.untracked.vstring('keep *'),
+	fileName = cms.untracked.string('out_simhit_validation.root')
 )
 
+from Validation.MuonGEMHits.simTrackMatching_cfi import SimTrackMatching
 process.load('Validation.MuonGEMHits.MuonGEMHits_cfi') 
-
+process.gemHitsValidation.outputFile= cms.string('valid.root')
+process.gemHitsValidation.simTrackMatching = SimTrackMatching
 process.p = cms.Path(process.gemHitsValidation*process.MEtoEDMConverter)
-
 process.outpath = cms.EndPath(process.o1)
