@@ -6,7 +6,7 @@
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include <algorithm>
 #include <iomanip>
-
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 using namespace std;
 
 namespace {
@@ -22,13 +22,14 @@ bool is_gem(unsigned int detid)
 
 
 SimHitMatcher::SimHitMatcher(const SimTrack& t, const SimVertex& v,
-      const edm::ParameterSet& ps, const edm::Event& ev, const edm::EventSetup& es)
+      const edm::ParameterSet& ps, const edm::Event& ev, const edm::EventSetup& es, const GEMGeometry* geom)
 : BaseMatcher(t, v, ps, ev, es)
 {
   simMuOnlyGEM_ = conf().getUntrackedParameter<bool>("simMuOnlyGEM", true);
   discardEleHitsGEM_ = conf().getUntrackedParameter<bool>("discardEleHitsGEM", true);
   simInputLabel_ = conf().getUntrackedParameter<std::string>("simInputLabel", "g4SimHits");
   setVerbose(conf().getUntrackedParameter<int>("verboseSimHit", 0));
+  gem_geo_ = geom;
   init();
 }
 
@@ -38,9 +39,6 @@ SimHitMatcher::~SimHitMatcher() {}
 
 void SimHitMatcher::init()
 {
-  edm::ESHandle<GEMGeometry> gem_g;
-  eventSetup().get<MuonGeometryRecord>().get(gem_g);
-  gem_geo_ = &*gem_g;
 
   edm::Handle<edm::PSimHitContainer> gem_hits;
   edm::Handle<edm::SimTrackContainer> sim_tracks;
@@ -134,6 +132,7 @@ void
 SimHitMatcher::matchSimHitsToSimTrack(std::vector<unsigned int> track_ids,
     const edm::PSimHitContainer& gem_hits)
 {
+
   for (auto& track_id: track_ids)
   {
     for (auto& h: gem_hits)

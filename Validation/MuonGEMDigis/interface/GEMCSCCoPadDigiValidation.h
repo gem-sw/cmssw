@@ -24,23 +24,16 @@ public:
                          const edm::InputTag & inputTag);
   ~GEMCSCCoPadDigiValidation();
   void analyze(const edm::Event& e, const edm::EventSetup&);
-  void bookHisto();
+  void bookHisto(const GEMGeometry* geom);
  private:
 
-  MonitorElement* theCSCCoPad_xy_rm1;
-  MonitorElement* theCSCCoPad_xy_rp1;
+  MonitorElement* theCSCCoPad_xy[2][3];
 
-  MonitorElement* theCSCCoPad_phipad_rm1;
-  MonitorElement* theCSCCoPad_phipad_rp1;
+  MonitorElement* theCSCCoPad_phipad[2][3];
 
+  MonitorElement* theCSCCoPad[2][3];
 
-  MonitorElement* theCSCCoPad_rm1;
-  MonitorElement* theCSCCoPad_rp1;
-
-
-  MonitorElement* theCSCCoPad_bx_rm1;
-  MonitorElement* theCSCCoPad_bx_rp1;
-
+  MonitorElement* theCSCCoPad_bx[2];
 
   MonitorElement* theCSCCoPad_zr_rm1;
   MonitorElement* theCSCCoPad_zr_rp1;

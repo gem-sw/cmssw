@@ -123,12 +123,23 @@ void
 MuonGEMDigis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   using namespace edm;
-  theGEMStripDigiValidation->analyze(iEvent,iSetup );  
-  theGEMCSCPadDigiValidation->analyze(iEvent,iSetup );  
-  theGEMCSCCoPadDigiValidation->analyze(iEvent,iSetup );  
-  theGEMDigiTrackMatch->analyze(iEvent,iSetup) ;
-}
+  try {
+      iSetup.get<MuonGeometryRecord>().get(gem_geo_);
+      gem_geometry_ = &*gem_geo_;
+      theGEMStripDigiValidation->setGeometry(gem_geometry_);
+      theGEMCSCPadDigiValidation->setGeometry(gem_geometry_);
+      theGEMCSCCoPadDigiValidation->setGeometry(gem_geometry_);
+      theGEMDigiTrackMatch->setGeometry(gem_geometry_);
 
+      theGEMStripDigiValidation->analyze(iEvent,iSetup );  
+      theGEMCSCPadDigiValidation->analyze(iEvent,iSetup );  
+      theGEMCSCCoPadDigiValidation->analyze(iEvent,iSetup );  
+      theGEMDigiTrackMatch->analyze(iEvent,iSetup) ;
+  }
+  catch(edm::eventsetup::NoProxyException<GEMGeometry>& e) {
+       edm::LogError("GEMStripDigiValidation")<<"Can not set geometry from GEMGeometry.\n";
+  }
+}
 
 // ------------ method called once each job just before starting event loop  ------------
 
@@ -151,22 +162,18 @@ MuonGEMDigis::endJob()
 void 
 MuonGEMDigis::beginRun(edm::Run const&, edm::EventSetup const& iSetup)
 {
-
-  iSetup.get<MuonGeometryRecord>().get(gem_geo_);
-  gem_geometry_ = &*gem_geo_;
   dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigiTask");
-
-  theGEMStripDigiValidation->setGeometry(gem_geometry_);
-  theGEMStripDigiValidation->bookHisto();
-
-  theGEMCSCPadDigiValidation->setGeometry(gem_geometry_);
-  theGEMCSCPadDigiValidation->bookHisto();
-  theGEMCSCCoPadDigiValidation->setGeometry(gem_geometry_);
-  theGEMCSCCoPadDigiValidation->bookHisto();
-
-
-  theGEMDigiTrackMatch->setGeometry(gem_geometry_);
-  theGEMDigiTrackMatch->bookHisto();
+  try {
+      iSetup.get<MuonGeometryRecord>().get(gem_geo_);
+      gem_geometry_ = &*gem_geo_;
+      theGEMStripDigiValidation->bookHisto(gem_geometry_);
+      theGEMCSCPadDigiValidation->bookHisto(gem_geometry_);
+      theGEMCSCCoPadDigiValidation->bookHisto(gem_geometry_);
+      theGEMDigiTrackMatch->bookHisto();
+  }
+  catch (edm::eventsetup::NoProxyException<GEMGeometry>& e) {
+       edm::LogError("GEMStripDigiValidation")<<"Can not set geometry from GEMGeometry.\n";
+  }
 }
 
 

@@ -14,3 +14,7 @@ GEMBaseValidation::GEMBaseValidation(DQMStore* dbe,
 
 GEMBaseValidation::~GEMBaseValidation() {
 }
+void GEMBaseValidation::setGeometry(const GEMGeometry* geom)
+{ 
+    theGEMGeometry = geom;
+}

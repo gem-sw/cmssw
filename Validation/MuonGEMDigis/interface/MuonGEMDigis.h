@@ -50,10 +50,6 @@ private:
   std::string simInputLabel_;
   edm::ParameterSet simTrackMatching_;
 
-  void buildLUT();
-  std::pair<int,int> getClosestChambers(int region, float phi);
-
-
   edm::Handle<GEMDigiCollection> gem_digis;
   edm::Handle<GEMCSCPadDigiCollection> gemcscpad_digis;
   edm::Handle<GEMCSCPadDigiCollection> gemcsccopad_digis;
@@ -64,7 +60,6 @@ private:
   edm::InputTag input_tag_gem_;
   edm::InputTag input_tag_gemcscpad_;
   edm::InputTag input_tag_gemcsccopad_;
-  std::pair<std::vector<float>,std::vector<int> > positiveLUT_;
-  std::pair<std::vector<float>,std::vector<int> > negativeLUT_;
+  
 };
 #endif
