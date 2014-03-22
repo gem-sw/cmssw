@@ -88,7 +88,7 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
     
     // check for GE2/1 geometry
     if ((not rpcGeometryAvailable) or (rpcGeometryAvailable and not hasRE31andRE41())) {
-      if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
+      if (infoV >= 0) edm::LogInfo("L1CSCTPEmulatorSetupError")
         << "+++ run() called for RPC-CSC integrated trigger without valid RPC geometry! +++ \n";
       return;
     }

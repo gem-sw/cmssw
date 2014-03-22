@@ -30,6 +30,7 @@ class CSCMuonPortCard;
 class CSCGeometry;
 class GEMGeometry;
 class RPCGeometry;
+class CSCTriggerPrimitivesProducer;
 
 class CSCTriggerPrimitivesBuilder
 {
@@ -51,6 +52,9 @@ class CSCTriggerPrimitivesBuilder
   void setGEMGeometry(const GEMGeometry *g) { gem_g = g; }
   void setRPCGeometry(const RPCGeometry *g) { rpc_g = g; }
 
+  /// link to producer for debugging
+  void setProducer(CSCTriggerPrimitivesProducer* c) {producer_ = c;}
+
   /** Build anode, cathode, and correlated LCTs in each chamber and fill
    *  them into output collections.  Select up to three best correlated LCTs
    *  in each (sub)sector and put them into an output collection as well. */
@@ -68,6 +72,7 @@ class CSCTriggerPrimitivesBuilder
    *  processors. */
   enum trig_cscs {MAX_ENDCAPS = 2, MAX_STATIONS = 4, MAX_SECTORS = 6,
 		  MAX_SUBSECTORS = 2, MAX_CHAMBERS = 9};
+
  private:
 
   /** Min and max allowed values for various CSC elements, defined in
@@ -113,6 +118,8 @@ class CSCTriggerPrimitivesBuilder
   const CSCGeometry* csc_g;
   const GEMGeometry* gem_g;
   const RPCGeometry* rpc_g;
+
+  CSCTriggerPrimitivesProducer* producer_;
 };
 
 #endif

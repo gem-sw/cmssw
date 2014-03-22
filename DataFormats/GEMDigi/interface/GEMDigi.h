@@ -5,9 +5,6 @@
  *
  * Digi for GEM
  *  
- *  $Date: 2013/01/18 04:18:31 $
- *  $Revision: 1.2 $
- *
  * \author Vadim Khotilovich
  *
  */
@@ -18,10 +15,11 @@
 class GEMDigi{
 
 public:
-  explicit GEMDigi (int strip, int bx);
-  GEMDigi ();
+  explicit GEMDigi(int strip, int bx);
+  GEMDigi();
 
   bool operator==(const GEMDigi& digi) const;
+  bool operator!=(const GEMDigi& digi) const;
   bool operator<(const GEMDigi& digi) const;
 
   int strip() const { return strip_; }
