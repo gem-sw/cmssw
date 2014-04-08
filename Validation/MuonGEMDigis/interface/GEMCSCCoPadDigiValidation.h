@@ -33,10 +33,9 @@ public:
 
   MonitorElement* theCSCCoPad[2][3];
 
-  MonitorElement* theCSCCoPad_bx[2];
+  MonitorElement* theCSCCoPad_bx[2][3];
 
-  MonitorElement* theCSCCoPad_zr_rm1;
-  MonitorElement* theCSCCoPad_zr_rp1;
+  MonitorElement* theCSCCoPad_zr[2][3];
 
 };
 

@@ -19,7 +19,14 @@ public:
   void setGeometry(const GEMGeometry* geom);
   virtual void bookHisto(const GEMGeometry* geom) = 0 ;
   virtual void analyze(const edm::Event& e, const edm::EventSetup&) = 0 ;
- protected:
+  MonitorElement* BookHistZR( const char* name, const char* label, unsigned int region_num, unsigned int station_num, unsigned int layer_num); 
+protected:
+
+  std::vector< std::string > regionLabel;
+  std::vector< std::string > layerLabel;
+  std::vector< std::string > stationLabel;
+  double* xy_range;
+  double* zr_range;
 
   DQMStore* dbe_;
   edm::InputTag theInputTag;

@@ -31,9 +31,8 @@ public:
   MonitorElement* theStrip_xy[2][3][2];
   MonitorElement* theStrip_phistrip[2][3][2];
   MonitorElement* theStrip[2][3][2];
-  MonitorElement* theStrip_bx[2][2];
-  MonitorElement* theStrip_zr_rm1;
-  MonitorElement* theStrip_zr_rp1;
+  MonitorElement* theStrip_bx[2][3][2];
+  MonitorElement* theStrip_zr[2][3][2];
 
 };
 

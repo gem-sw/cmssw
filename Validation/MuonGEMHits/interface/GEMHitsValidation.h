@@ -18,11 +18,11 @@ public:
   void bookHisto(const GEMGeometry*);
  private:
 
-  MonitorElement* gem_sh_xy[2][3][2][2];
+  MonitorElement* gem_sh_xy[2][3][2];
   MonitorElement* gem_sh_zr[2][3][2];
 
-  MonitorElement* gem_sh_tof[2][3][2][2];
-  MonitorElement* gem_sh_eloss[2][3][2][2];
+  MonitorElement* gem_sh_tof[2][3][2];
+  MonitorElement* gem_sh_eloss[2][3][2];
 
   Int_t npart;
 
