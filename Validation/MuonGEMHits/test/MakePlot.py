@@ -47,6 +47,7 @@ def draw_col(target_dir, h, ext =".png", opt = "col"):
 
 
 PlotDir = "t_plot"
+os.system("mkdir -p "+PlotDir)
 PlotDir = PlotDir+'/'
 #os.mkdir(PlotDir)
 
@@ -59,7 +60,7 @@ for x in d1.GetListOfKeys() :
 	key_list.append(x.GetName())
 
 for hist in key_list :
-	if hist.find("eff") != -1 :
+	if hist.find("eff") != -1 or hist.find("track_") != -1 :
 		continue
 	if (hist.find("lx") !=-1 or hist.find("ly") != -1 ) :
 		continue
