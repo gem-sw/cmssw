@@ -1,7 +1,11 @@
 #!/usr/bin/env python
+
+"""
+Copied from GEMCode/GEMValidation
+"""
+
 from ROOT import *
 
-from drawPlots import *
 import os
 import sys
 sys.argv.append( '-b' )
