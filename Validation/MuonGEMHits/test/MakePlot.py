@@ -29,7 +29,6 @@ def draw_bx(target_dir, h , ext = ".png", opt = ""):
   c = TCanvas(h.GetTitle(),h.GetName(),600,600)
   c_title = c.GetTitle()
   gPad.SetLogy()
-  h.SetTitle(title)
   h.SetLineWidth(2)
   h.SetLineColor(kBlue)
   h.Draw(opt)
