@@ -1,8 +1,8 @@
 #include "Validation/MuonGEMDigis/interface/GEMCSCPadDigiValidation.h"
 
 GEMCSCPadDigiValidation::GEMCSCPadDigiValidation(DQMStore* dbe,
-                                               const edm::InputTag & inputTag)
-:  GEMBaseValidation(dbe, inputTag)
+                                               const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo)
+:  GEMBaseValidation(dbe, inputTag, pbInfo)
 {}
 void GEMCSCPadDigiValidation::bookHisto(const GEMGeometry* geom) {
   theGEMGeometry = geom;
@@ -30,7 +30,7 @@ void GEMCSCPadDigiValidation::bookHisto(const GEMGeometry* geom) {
         theCSCPad[region_num][station_num][layer_num] = dbe_->book1D( ("pad_dg"+name_prefix).c_str(), ("Digi occupancy per pad number: "+label_prefix+";Pad number; entries").c_str(), nPads,0.5,nPads+0.5);
         theCSCPad_xy[region_num][station_num][layer_num] = dbe_->book2D( ("pad_dg_xy"+name_prefix).c_str(), ("Digi occupancy: "+label_prefix+";globalX [cm]; globalY[cm]").c_str(), 360, -360,360,360,-360,360);
         theCSCPad_bx[region_num][station_num][layer_num] = dbe_->book1D( ("pad_dg_bx"+name_prefix).c_str(), ("Bunch crossing: "+label_prefix+"; bunch crossing ; entries").c_str(), 11,-5.5,5.5);
-        theCSCPad_zr[region_num][station_num][layer_num] = dbe_->book2D( ("pad_dg_zr"+name_prefix).c_str(), ("Digi occupancy:"+label_prefix +"; globalZ [cm] ; globalR [cm] ").c_str(), 200,zr_range[region_num*6+station_num*2],zr_range[region_num*6+station_num*2+1],55,130,240);
+        theCSCPad_zr[region_num][station_num][layer_num] = BookHistZR("pad_dg","Digi",region_num,station_num,layer_num);
       }
     }
   }

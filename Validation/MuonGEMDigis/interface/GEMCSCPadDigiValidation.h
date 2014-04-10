@@ -20,7 +20,7 @@ class GEMCSCPadDigiValidation : public GEMBaseValidation
 {
 public:
   GEMCSCPadDigiValidation(DQMStore* dbe,
-                         const edm::InputTag & inputTag);
+                         const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo);
   ~GEMCSCPadDigiValidation();
   void analyze(const edm::Event& e, const edm::EventSetup&);
   void bookHisto(const GEMGeometry* geom);

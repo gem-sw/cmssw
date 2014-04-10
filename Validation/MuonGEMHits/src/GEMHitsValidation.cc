@@ -4,8 +4,8 @@
 #include "DQMServices/Core/interface/DQMStore.h"
 #include <TMath.h>
 
-GEMHitsValidation::GEMHitsValidation(DQMStore* dbe, const edm::InputTag & inputTag)
-:  GEMBaseValidation(dbe, inputTag)
+GEMHitsValidation::GEMHitsValidation(DQMStore* dbe, const edm::InputTag & inputTag, const edm::ParameterSet& cfg)
+:  GEMBaseValidation(dbe, inputTag, cfg)
 {}
 
 void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {

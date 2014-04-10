@@ -21,7 +21,7 @@ class GEMStripDigiValidation : public GEMBaseValidation
 {
 public:
   GEMStripDigiValidation(DQMStore* dbe,
-                         const edm::InputTag & inputTag);
+                         const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo);
   ~GEMStripDigiValidation();
   void analyze(const edm::Event& e, const edm::EventSetup&);
   void bookHisto(const GEMGeometry* geom) ; 

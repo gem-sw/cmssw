@@ -12,7 +12,7 @@ class GEMHitsValidation : public GEMBaseValidation
 {
 public:
   GEMHitsValidation(DQMStore* dbe,
-                         const edm::InputTag & inputTag);
+                         const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo);
   ~GEMHitsValidation();
   void analyze(const edm::Event& e, const edm::EventSetup&);
   void bookHisto(const GEMGeometry*);

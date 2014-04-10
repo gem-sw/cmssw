@@ -1,7 +1,7 @@
 #include "Validation/MuonGEMDigis/interface/GEMStripDigiValidation.h"
 GEMStripDigiValidation::GEMStripDigiValidation(DQMStore* dbe,
-                                               const edm::InputTag & inputTag)
-:  GEMBaseValidation(dbe, inputTag)
+                                               const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo)
+:  GEMBaseValidation(dbe, inputTag, pbInfo)
 {}
 
 void GEMStripDigiValidation::bookHisto(const GEMGeometry* geom) { 
@@ -31,8 +31,8 @@ void GEMStripDigiValidation::bookHisto(const GEMGeometry* geom) {
         theStrip_phistrip[region_num][station_num][layer_num] = dbe_->book2D( ("strip_dg_phistrip"+name_prefix).c_str(), ("Digi occupancy: "+label_prefix+"; phi [rad];strip number").c_str(), 280, -TMath::Pi(), TMath::Pi(), nstrips/2,0,nstrips);
         theStrip[region_num][station_num][layer_num] = dbe_->book1D( ("strip_dg"+name_prefix).c_str(), ("Digi occupancy per stip number: "+label_prefix+";strip number; entries").c_str(), nstrips,0.5,nstrips+0.5);
         theStrip_xy[region_num][station_num][layer_num] = dbe_->book2D( ("strip_dg_xy"+name_prefix).c_str(), ("Digi occupancy: "+label_prefix+";globalX [cm]; globalY[cm]").c_str(), 360, -360,360,360,-360,360);
-				theStrip_zr[region_num][station_num][layer_num] = dbe_->book2D( ("strp_dg_zr"+name_prefix).c_str(),("Digi occupancy: "+label_prefix+"; globalZ [cm] ; globalR [cm]").c_str(),200,zr_range[region_num*6+station_num*2],zr_range[region_num*6+station_num*2+1],55,130,240);
         theStrip_bx[region_num][station_num][layer_num] = dbe_->book1D( ("strip_dg_bx"+name_prefix).c_str(), ("Bunch crossing: "+label_prefix+"; bunch crossing ; entries").c_str(), 11,-5.5,5.5);
+				theStrip_zr[region_num][station_num][layer_num] = BookHistZR("strp_dg","Digi",region_num,station_num,layer_num);
       }
     }
   }
