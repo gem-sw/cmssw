@@ -28,11 +28,8 @@ void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {
   for( unsigned int region_num = 0 ; region_num < nregion ; region_num++ ) {
     for( unsigned int station_num = 0 ; station_num < nstation ; station_num++) {
       for( unsigned int layer_num = 0 ; layer_num < 2 ; layer_num++) {
-        std::string hist_name_for_zr  = std::string("gem_sh_zr_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num]+"_";
-        std::string hist_label_for_zr = "SimHit occupancy : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" "+" ; globalZ [cm]; globalR[cm]";
-        gem_sh_zr[region_num][station_num][layer_num] = BookHistZR("gem_sh","SimHit",region_num,station_num,layer_num);
+          gem_sh_zr[region_num][station_num][layer_num] = BookHistZR("gem_sh","SimHit",region_num,station_num,layer_num);
 
-        //for( unsigned int cham_loc_num = 0 ; cham_loc_num < 2 ; cham_loc_num++) {
           std::string hist_name_for_xy  = std::string("gem_sh_xy_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_name_for_tof  = std::string("gem_sh_tof_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_name_for_eloss  = std::string("gem_sh_energyloss_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
@@ -46,7 +43,6 @@ void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {
           else  { tof_min = 26; tof_max = 30; }
           gem_sh_tof[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_tof.c_str(), hist_label_for_tof.c_str(), 40,tof_min,tof_max);
           gem_sh_eloss[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_eloss.c_str(), hist_label_for_eloss.c_str(), 60,0.,6000.);
-       // }   
       }
     }
   }
