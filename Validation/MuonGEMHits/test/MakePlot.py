@@ -81,7 +81,7 @@ def draw_plot( file, tDir,oDir ) :
 			continue
 		if ( hist.find("bx") != -1 ) :
 			draw_bx( oDir, d1.Get(hist)  )
-		elif ( hist.find("xy") !=-1 or hist.find("zr") !=-1 or hist.find("roll_vs_strip")!= -1 ) :
+		elif ( hist.find("xy") !=-1 or hist.find("zr") !=-1 or hist.find("roll_vs_strip")!= -1 or hist.find("phipad")!=-1 or hist.find("phistrip") != -1 ) :
 			draw_col( oDir, d1.Get(hist) )
 		else :
 			draw_occ( oDir, d1.Get(hist) )
