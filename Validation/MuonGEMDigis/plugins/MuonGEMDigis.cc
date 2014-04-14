@@ -122,7 +122,7 @@ MuonGEMDigis::endJob()
 void 
 MuonGEMDigis::beginRun(edm::Run const&, edm::EventSetup const& iSetup)
 {
-  dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigiTask");
+  dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
   try{
     iSetup.get<MuonGeometryRecord>().get(gem_geo_);
     gem_geometry_ = &*gem_geo_;
