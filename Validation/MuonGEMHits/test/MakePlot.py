@@ -8,8 +8,11 @@ from ROOT import *
 
 import os
 import sys
-sys.argv.append( '-b' )
+#sys.argv.append( '-b' )
+import ROOT
+ROOT.gROOT.SetBatch(1)
 
+import optparse
 def draw_occ(target_dir, h, ext =".png", opt = ""):
   gStyle.SetStatStyle(0)
   gStyle.SetOptStat(1110)
@@ -48,30 +51,84 @@ def draw_col(target_dir, h, ext =".png", opt = "col"):
   h.Draw(opt)
   c.SaveAs(target_dir + c_title + ext)
 
+def draw_plot( file, tDir,oDir ) :
+	c = TCanvas("c","c",600,600)
+	dqm_file = TFile( file)
+	d1 = dqm_file.Get(tDir)
+	key_list =[]
 
-PlotDir = "t_plot"
-os.system("mkdir -p "+PlotDir)
-PlotDir = PlotDir+'/'
-#os.mkdir(PlotDir)
+	try :
+		tlist = d1.GetListOfKeys()
+	except :
+		print oDir
+		if ( oDir.find("Digi") != -1 ):
+			tDir = "DQMData/Run 1/MuonGEMDigisV/Run summary/GEMDigiTask"
+			d1 = dqm_file.Get(tDir)
+			tlist = d1.GetListOfKeys()
+		elif ( oDir.find("RecHit") != -1 ):
+			tDir = "DQMData/Run 1/MuonGEMRecHitsV/Run summary/GEMRecHitTask"
+			d1 = dqm_file.Get(tDir)
+			tlist = d1.GetListOfKeys()
+		else :
+			print "error"
+			exit(-1)
+	for x in tlist :
+		key_list.append(x.GetName())
+	for hist in key_list :
+		if hist.find("eff") != -1 or hist.find("track_") != -1 :
+			continue
+		if (hist.find("lx") !=-1 or hist.find("ly") != -1 ) :
+			continue
+		if ( hist.find("bx") != -1 ) :
+			draw_bx( oDir, d1.Get(hist)  )
+		elif ( hist.find("xy") !=-1 or hist.find("zr") !=-1 or hist.find("roll_vs_strip")!= -1 ) :
+			draw_col( oDir, d1.Get(hist) )
+		else :
+			draw_occ( oDir, d1.Get(hist) )
 
-c = TCanvas("c","c",600,600)
-dqm_file = TFile("DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root")
-d1 = dqm_file.Get("DQMData/Run 1/MuonGEMHitsV/Run summary/GEMHitsTask")
+ 
 
-key_list =[]
-for x in d1.GetListOfKeys() :
-	key_list.append(x.GetName())
+if __name__ == '__main__' :
+	usage = ": %prog [option] DQM_filename.root\negs) ./%prog -a DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root"
+	parser = optparse.OptionParser(usage=usage)
+	#parser.add_option("-i",dest='dqmfile',help='Input DQM filename',default="DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root")
+	parser.add_option("-o",dest='directory',help='Name of output directory(Default : temp_plot)',default="temp_plot")
+	parser.add_option("-a",action='store_true',dest='all',help='Enable all step option.(-s -d -r)',default=False)
+	parser.add_option("-s",action='store_true',dest='simhit',help='Run simhit plotter',default=False)
+	parser.add_option("-d",action='store_true',dest='digi',help='Run digi plotter',default=False)
+	parser.add_option("-r",action='store_true',dest='reco',help='Run reco plotter',default=False)
+	options, args = parser.parse_args()
 
-for hist in key_list :
-	if hist.find("eff") != -1 or hist.find("track_") != -1 :
-		continue
-	if (hist.find("lx") !=-1 or hist.find("ly") != -1 ) :
-		continue
-	if ( hist.find("bx") != -1 ) :
-		draw_bx( PlotDir, d1.Get(hist)  )
-	elif ( hist.find("xy") !=-1 or hist.find("zr") !=-1) :
-		draw_col( PlotDir, d1.Get(hist) )
-	else :
-		draw_occ( PlotDir, d1.Get(hist) )
-#c.SaveAs("h1.png")
-#draw_plot(hi1)
+	if len(sys.argv) ==1 :
+		parser.print_help()
+		exit()
+	# If no argument, default name will be used.
+	if len(args)==0 :
+		print "Input file name is None."
+		print "Use default name."
+		args.append("DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root")
+
+	if len(args) != 1 : 
+		print "Can not understand input argument"
+		parser.print_help()
+	
+	steps= []
+	if ( options.all ) :
+		options.simhit=True
+		options.digi=True
+		options.reco=True
+
+	if ( options.simhit) :
+		steps.append("GEMHits")
+	if ( options.digi) :
+		steps.append("GEMDigis")
+	if ( options.reco) :
+		steps.append("GEMRecHits")
+
+	for step in steps :
+		tDir = "DQMData/Run 1/Muon%sV/Run summary/%sTask"%(step,step)
+		oDir = options.directory+"_%s"%(step)+'/'
+		os.system("mkdir -p "+oDir )
+		draw_plot(args[0],tDir,oDir)	
+		#print args[0],tDir, oDir
+	 
