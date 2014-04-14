@@ -19,26 +19,26 @@ void GEMSimTrackMatch::bookHisto()
    const float PI=TMath::Pi();
    dbe_->setCurrentFolder("MuonGEMHitsV/GEMHitsTask");
 
-	 const char* l_postfix[5] = { "","_l1","_l2","_l1or2","_l1and2"};
-	 const char* c_postfix[2] = { "_even","_odd" };
+	 const char* l_suffix[5] = { "","_l1","_l2","_l1or2","_l1and2"};
+	 const char* c_suffix[2] = { "_even","_odd" };
    
    for( unsigned int i=0 ; i< 5; i++) {
 		for( unsigned int j=0 ; j<2 ; j++) {
-			string postfix = string(c_postfix[j]) + string(l_postfix[i]);
+			string suffix = string(c_suffix[j]) + string(l_suffix[i]);
 
-			string track_eta_name = string("track_eta")+ postfix;
+			string track_eta_name = string("track_eta")+ suffix;
 			string track_eta_title = track_eta_name+";SimTrack |#eta|;# of tracks";
 			track_eta[i][j]     = dbe_->book1D(track_eta_name.c_str(), track_eta_title.c_str(), 140,1.5,2.2);
 	
-			string track_phi_name = string("track_phi")+ postfix;
+			string track_phi_name = string("track_phi")+ suffix;
 			string track_phi_title = track_phi_name+";SimTrack |#phi|;# of tracks";
 			track_phi[i][j] = dbe_->book1D(track_phi_name.c_str(), track_phi_title.c_str(),100, -PI,PI);
 			
-			string gem_lx_even_name  = string("gem_lx")+ postfix;
+			string gem_lx_even_name  = string("gem_lx")+ suffix;
 			string gem_lx_even_title = gem_lx_even_name+";SimTrack localX [cm] ; Entries";
 			gem_lx[i][j] = dbe_->book1D(gem_lx_even_name.c_str(), gem_lx_even_title.c_str(), 100,-100,100);
 
-			string gem_ly_even_name  = string("gem_ly")+ postfix;
+			string gem_ly_even_name  = string("gem_ly")+ suffix;
 			string gem_ly_even_title = gem_ly_even_name+";SimTrack localY [cm] ; Entries";
 			gem_ly[i][j] = dbe_->book1D(gem_ly_even_name.c_str(), gem_ly_even_title.c_str(), 100,-100,100);
 
@@ -112,7 +112,7 @@ void GEMSimTrackMatch::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       if ( id.chamber() & 1 ) isHitOddChamber = true;  // true : odd, false : even
 			else isHitEvenChamber = true;
 			if ( id.layer() == 1 ) isHitLayer1 = true;
-			if ( id.layer() ==2 ) isHitLayer2 = true;
+			if ( id.layer() == 2 ) isHitLayer2 = true;
 		}		 
 		if ( isHitEvenChamber ) {	
 	    track_eta[0][0]->Fill( fabs( track_.eta)  );

@@ -88,11 +88,11 @@ MuonGEMDigis_Harvesting::endRun(edm::Run const&, edm::EventSetup const&)
   dbe_->cd();
   dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigiTask");
   
-  std::vector< std::string > postfix;
-  postfix.push_back("_l1");
-  postfix.push_back("_l2");
-  postfix.push_back("_l1or2");
-  postfix.push_back("_l1and2");
+  std::vector< std::string > suffix;
+  suffix.push_back("_l1");
+  suffix.push_back("_l2");
+  suffix.push_back("_l1or2");
+  suffix.push_back("_l1and2");
   TH1F* gem_trk_phi = nullptr;  
   TH1F* gem_trk_eta = nullptr;
   TH1F* sh_eta[4]={nullptr};
@@ -105,19 +105,19 @@ MuonGEMDigis_Harvesting::endRun(edm::Run const&, edm::EventSetup const&)
     gem_trk_eta->Sumw2();
   }
   
-  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_eta"+postfix[0]) !=nullptr && dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_phi"+postfix[0]) !=nullptr ) {
+  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_eta"+suffix[0]) !=nullptr && dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_phi"+suffix[0]) !=nullptr ) {
     for ( int i =0 ; i< 4 ; i++) {
-      sh_eta[i] = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_eta"+postfix[i])->getTH1F()->Clone();
+      sh_eta[i] = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_eta"+suffix[i])->getTH1F()->Clone();
       sh_eta[i]->Sumw2();
-      sh_phi[i] = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_phi"+postfix[i])->getTH1F()->Clone();
+      sh_phi[i] = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_sh_phi"+suffix[i])->getTH1F()->Clone();
       sh_phi[i]->Sumw2();
     }
 
   }
-  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+postfix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_eta !=nullptr ) {
+  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+suffix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_eta !=nullptr ) {
     for ( int i =0 ; i< 4 ; i++) {
-      TH1F* dg_eta =    (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+postfix[i])->getTH1F()->Clone();
-      TH1F* dg_eta_2 =  (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+postfix[i])->getTH1F()->Clone();
+      TH1F* dg_eta =    (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+suffix[i])->getTH1F()->Clone();
+      TH1F* dg_eta_2 =  (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_eta"+suffix[i])->getTH1F()->Clone();
       dg_eta->Sumw2();
       dg_eta_2->Sumw2();
       dg_eta->Divide(gem_trk_eta);
@@ -126,13 +126,13 @@ MuonGEMDigis_Harvesting::endRun(edm::Run const&, edm::EventSetup const&)
       dbe_->book1D( TString::Format("eff_%s_with_sh",dg_eta_2->GetName()),dg_eta_2); 
     }
   }
-  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+postfix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_eta !=nullptr )  {
+  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+suffix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_eta !=nullptr )  {
     for ( int i =0 ; i< 4 ; i++) {
       TH1F* pad_eta;
       TH1F* pad_eta_2;
       if ( i <3) { 
-        pad_eta = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+postfix[i])->getTH1F()->Clone();
-        pad_eta_2 = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+postfix[i])->getTH1F()->Clone();
+        pad_eta = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+suffix[i])->getTH1F()->Clone();
+        pad_eta_2 = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_eta"+suffix[i])->getTH1F()->Clone();
       }
       else       {
         pad_eta = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/copad_eta")->getTH1F()->Clone();
@@ -149,10 +149,10 @@ MuonGEMDigis_Harvesting::endRun(edm::Run const&, edm::EventSetup const&)
     }
   }
 
-  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+postfix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_phi !=nullptr) {
+  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+suffix[0]) !=nullptr && sh_eta[0] !=nullptr && gem_trk_phi !=nullptr) {
     for ( int i =0 ; i< 4 ; i++) {
-      TH1F* dg_phi =    (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+postfix[i])->getTH1F()->Clone();
-      TH1F* dg_phi_2 =  (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+postfix[i])->getTH1F()->Clone();
+      TH1F* dg_phi =    (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+suffix[i])->getTH1F()->Clone();
+      TH1F* dg_phi_2 =  (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/dg_phi"+suffix[i])->getTH1F()->Clone();
       dg_phi->Sumw2();
       dg_phi_2->Sumw2();
       dg_phi->Divide(gem_trk_phi);
@@ -161,13 +161,13 @@ MuonGEMDigis_Harvesting::endRun(edm::Run const&, edm::EventSetup const&)
       dbe_->book1D( TString::Format("eff_%s_with_sh",dg_phi_2->GetName()),dg_phi_2); 
     }
   }
-  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+postfix[0]) !=nullptr && sh_phi[0] !=nullptr && gem_trk_phi !=nullptr)  {
+  if( dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+suffix[0]) !=nullptr && sh_phi[0] !=nullptr && gem_trk_phi !=nullptr)  {
     for ( int i =0 ; i< 4 ; i++) {
       TH1F* pad_phi;
       TH1F* pad_phi_2;
       if ( i <3) { 
-        pad_phi = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+postfix[i])->getTH1F()->Clone();
-        pad_phi_2 = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+postfix[i])->getTH1F()->Clone();
+        pad_phi = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+suffix[i])->getTH1F()->Clone();
+        pad_phi_2 = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/pad_phi"+suffix[i])->getTH1F()->Clone();
       }
       else       {
         pad_phi = (TH1F*)dbe_->get("MuonGEMDigisV/GEMDigiTask/copad_phi")->getTH1F()->Clone();
