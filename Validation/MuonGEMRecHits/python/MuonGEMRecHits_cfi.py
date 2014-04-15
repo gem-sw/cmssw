@@ -5,6 +5,6 @@ gemRecHitsValidation = cms.EDAnalyzer("MuonGEMRecHits",
     gemRecHitInput = cms.untracked.InputTag('gemRecHits'),
     gemSimHitInput = cms.untracked.InputTag('g4SimHits','MuonGEMHits'),
     simTrackInput = cms.untracked.InputTag('g4SimHits'),
-    folderPath = cms.untracked.string('MuonGEMRecHitsV/GEMRecHitTask'),
+    folderPath = cms.untracked.string('MuonGEMRecHitsV/GEMRecHitsTask'),
     outputFile = cms.untracked.string('GEMRecHit_ME.root')
 )

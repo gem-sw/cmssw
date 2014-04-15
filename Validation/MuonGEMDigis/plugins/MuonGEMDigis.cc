@@ -58,13 +58,14 @@ MuonGEMDigis::MuonGEMDigis(const edm::ParameterSet& ps)
   cscCopadLabel_ = ps.getParameter<edm::InputTag>("cscCopadLabel");
   simInputLabel_ = ps.getUntrackedParameter<std::string>("simInputLabel", "g4SimHits");
   simTrackMatching_ = ps.getParameterSet("simTrackMatching");
+  const edm::ParameterSet& pbInfo = ps.getParameterSet("PlotBinInfo");
   
   dbe_ = edm::Service<DQMStore>().operator->();
   outputFile_ =  ps.getParameter<std::string>("outputFile");
 
-  theGEMStripDigiValidation  = new  GEMStripDigiValidation(dbe_, stripLabel_ );
-  theGEMCSCPadDigiValidation = new GEMCSCPadDigiValidation(dbe_, cscPadLabel_ );
-  theGEMCSCCoPadDigiValidation = new GEMCSCCoPadDigiValidation(dbe_, cscCopadLabel_ );
+  theGEMStripDigiValidation  = new  GEMStripDigiValidation(dbe_, stripLabel_ , pbInfo);
+  theGEMCSCPadDigiValidation = new GEMCSCPadDigiValidation(dbe_, cscPadLabel_, pbInfo );
+  theGEMCSCCoPadDigiValidation = new GEMCSCCoPadDigiValidation(dbe_, cscCopadLabel_, pbInfo );
   theGEMDigiTrackMatch = new GEMDigiTrackMatch(dbe_, simInputLabel_ , simTrackMatching_ );
 }
 
@@ -81,10 +82,26 @@ MuonGEMDigis::~MuonGEMDigis()
 void
 MuonGEMDigis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  try{
+    iSetup.get<MuonGeometryRecord>().get(gem_geo_);
+    gem_geometry_ = &*gem_geo_;
+    hasGEMGeometry_ = true;
+  }
+  catch(edm::eventsetup::NoProxyException<GEMGeometry>& e){
+    edm::LogError("MuonGEMDigis") << "+++ Error : GEM geometry is unavailable. +++\n";
+    return;
+  }
   if ( hasGEMGeometry_) { 
-    theGEMStripDigiValidation->analyze(iEvent,iSetup );  
+    theGEMStripDigiValidation->setGeometry(gem_geometry_);
+    theGEMStripDigiValidation->analyze(iEvent,iSetup ); 
+ 
+    theGEMCSCPadDigiValidation->setGeometry(gem_geometry_);
     theGEMCSCPadDigiValidation->analyze(iEvent,iSetup );  
-    theGEMCSCCoPadDigiValidation->analyze(iEvent,iSetup );  
+
+    theGEMCSCCoPadDigiValidation->setGeometry(gem_geometry_);
+    theGEMCSCCoPadDigiValidation->analyze(iEvent,iSetup ); 
+
+    theGEMDigiTrackMatch->setGeometry(gem_geometry_);
     theGEMDigiTrackMatch->analyze(iEvent,iSetup) ;
   }
 }
@@ -105,8 +122,9 @@ MuonGEMDigis::endJob()
 void 
 MuonGEMDigis::beginRun(edm::Run const&, edm::EventSetup const& iSetup)
 {
-  iSetup.get<MuonGeometryRecord>().get(gem_geo_);
+  dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
   try{
+    iSetup.get<MuonGeometryRecord>().get(gem_geo_);
     gem_geometry_ = &*gem_geo_;
     hasGEMGeometry_ = true;
   }
@@ -115,18 +133,10 @@ MuonGEMDigis::beginRun(edm::Run const&, edm::EventSetup const& iSetup)
     return;
   }
 
-  dbe_->setCurrentFolder("MuonGEMDigisV/GEMDigiTask");
-
   if ( hasGEMGeometry_ ) {
-
-    theGEMStripDigiValidation->setGeometry(gem_geometry_);
-    theGEMStripDigiValidation->bookHisto();
-    theGEMCSCPadDigiValidation->setGeometry(gem_geometry_);
-    theGEMCSCPadDigiValidation->bookHisto();
-    theGEMCSCCoPadDigiValidation->setGeometry(gem_geometry_);
-    theGEMCSCCoPadDigiValidation->bookHisto();
-
-    theGEMDigiTrackMatch->setGeometry(gem_geometry_);
+    theGEMStripDigiValidation->bookHisto(gem_geometry_);
+    theGEMCSCPadDigiValidation->bookHisto(gem_geometry_);
+    theGEMCSCCoPadDigiValidation->bookHisto(gem_geometry_);
     theGEMDigiTrackMatch->bookHisto();
   }
 }

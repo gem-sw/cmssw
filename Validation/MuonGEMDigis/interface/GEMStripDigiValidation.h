@@ -21,18 +21,18 @@ class GEMStripDigiValidation : public GEMBaseValidation
 {
 public:
   GEMStripDigiValidation(DQMStore* dbe,
-                         const edm::InputTag & inputTag);
+                         const edm::InputTag & inputTag, const edm::ParameterSet& pbInfo);
   ~GEMStripDigiValidation();
   void analyze(const edm::Event& e, const edm::EventSetup&);
-  void bookHisto() ; 
+  void bookHisto(const GEMGeometry* geom) ; 
+
  private:
 
   MonitorElement* theStrip_xy[2][3][2];
   MonitorElement* theStrip_phistrip[2][3][2];
   MonitorElement* theStrip[2][3][2];
-  MonitorElement* theStrip_bx[2][2];
-  MonitorElement* theStrip_zr_rm1;
-  MonitorElement* theStrip_zr_rp1;
+  MonitorElement* theStrip_bx[2][3][2];
+  MonitorElement* theStrip_zr[2][3][2];
 
 };
 
