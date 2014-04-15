@@ -32,7 +32,9 @@ void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {
 
           std::string hist_name_for_xy  = std::string("gem_sh_xy_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_name_for_tof  = std::string("gem_sh_tof_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
+          std::string hist_name_for_tofMu  = std::string("gem_sh_tofMuon_r")+region[region_num]+"_st"+station[station_num]+"_l"+layer[layer_num]+"_"+cham_loc[cham_loc_num];
           std::string hist_name_for_eloss  = std::string("gem_sh_energyloss_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
+          std::string hist_name_for_elossMu  = std::string("gem_sh_energylossMuon_r")+region[region_num]+"_st"+station[station_num]+"_l"+layer[layer_num]+"_"+cham_loc[cham_loc_num];
           std::string hist_label_for_xy = "SimHit occupancy : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" ; globalX [cm]; globalY[cm]";
           std::string hist_label_for_tof = "SimHit TOF : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" "+" ; Time of flight [ns] ; entries";
           std::string hist_label_for_eloss = "SimHit energy loss : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" "+" ; Energy loss [eV] ; entries";
@@ -42,7 +44,9 @@ void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {
           if( station_num == 0 ) { tof_min = 18; tof_max = 22; }
           else  { tof_min = 26; tof_max = 30; }
           gem_sh_tof[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_tof.c_str(), hist_label_for_tof.c_str(), 40,tof_min,tof_max);
+          gem_sh_tofMu[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_tofMu.c_str(), hist_label_for_tof.c_str(), 40,18,22);
           gem_sh_eloss[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_eloss.c_str(), hist_label_for_eloss.c_str(), 60,0.,6000.);
+          gem_sh_elossMu[region_num][station_num][layer_num] = dbe_->book1D( hist_name_for_elossMu.c_str(), hist_label_for_eloss.c_str(), 60,0.,6000.);
       }
     }
   }
@@ -65,10 +69,11 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     return ;
   }
 
+  Float_t timeOfFlightMuon = 0.;
+  Float_t energyLossMuon = 0;
+
   for (auto hits=GEMHits->begin(); hits!=GEMHits->end(); hits++) {
-    Float_t energyLoss = hits->energyLoss();
-    Float_t timeOfFlight = hits->timeOfFlight();
-    
+
     const GEMDetId id(hits->detUnitId());
     Int_t region = id.region();
     Int_t station = id.station();
@@ -85,6 +90,18 @@ void GEMHitsValidation::analyze(const edm::Event& e,
 
     const LocalPoint hitEP(hits->entryPoint());
 
+//move these here in order to use a GEMDetId - layers, station...
+    Float_t energyLoss = hits->energyLoss();
+    Float_t timeOfFlight = hits->timeOfFlight();
+    if (abs(hits-> particleType()) == 13)
+    {
+      timeOfFlightMuon = hits->timeOfFlight();
+      energyLossMuon = hits->energyLoss();
+//fill histos for Muons only
+      gem_sh_tofMu[(int)(region/2.+0.5)][station-1][layer-1][even_odd]->Fill(timeOfFlightMuon);
+      gem_sh_elossMu[(int)(region/2.+0.5)][station-1][layer-1][even_odd]->Fill(energyLossMuon);
+    }
+    
       // fill hist
     // First, fill variable has no condition.
     gem_sh_zr[(int)(region/2.+0.5)][station-1][layer-1]->Fill(g_z,g_r);
