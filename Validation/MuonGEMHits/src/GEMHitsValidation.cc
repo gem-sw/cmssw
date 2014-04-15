@@ -32,9 +32,9 @@ void GEMHitsValidation::bookHisto(const GEMGeometry* gem_geo) {
 
           std::string hist_name_for_xy  = std::string("gem_sh_xy_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_name_for_tof  = std::string("gem_sh_tof_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
-          std::string hist_name_for_tofMu  = std::string("gem_sh_tofMuon_r")+region[region_num]+"_st"+station[station_num]+"_l"+layer[layer_num]+"_"+cham_loc[cham_loc_num];
+          std::string hist_name_for_tofMu  = std::string("gem_sh_tofMuon_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_name_for_eloss  = std::string("gem_sh_energyloss_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
-          std::string hist_name_for_elossMu  = std::string("gem_sh_energylossMuon_r")+region[region_num]+"_st"+station[station_num]+"_l"+layer[layer_num]+"_"+cham_loc[cham_loc_num];
+          std::string hist_name_for_elossMu  = std::string("gem_sh_energylossMuon_r")+regionLabel[region_num]+"_st"+stationLabel[station_num]+"_l"+layerLabel[layer_num];
           std::string hist_label_for_xy = "SimHit occupancy : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" ; globalX [cm]; globalY[cm]";
           std::string hist_label_for_tof = "SimHit TOF : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" "+" ; Time of flight [ns] ; entries";
           std::string hist_label_for_eloss = "SimHit energy loss : region"+regionLabel[region_num]+" station "+stationLabel[station_num]+" layer "+layerLabel[layer_num]+" "+" ; Energy loss [eV] ; entries";
@@ -98,8 +98,8 @@ void GEMHitsValidation::analyze(const edm::Event& e,
       timeOfFlightMuon = hits->timeOfFlight();
       energyLossMuon = hits->energyLoss();
 //fill histos for Muons only
-      gem_sh_tofMu[(int)(region/2.+0.5)][station-1][layer-1][even_odd]->Fill(timeOfFlightMuon);
-      gem_sh_elossMu[(int)(region/2.+0.5)][station-1][layer-1][even_odd]->Fill(energyLossMuon);
+      gem_sh_tofMu[(int)(region/2.+0.5)][station-1][layer-1]->Fill(timeOfFlightMuon);
+      gem_sh_elossMu[(int)(region/2.+0.5)][station-1][layer-1]->Fill(energyLossMuon);
     }
     
       // fill hist
