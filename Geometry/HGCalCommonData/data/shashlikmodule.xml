@@ -52,7 +52,7 @@
   <Numeric name="WidthBack"         value="[widthBack]"/>
   <Numeric name="ModuleThickness"   value="[moduleThickness]"/>
   <Numeric name="ModuleTaperAngle"  value="[moduleTaperAngle]"/>
-  <Numeric name="HoleRadius"        value="0.8*mm"/>
+  <Numeric name="HoleRadius"        value="0.6*mm"/>
   <String name="FibreMaterial"      value="materials:Quartz"/>
   <String name="FibreName"          value="shashlikmodule:ShashlikFibre"/>
   <Vector name="HoleX" type="numeric" nEntries="4">
@@ -63,5 +63,12 @@
   <Vector name="CalibFibreParameters" type="numeric" nEntries="3">
    0.6*mm,  0.0*mm, 0.0*mm </Vector>
 </Algorithm>
+
+<SpecParSection label="shashlikmodule.xml" eval="true">
+  <SpecPar name="ShashlikTree">
+    <PartSelector path="//ShashlikModule.*"/>
+    <Parameter name="ShashlikStructure" value="ShashlikModule" eval="false"/>
+  </SpecPar>  
+</SpecParSection>
 
 </DDDefinition>
