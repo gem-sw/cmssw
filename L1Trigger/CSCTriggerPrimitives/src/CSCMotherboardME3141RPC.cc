@@ -153,6 +153,7 @@ CSCMotherboardME3141RPC::CSCMotherboardME3141RPC(unsigned endcap, unsigned stati
   // deltas used to match to RPC digis
   maxDeltaBXRPC_ = me3141tmbParams.getParameter<int>("maxDeltaBXRPC");
   maxDeltaStripRPC_ = me3141tmbParams.getParameter<int>("maxDeltaStripRPC");
+ // maxDeltaRollRPC_ = me3141tmbParams.getParameter<int>("maxDeltaRollRPC");
 
   // use "old" or "new" dataformat for integrated LCTs?
   useOldLCTDataFormatALCTRPC_ = me3141tmbParams.getParameter<bool>("useOldLCTDataFormatALCTRPC");
@@ -238,7 +239,7 @@ CSCMotherboardME3141RPC::run(const CSCWireDigiCollection* wiredc,
   const CSCLayer* keyLayer(cscChamber->layer(3));
   const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
   const int region((theEndcap == 1) ? 1: -1);
-  const bool isEven(csc_id%2==0);
+  const bool isEven(csc_id.chamber()%2==0);
   const int csc_trig_sect(CSCTriggerNumbering::triggerSectorFromLabels(csc_id));
   const int csc_trig_id( CSCTriggerNumbering::triggerCscIdFromLabels(csc_id));
   const int csc_trig_chid((3*(csc_trig_sect-1)+csc_trig_id)%18 +1);
@@ -246,7 +247,7 @@ CSCMotherboardME3141RPC::run(const CSCWireDigiCollection* wiredc,
   const int rpc_trig_subsect((csc_trig_chid-1)%3+1);
   const RPCDetId rpc_id(region,1,theStation,rpc_trig_sect,1,rpc_trig_subsect,0);
   const RPCChamber* rpcChamber(rpc_g->chamber(rpc_id));
-
+   
   if (runME3141ILT_){
     
     // check for RE3/1-RE4/1 geometry
@@ -260,6 +261,7 @@ CSCMotherboardME3141RPC::run(const CSCWireDigiCollection* wiredc,
     rpcRollToEtaLimits_ = createRPCRollLUT(rpc_id);
     
     if (debug_luts_){
+     std::cout << "RPC det " <<rpc_id<<"  CSC det "<< csc_id << std::endl;
       if (rpcRollToEtaLimits_.size()) {
         for(auto p : rpcRollToEtaLimits_) {
           std::cout << "roll "<< p.first << " min eta " << (p.second).first << " max eta " << (p.second).second << std::endl;
@@ -678,6 +680,7 @@ CSCMotherboardME3141RPC::matchingRPCDigis(const CSCALCTDigi& alct, const RPCDigi
     auto digiRoll(RPCDetId(p.first).roll());
     if (debug) std::cout << "Candidate ALCT: " << digiRoll << std::endl;
     if (alctRoll !=  digiRoll) continue;
+    // if (std::abs(alctRoll-digiRoll) > maxDeltaRollRPC_) continue;
     if (debug) std::cout << "++Matches! " << std::endl;
     result.push_back(p);
     if (first) return result;
