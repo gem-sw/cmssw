@@ -111,7 +111,7 @@ CSCMotherboardME3141RPC::CSCMotherboardME3141RPC(unsigned endcap, unsigned stati
   // deltas used to match to RPC digis
   maxDeltaBXRPC_ = me3141tmbParams.getParameter<int>("maxDeltaBXRPC");
   maxDeltaStripRPC_ = me3141tmbParams.getParameter<int>("maxDeltaStripRPC");
-  maxDeltaRollRPC_ = me3141tmbParams.getParameter<int>("maxDeltaRollRPC");
+ // maxDeltaRollRPC_ = me3141tmbParams.getParameter<int>("maxDeltaRollRPC");
 
   // use "old" or "new" dataformat for integrated LCTs?
   useOldLCTDataFormatALCTRPC_ = me3141tmbParams.getParameter<bool>("useOldLCTDataFormatALCTRPC");
@@ -629,8 +629,8 @@ CSCMotherboardME3141RPC::matchingRPCDigis(const CSCALCTDigi& alct, const RPCDigi
   for (auto p: digis){
     auto digiRoll(RPCDetId(p.first).roll());
     if (debug) std::cout << "Candidate ALCT: " << digiRoll << std::endl;
-    //if (alctRoll !=  digiRoll) continue;
-    if (std::abs(alctRoll-digiRoll) > maxDeltaRollRPC_) continue;
+    if (alctRoll !=  digiRoll) continue;
+    // if (std::abs(alctRoll-digiRoll) > maxDeltaRollRPC_) continue;
     if (debug) std::cout << "++Matches! " << std::endl;
     result.push_back(p);
     if (first) return result;
