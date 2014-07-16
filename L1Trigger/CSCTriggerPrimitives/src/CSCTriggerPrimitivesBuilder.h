@@ -132,7 +132,10 @@ class CSCTriggerPrimitivesBuilder
   const GEMGeometry* gem_g;
   const RPCGeometry* rpc_g;
 
-  CLHEP::RandFlat* flat_;
+  CLHEP::RandFlat* flat_me1_;
+  CLHEP::RandFlat* flat_me2_;
+  CLHEP::RandFlat* flat_me3_;
+  CLHEP::RandFlat* flat_me4_;
 };
 
 #endif

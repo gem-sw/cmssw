@@ -230,8 +230,20 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             if (checkBadChambers_ && badChambers->isInBadChamber(detid)) continue;
 
             // randomly disable X% of CSC chambers
-            if (flat_->fire(1) < fractionBrokenCSCs_) {
-              edm::LogInfo("L1CSCTrigger") << "Skipping bad chamber: " << detid << std::endl;              
+	    if (stat==1 && flat_me1_->fire(1) < fractionBrokenCSCs_){
+              edm::LogInfo("L1CSCTrigger") << "Skipping bad chamber: " << detid << std::endl;
+              continue;
+            }
+	    if (stat==2 && flat_me2_->fire(1) < fractionBrokenCSCs_){
+              edm::LogInfo("L1CSCTrigger") << "Skipping bad chamber: " << detid << std::endl;
+              continue;
+            }
+	    if (stat==3 && flat_me3_->fire(1) < fractionBrokenCSCs_){
+              edm::LogInfo("L1CSCTrigger") << "Skipping bad chamber: " << detid << std::endl;
+              continue;
+            }
+	    if (stat==4 && flat_me4_->fire(1) < fractionBrokenCSCs_){
+              edm::LogInfo("L1CSCTrigger") << "Skipping bad chamber: " << detid << std::endl;
               continue;
             }
 
@@ -694,5 +706,8 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
 void CSCTriggerPrimitivesBuilder::setRandomEngine(CLHEP::HepRandomEngine& eng)
 {
-  flat_ = new CLHEP::RandFlat(eng);
+  flat_me1_ = new CLHEP::RandFlat(eng);
+  flat_me2_ = new CLHEP::RandFlat(eng);
+  flat_me3_ = new CLHEP::RandFlat(eng);
+  flat_me4_ = new CLHEP::RandFlat(eng);
 }
