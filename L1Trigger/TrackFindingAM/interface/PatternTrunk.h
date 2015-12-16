@@ -12,6 +12,10 @@
 #include <boost/serialization/map.hpp>
 #include "GradedPattern.h"
 
+#ifdef IPNL_USE_CUDA
+#include "gpu_struct.h"
+#endif
+
 using namespace std;
 
 /**
@@ -79,6 +83,19 @@ class PatternTrunk{
   **/  
   void link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules);
 
+#ifdef IPNL_USE_CUDA
+ /**
+     \brief Link the low definition patterns to the detector structure
+     \param p the pattern bank structure on the device
+     \param d The detector structure on the device
+     \param pattern_index The index of the pattern in the bank
+     \param sec The ladders in the sector
+     \param modules The modules in the sector (one vector per ladder)
+     \param layers List of layers IDs
+  **/  
+  void linkCuda(patternBank* p, deviceDetector* d, int pattern_index, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules, vector<int> layers, unsigned int* cache);
+#endif
+
   /**
      \brief Change the DC bits of the LDP to take the parameter's DC bits into account (used while merging banks)
      \param p A new pattern
@@ -91,6 +108,13 @@ class PatternTrunk{
      \return A pointer on the copy
   **/
   GradedPattern* getActivePattern(int active_threshold);
+  /**
+     \brief Returns a copy of the active pattern
+     \param max_nb_missing_hit The maximum number of non active layers to activate the pattern 
+     \param active_threshold The minimum number of active super strips to activate the pattern
+     \return A pointer on the copy
+  **/
+  GradedPattern* getActivePatternUsingMissingHit(int max_nb_missing_hit, int active_threshold);
 
   /**
      \brief Check if the high resolution pattern is already in the bank when DC bits are activated
@@ -103,39 +127,19 @@ class PatternTrunk{
   GradedPattern* lowDefPattern;
   map<string, GradedPattern*> fullDefPatterns;
 
-  /**
-    \brief Compute the DC bits. We use Gray Code to encode the positions :
-    0 : 000
-    1 : 001
-    2 : 011
-    3 : 010
-    4 : 110
-    5 : 111
-    6 : 101
-    7 : 100
-    The values used for the Don't Care bits are :
-    0 : 0
-    1 : 1
-    2 : X (don't care)
-    3 : Unused
-    For example if the DC bits are 1X0 it means positions 4 and 7.
-    \param v List of DC bits, used for recursivity
-    \param values List of used strips at full resolution (00110000 if the third and fourth strips are used at full def)
-    \param size The number of strips in the previous array. Depends on the number of DC bits used (2 for 1 DC bit, 4 for 2 DC bits, 8 for 3 DC bits, ...)
-    \param reverse Used for recursivity. Usefull to know if we are on the first or the second half of the array
-  **/
-  void computeDCBits(vector<int> &v, bool* values, int size, int reverse);
   void deleteFDPatterns();
 
   friend class boost::serialization::access;
   
   template<class Archive> void save(Archive & ar, const unsigned int version) const{
-    ar << lowDefPattern;;
+    ar << lowDefPattern;
     ar << fullDefPatterns;
   }
   
   template<class Archive> void load(Archive & ar, const unsigned int version){
-    ar >> lowDefPattern;;
+    if(lowDefPattern!=NULL)
+      delete lowDefPattern;
+    ar >> lowDefPattern;
     ar >> fullDefPatterns;
   }
   

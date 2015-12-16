@@ -3,6 +3,10 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "DataFormats/EcalDetId/interface/EcalSubdetector.h"
 
+#include "DataFormats/Math/interface/Vector3D.h"
+#include "Math/Vector3D.h"
+#include "Math/VectorUtil.h"
+
 #include <algorithm>
 #include <iostream>
 
@@ -73,44 +77,66 @@ std::vector<CaloTowerDetId>  EgammaHadTower::towersOf(const reco::SuperCluster& 
   return towers;
 }
 
-double EgammaHadTower::getDepth1HcalESum(const std::vector<CaloTowerDetId> & towers) const {
+double EgammaHadTower::getDepth1HcalESum(const std::vector<CaloTowerDetId> & towers, float EtMin) const {
   double esum=0.;
   CaloTowerCollection::const_iterator trItr = towerCollection_->begin();
   CaloTowerCollection::const_iterator trItrEnd = towerCollection_->end();
   for( ;  trItr != trItrEnd ; ++trItr){
     std::vector<CaloTowerDetId>::const_iterator itcheck = find(towers.begin(), towers.end(), trItr->id());
     if( itcheck != towers.end() ) {
-      esum += trItr->ietaAbs()<18 || trItr->ietaAbs()>29 ? trItr->hadEnergy() : trItr->hadEnergyHeInnerLayer() ;
+      if(trItr->hadEt()>EtMin)
+	esum += trItr->ietaAbs()<18 || trItr->ietaAbs()>29 ? trItr->hadEnergy() : trItr->hadEnergyHeInnerLayer() ;
     }
   }
   return esum;
 }
 
-double EgammaHadTower::getDepth2HcalESum(const std::vector<CaloTowerDetId> & towers) const {
+double EgammaHadTower::getDepth2HcalESum(const std::vector<CaloTowerDetId> & towers, float EtMin) const {
   double esum=0.;
   CaloTowerCollection::const_iterator trItr = towerCollection_->begin();
   CaloTowerCollection::const_iterator trItrEnd = towerCollection_->end();
   for( ;  trItr != trItrEnd ; ++trItr){
     std::vector<CaloTowerDetId>::const_iterator itcheck = find(towers.begin(), towers.end(), trItr->id());
     if( itcheck != towers.end() ) {
-      esum += trItr->hadEnergyHeOuterLayer();
+      if(trItr->hadEt()>EtMin)
+	esum += trItr->hadEnergyHeOuterLayer();
     }
   }
   return esum;
 }
 
-double EgammaHadTower::getDepth1HcalESum( const reco::SuperCluster& sc ) const {
-  return getDepth1HcalESum(towersOf(sc)) ;
+double EgammaHadTower::getDepth1HcalESum( const reco::SuperCluster& sc, float EtMin ) const {
+  return getDepth1HcalESum(towersOf(sc),EtMin) ;
 }
 
-double EgammaHadTower::getDepth2HcalESum( const reco::SuperCluster& sc ) const {
-  return getDepth2HcalESum(towersOf(sc)) ;
+double EgammaHadTower::getDepth2HcalESum( const reco::SuperCluster& sc, float EtMin ) const {
+  return getDepth2HcalESum(towersOf(sc),EtMin) ;
 }
 
 void EgammaHadTower::setTowerCollection(const CaloTowerCollection* towerCollection) {
   towerCollection_ = towerCollection;
 }
 
+void EgammaHadTower::setHCALClusterCollection(const std::vector<reco::PFCluster>* pfClusterCollection) {
+  hcalPFClusterCollection_ = pfClusterCollection;
+}
+
+double EgammaHadTower::getHCALClusterEnergy(const reco::SuperCluster & sc, float EtMin, double hOverEConeSize) const {
+  math::XYZVector vectorSC(sc.position().x(),sc.position().y(),sc.position().z());
+  double totalEnergy = 0.;
+  std::vector<reco::PFCluster>::const_iterator trItr = hcalPFClusterCollection_->begin();
+  std::vector<reco::PFCluster>::const_iterator trItrEnd = hcalPFClusterCollection_->end();
+  for( ;  trItr != trItrEnd ; ++trItr){
+      math::XYZVector vectorHgcalHFECluster(trItr->position().x(),trItr->position().y(),trItr->position().z());
+      double dR = ROOT::Math::VectorUtil::DeltaR(vectorSC,vectorHgcalHFECluster);
+      if (dR<hOverEConeSize) totalEnergy += trItr->energy();
+  }
+  return totalEnergy;
+}
+
 bool ClusterGreaterThan(const reco::CaloClusterPtr& c1, const reco::CaloClusterPtr& c2)  {
   return (*c1 > *c2);
 }
+
+
+

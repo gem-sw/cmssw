@@ -1,3 +1,4 @@
+#include "TNamed.h"
 #include "Fireworks/Geometry/interface/FWRecoGeometryESProducer.h"
 #include "Fireworks/Geometry/interface/FWRecoGeometry.h"
 #include "Fireworks/Geometry/interface/FWRecoGeometryRecord.h"
@@ -7,6 +8,7 @@
 #include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
+#include "Geometry/FCalGeometry/interface/HGCalGeometry.h"
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "Geometry/CSCGeometry/interface/CSCChamber.h"
@@ -85,7 +87,21 @@ FWRecoGeometryESProducer::produce( const FWRecoGeometryRecord& record )
   m_trackerGeom = (const TrackerGeometry*) m_geomRecord->slaveGeometry( detId );
   
   record.getRecord<CaloGeometryRecord>().get( m_caloGeom );
+
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalEESensitive", m_hgcGeom.back() );
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalHESiliconSensitive", m_hgcGeom.back() );
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalHEScintillatorSensitive", m_hgcGeom.back() );
   
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalEESensitive", m_hgcGeom.back() );
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalHESiliconSensitive", m_hgcGeom.back() );
+  m_hgcGeom.push_back(edm::ESHandle<HGCalGeometry>());
+  record.getRecord<IdealGeometryRecord>().get( "HGCalHEScintillatorSensitive", m_hgcGeom.back() );
+
   addPixelBarrelGeometry( );
   addPixelForwardGeometry();
   addTIBGeometry();
@@ -222,6 +238,14 @@ FWRecoGeometryESProducer::addRPCGeometry( void )
   {
     edm::LogInfo("FWRecoGeometry") << "failed to produce RPC geometry " << exception.what() << std::endl;
   }
+
+
+  try {
+     RPCDetId id(1, 1, 4, 1, 1, 1, 1 );
+     m_geomRecord->slaveGeometry( detId );
+     m_fwGeometry->extraDet.Add(new TNamed("RE4", "RPC endcap station 4"));
+  }
+  catch (...) {}
 }
 
 void
@@ -257,6 +281,8 @@ FWRecoGeometryESProducer::addGEMGeometry( void )
 	m_fwGeometry->idToName[current].topology[5] = roll->npads();
       }
     }
+
+    m_fwGeometry->extraDet.Add(new TNamed("GEM", "GEM muon detector"));
   }
   catch( cms::Exception &exception )
   {
@@ -284,17 +310,17 @@ FWRecoGeometryESProducer::addME0Geometry( void )
 	unsigned int current = insert_id( rawid );
 	fillShapeAndPlacement( current, roll );
 	  
-	//const StripTopology& topo = roll->specificTopology();
-	//  m_fwGeometry->idToName[current].topology[0] = topo.nstrips();
-	// m_fwGeometry->idToName[current].topology[1] = topo.stripLength();
-	//m_fwGeometry->idToName[current].topology[2] = topo.pitch();
+	const StripTopology& topo = roll->specificTopology();
+	m_fwGeometry->idToName[current].topology[0] = topo.nstrips();
+	m_fwGeometry->idToName[current].topology[1] = topo.stripLength();
+	m_fwGeometry->idToName[current].topology[2] = topo.pitch();
 	
-	//float height = topo.stripLength()/2;
-	// LocalPoint  lTop( 0., height, 0.);
-	//LocalPoint  lBottom( 0., -height, 0.);
-	//m_fwGeometry->idToName[current].topology[3] = roll->localPitch(lTop);
-	//m_fwGeometry->idToName[current].topology[4] = roll->localPitch(lBottom);
-	//m_fwGeometry->idToName[current].topology[5] = roll->npads();
+	float height = topo.stripLength()/2;
+	LocalPoint  lTop( 0., height, 0.);
+	LocalPoint  lBottom( 0., -height, 0.);
+	m_fwGeometry->idToName[current].topology[3] = roll->localPitch(lTop);
+	m_fwGeometry->idToName[current].topology[4] = roll->localPitch(lBottom);
+	m_fwGeometry->idToName[current].topology[5] = roll->npads();
       }
     }
   }
@@ -441,6 +467,34 @@ FWRecoGeometryESProducer::addCaloGeometry( void )
     const CaloCellGeometry::CornersVec& cor( m_caloGeom->getGeometry( *it )->getCorners());
     unsigned int id = insert_id( it->rawId());
     fillPoints( id, cor.begin(), cor.end());
+  }
+
+  // do the HGCal if we actually got it  
+  for( const auto& hgcGeom : m_hgcGeom ){
+    if( hgcGeom.product() ) {
+      float minZ = 1e6, maxZ = 0;
+      float minRho = 1e6, maxRho = 0;
+      const std::vector<DetId>& hids = hgcGeom->getValidDetIds();
+      std::cout << "Processing: " << hgcGeom->cellElement() << std::endl;
+      std::cout << "got hgc detector with " << hids.size() << " valid det ids!" << std::endl;
+      for( const auto& hid : hids ) {
+	const HGCalGeometry::CornersVec cor( std::move( hgcGeom->getCorners( hid ) ) );
+	for( const auto& corner : cor ) {
+	  if( std::abs(corner.eta()) >3.0 ) { 
+	    std::cout << "THIS IS VERY BAD RECHIT CORNER IS PAST ETA 3.0 BOUNDARY FOR: " 
+		      << std::hex << hid.rawId() << std::dec << " : eta=" << corner.eta()  << std::endl;
+	  }
+	  minZ = std::min(std::abs(corner.z()),minZ);
+	  maxZ = std::max(std::abs(corner.z()),maxZ);
+	  minRho = std::min(std::hypot(corner.x(),corner.y()), minRho);
+	  maxRho = std::max(std::hypot(corner.x(),corner.y()), maxRho);
+	}
+	unsigned int id = insert_id( hid.rawId() );
+	fillPoints( id, cor.begin(), cor.end() );
+      }
+      std::cout << "Got minZ = " << minZ << " got maxZ = " << maxZ 
+		<< " minRho  = " << minRho << " maxRho = " << maxRho << std::endl;
+    }
   }
 }
 

@@ -26,18 +26,20 @@
 #include <fstream>
 #include <iomanip>
 
-#define DebugLog
+//#define DebugLog
 
 HGCSD::HGCSD(G4String name, const DDCompactView & cpv,
 	     SensitiveDetectorCatalog & clg, 
 	     edm::ParameterSet const & p, const SimTrackManager* manager) : 
   CaloSD(name, cpv, clg, p, manager,
-         p.getParameter<edm::ParameterSet>("HGCSD").getParameter<int>("TimeSliceUnit"),
+         p.getParameter<edm::ParameterSet>("HGCSD").getParameter<double>("TimeSliceUnit"),
          p.getParameter<edm::ParameterSet>("HGCSD").getParameter<bool>("IgnoreTrackID")), 
   numberingScheme(0) {
 
   edm::ParameterSet m_HGC = p.getParameter<edm::ParameterSet>("HGCSD");
   eminHit          = m_HGC.getParameter<double>("EminHit")*MeV;
+  bool checkID     = m_HGC.getUntrackedParameter<bool>("CheckID", false);
+  verbosity        = m_HGC.getUntrackedParameter<int>("Verbosity",0);
 
   //this is defined in the hgcsens.xml
   G4String myName(this->nameOfSD());
@@ -66,7 +68,7 @@ HGCSD::HGCSD(G4String name, const DDCompactView & cpv,
 #endif
   edm::LogInfo("HGCSim") << "HGCSD:: Threshold for storing hits: " << eminHit;
 
-  numberingScheme = new HGCNumberingScheme(cpv,nameX);
+  numberingScheme = new HGCNumberingScheme(cpv,nameX,checkID,verbosity);
 }
 
 HGCSD::~HGCSD() { 
@@ -80,9 +82,9 @@ bool HGCSD::ProcessHits(G4Step * aStep, G4TouchableHistory * ) {
   if (aStep == NULL) {
     return true;
   } else {
+#ifdef DebugLog
     G4int parCode = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
     bool notaMuon = (parCode == mupPDG || parCode == mumPDG ) ? false : true;
-#ifdef DebugLog
     G4LogicalVolume* lv =
       aStep->GetPreStepPoint()->GetPhysicalVolume()->GetLogicalVolume();
     edm::LogInfo("HGCSim") << "HGCSD: Hit from standard path from "
@@ -121,22 +123,9 @@ uint32_t HGCSD::setDetUnitId(G4Step * aStep) {
 
   int layer  = touch->GetReplicaNumber(0);
   int module = touch->GetReplicaNumber(1);
-
-  //gang in layers (otherwise DetId is not enough to accomodate all layers)
-  //new layer is negative if not to be looked at : set DetId to 0
-  if(numberingScheme)
-    {
-      layer=numberingScheme->getDDDConstants()->simToReco(1,layer,true).second;
-      if(layer<0) return 0;  
-    }
-
-  // if(iz<0) {
-  //     std::cout << "layer=" << layer << "=" << touch->GetReplicaNumber(0) << "\t"
-  // 	      << "mod="   << module << "=" << touch->GetReplicaNumber(1) << "\t"
-  // 	      << "izplmin=" << iz  << "=" << touch->GetReplicaNumber(3) << "\t"
-  // 	      << "globalZ=" << globalZ << std::endl; 
-  //}
-
+  if (verbosity > 0) 
+    std::cout << "HGCSD::Global " << hitPoint << " local " << localpos 
+	      << std::endl;
   return setDetUnitId (subdet, layer, module, iz, localpos);
 }
 

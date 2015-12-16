@@ -68,6 +68,8 @@ class TrackFindingAMProducer : public edm::EDProducer
   double                       mMagneticField;
   std::string                  nBKName;
   int                          nThresh;
+  int                          nMissingHits;
+  int                          nDebug;
   SectorTree                   m_st;
   PatternFinder                *m_pf;
   const StackedTrackerGeometry *theStackedTracker;
@@ -94,6 +96,8 @@ TrackFindingAMProducer::TrackFindingAMProducer( const edm::ParameterSet& iConfig
   TTPatternOutputTag = iConfig.getParameter< std::string >( "TTPatternName" );
   nBKName            = iConfig.getParameter< std::string >("inputBankFile");
   nThresh            = iConfig.getParameter< int >("threshold");
+  nMissingHits       = iConfig.getParameter< int >("nbMissingHits");
+  nDebug             = iConfig.getParameter< int >("debugMode");
 
   std::cout << "Loading pattern bank file : " << std::endl;
   std::cout << nBKName << std::endl;
@@ -117,6 +121,11 @@ TrackFindingAMProducer::TrackFindingAMProducer( const edm::ParameterSet& iConfig
   }  
 
   m_pf = new PatternFinder( m_st.getSuperStripSize(), nThresh, &m_st, "", "" );
+
+  if(nMissingHits>-1)
+  {
+    m_pf->useMissingHitThreshold(nMissingHits);
+  }
 
   produces< std::vector< TTTrack< Ref_PixelDigi_ > > >( TTPatternOutputTag );
 }
@@ -224,6 +233,8 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
         layer  = 10+detIdStub.iZ()+abs((int)(detIdStub.iSide())-2)*7;
         ladder = detIdStub.iRing()-1;
         module = detIdStub.iPhi()-1;
+
+	//	std::cout << mp0.y() << " / " << cols0 << " / " << cols1 << " / " << segment << std::endl;
       }
 
       module = CMSPatternLayer::getModuleCode(layer,module);
@@ -246,6 +257,8 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
   /// PAssing the superstrips into the AM chip
 
   std::vector< Sector* > patternsSectors = m_pf->find(m_hits); // AM PR is done here....
+  if(nDebug==1)
+    m_pf->displaySuperstrips(m_hits); // display the supertrips of the event
 
   /// STEP 3
   /// Collect the info and store the track seed stuff

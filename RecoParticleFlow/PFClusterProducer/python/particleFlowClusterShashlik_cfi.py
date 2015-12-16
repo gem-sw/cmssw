@@ -2,6 +2,8 @@ import FWCore.ParameterSet.Config as cms
 
 #### PF CLUSTER SHASHLIK ####
 
+from particleFlowClusterECALTimeResolutionParameters_cfi import _timeResolutionECALBarrel, _timeResolutionShashlikEndcap
+
 #cleaning
 ## no cleaning for Shashlik yet
 
@@ -10,8 +12,8 @@ _localMaxSeeds_EK = cms.PSet(
     algoName = cms.string("LocalMaximumSeedFinder"),
     thresholdsByDetector = cms.VPSet(
     cms.PSet( detector = cms.string("ECAL_ENDCAP"),
-              seedingThreshold = cms.double(0.3),
-              seedingThresholdPt = cms.double(0.075)
+              seedingThreshold = cms.double(0.),
+              seedingThresholdPt = cms.double(0.2)
               )
     ),
     nNeighbours = cms.int32(8)
@@ -22,8 +24,8 @@ _topoClusterizer_EK = cms.PSet(
     algoName = cms.string("Basic2DGenericTopoClusterizer"),
     thresholdsByDetector = cms.VPSet(   
     cms.PSet( detector = cms.string("ECAL_ENDCAP"),
-              gatheringThreshold = cms.double(0.08),
-              gatheringThresholdPt = cms.double(0.0)
+              gatheringThreshold = cms.double(0.),
+              gatheringThresholdPt = cms.double(0.1)
               )
     ),
     useCornerCells = cms.bool(True)
@@ -63,6 +65,13 @@ _pfClusterizer_EK = cms.PSet(
     allCellsPositionCalc = _positionCalcECAL_all_nodepth,
     positionCalcForConvergence = _positionCalcEK_all_withdepth,
     showerSigma = cms.double(1.1),
+    # The following 2 parameters are only considerd if no
+    # time resolution is provided
+    timeSigmaEB = cms.double(10),
+    timeSigmaEE = cms.double(10), 
+    maxNSigmaTime = cms.double(10.), # Maximum number of sigmas in time 
+    minChi2Prob = cms.double(0.), # Minimum chi2 probability (ignored if 0)
+    clusterTimeResFromSeed = cms.bool(False),
     stoppingTolerance = cms.double(1e-8),
     maxIterations = cms.uint32(50),
     excludeOtherSeeds = cms.bool(True),
@@ -71,7 +80,10 @@ _pfClusterizer_EK = cms.PSet(
     cms.PSet( detector = cms.string("ECAL_ENDCAP"),
               recHitEnergyNorm = cms.double(0.08)
               )
-    )
+    ),
+    #can use ECAL timing here since Shashlik is forced to be the same as EE
+    timeResolutionCalcBarrel = _timeResolutionECALBarrel,
+    timeResolutionCalcEndcap = _timeResolutionShashlikEndcap
 )
 
 particleFlowClusterEKUncorrected = cms.EDProducer(

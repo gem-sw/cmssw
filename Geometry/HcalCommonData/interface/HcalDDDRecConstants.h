@@ -27,7 +27,6 @@ class HcalDDDRecConstants {
 
 public:
 
-  HcalDDDRecConstants();
   HcalDDDRecConstants(const DDCompactView& cpv, 
 		      const HcalDDDSimConstants& hcons);
   ~HcalDDDRecConstants();
@@ -45,6 +44,12 @@ public:
 	       double df=0) : ieta(eta), nPhi(nf),depthStart(0), etaMin(et1), 
 			      etaMax(et2), phi0(fi0), dphi(df) {}
   };
+  struct HcalActiveLength {
+    int    ieta, depth;
+    double eta, thick;
+    HcalActiveLength(int ie=0, int d=0, double et=0, 
+		     double t=0) : ieta(ie), depth(d), eta(et), thick(t) {}
+  };
 
   std::vector<std::pair<double,double> > getConstHBHE(const int type) const {
     if      (type == 0) return gconsHB;
@@ -53,6 +58,7 @@ public:
   }
   std::vector<int>          getDepth(const int i) const {return layerGroup[i];}
   std::vector<HcalEtaBin>   getEtaBins(const int itype) const;
+  std::pair<double,double>  getEtaPhi(int subdet, int ieta, int iphi) const;
   std::pair<int,int>        getEtaRange(const int i) const
     {return std::pair<int,int>(iEtaMin[i],iEtaMax[i]);}
   std::vector<double>       getEtaTable()   const {return etaTable;}
@@ -68,26 +74,24 @@ public:
   std::vector<double>       getPhiOffs()    const {return phioff;}
   std::vector<double>       getPhiTable()   const {return phibin;}
   std::vector<double>       getPhiTableHF() const {return phibinHF;}
+  double                    getRZ(int subdet, int ieta, int depth) const;
+  std::vector<HcalActiveLength> getThickActive(const int type) const;
   std::string               getTopoMode() const {return modeTopo;}
   std::vector<HcalCellType> HcalCellTypes(HcalSubdetector) const;
-  void                      initialize(const DDCompactView& cpv,
-				       const HcalDDDSimConstants& hcons);
   unsigned int              numberOfCells(HcalSubdetector) const;
   unsigned int              nCells(HcalSubdetector) const;
   unsigned int              nCells() const;
        
 private:
-  void                      checkInitialized() const;
+  void                      initialize(const DDCompactView& cpv);
   void                      loadSpecPars(const DDFilteredView& fv);
   void                      loadSimConst();
-  std::vector<double>       getDDDArray(const char *, const DDsvalues_type &, 
-					int &) const;
   std::string               getDDDString(const std::string &, 
 					 const DDsvalues_type &) const;
 
   bool                tobeInitialized;
   static const int    nEtaMax=100;
-  const HcalDDDSimConstants *hcons;
+  const HcalDDDSimConstants & hcons;
   std::string         modeTopo;   // Mode for topology
   std::vector<double> phioff;     // Phi offset for barrel, endcap, forward
   std::vector<int>    etaGroup;   // Eta Grouping

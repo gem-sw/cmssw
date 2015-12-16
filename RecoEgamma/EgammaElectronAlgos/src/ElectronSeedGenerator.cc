@@ -277,6 +277,10 @@ void  ElectronSeedGenerator::run
     seedsFromThisCluster(sclRefs[i],hoe1s[i],hoe2s[i],out,tTopo);
   }
 
+  // Clear recHits_ from the final loop
+  decltype(recHits_) temp;
+  recHits_.swap(temp); // Make sure the memory for the pointers is cleared as well
+  
   LogDebug ("run") << ": For event "<<e.id();
   LogDebug ("run") <<"Nr of superclusters after filter: "<<sclRefs.size()
    <<", no. of ElectronSeeds found  = " << out.size();
@@ -289,9 +293,12 @@ void ElectronSeedGenerator::seedsFromThisCluster
 {
   float clusterEnergy = seedCluster->energy() ;
   GlobalPoint clusterPos
-    ( seedCluster->position().x(),
-      seedCluster->position().y(),
-      seedCluster->position().z() ) ;
+    ( seedCluster->seed()->position().x(),
+      seedCluster->seed()->position().y(),
+      seedCluster->seed()->position().z() ) ;
+  //  ( seedCluster->position().x(),
+  //    seedCluster->position().y(),
+  //    seedCluster->position().z() ) ;
   reco::ElectronSeed::CaloClusterRef caloCluster(seedCluster) ;
 
   //LogDebug("") << "[ElectronSeedGenerator::seedsFromThisCluster] new supercluster with energy: " << clusterEnergy ;

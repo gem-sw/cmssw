@@ -61,6 +61,17 @@ class Pattern{
      \param modules The modules in the sector (one vector per ladder)
   **/
   void link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules);
+#ifdef IPNL_USE_CUDA
+  /**
+     \brief Create links between patterns and detector on the device
+     \param p the pattern bank structure on the device
+     \param d The detector structure on the device
+     \param pattern_index The index of the pattern in the bank
+     \param modules The modules in the sector (one vector per ladder)
+     \param layers list of layers IDs
+  **/
+  void linkCuda(patternBank* p, deviceDetector* d, int pattern_index, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules, vector<int> layers, unsigned int* cache);
+#endif
   /**
      \brief Reset the links between the pattern layers and the super strips
   **/
@@ -71,6 +82,13 @@ class Pattern{
      \return True if the pattern is active, false otherwise.
   **/
   bool isActive(int active_threshold);
+  /**
+     \brief Check if the pattern is active
+     \param nb_allowed_missing_hit Maximum number of allowed non active layers (fake patternLayers do not count) 
+     \param active_threshold Minimum number of hit super strips
+     \return True if the number of active layer is at least nb_layer-nb_fake-nb_allowed_missing_hit
+  **/
+  bool isActiveUsingMissingHit(int nb_allowed_missing_hit, int active_threshold);
   /**
      \brief Created a unique key for this pattern
   **/
@@ -100,6 +118,12 @@ class Pattern{
   bool contains(Pattern* hdp);
 
   /**
+     \brief Get the number of fake superstrips used in the pattern
+     \return The number of PatternLayer being just a placeholder
+  **/
+  int getNbFakeSuperstrips();
+
+  /**
      \brief Allows to display a Pattern as a string
   **/
   friend ostream& operator<<(ostream& out, const Pattern& s);
@@ -108,6 +132,8 @@ class Pattern{
   int nb_layer;
   SuperStrip*** strips;
   char* nb_strips;
+  bool nbFakeSSKnown;// used to store the number of fake SS
+  char nbFakeSS; // used to store the number of fake SS (avoids re-computing)
   vector<PatternLayer*> layer_strips;
 
   friend class boost::serialization::access;

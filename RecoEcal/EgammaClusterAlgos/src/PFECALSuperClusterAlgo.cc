@@ -17,6 +17,8 @@
 #include <sstream>
 #include <cmath>
 
+
+
 using namespace std;
 namespace MK = reco::MustacheKernel;
 
@@ -129,11 +131,12 @@ namespace {
     const CalibClusterPtr the_seed;    
     PFECALSuperClusterAlgo::clustering_type _type;
     bool dynamic_dphi;
+    bool puEtHardCut;
     double etawidthSuperCluster_ = .0 , phiwidthSuperCluster_ = .0;
     IsClustered(const CalibClusterPtr s, 
 		PFECALSuperClusterAlgo::clustering_type ct,
-		const bool dyn_dphi) : 
-      the_seed(s), _type(ct), dynamic_dphi(dyn_dphi) {}
+		const bool dyn_dphi, const bool puHardCut) : 
+      the_seed(s), _type(ct), dynamic_dphi(dyn_dphi), puEtHardCut(puHardCut) {}
     bool operator()(const CalibClusterPtr& x) { 
       const double dphi = 
 	std::abs(TVector2::Phi_mpi_pi(the_seed->phi() - x->phi()));        
@@ -143,7 +146,7 @@ namespace {
 						   the_seed->phi(),
 						   x->energy_nocalib(),
 						   x->eta(),
-						   x->phi()) ) );
+						   x->phi(),puEtHardCut) ) );
 
       switch( _type ) {
       case PFECALSuperClusterAlgo::kBOX:
@@ -166,7 +169,9 @@ namespace {
   };
 }
 
-PFECALSuperClusterAlgo::PFECALSuperClusterAlgo() : beamSpot_(0) { }
+PFECALSuperClusterAlgo::PFECALSuperClusterAlgo() : beamSpot_(0) { 
+  hgcEmPreId_.reset( nullptr );
+}
 
 void PFECALSuperClusterAlgo::
 setPFClusterCalibration(const std::shared_ptr<PFEnergyCalibration>& calib) {
@@ -238,6 +243,13 @@ loadAndSortPFClusters(const edm::Event &iEvent) {
     LogDebug("PFClustering") 
       << "Loading PFCluster i="<<cluster.key()
       <<" energy="<<cluster->energy()<<std::endl;
+
+    if( useHGCPreId_ ) {
+      hgcEmPreId_->reset();
+      hgcEmPreId_->setShowerPosition(cluster->position());
+      hgcEmPreId_->setShowerDirection(cluster->axis());      
+      if( !hgcEmPreId_->cutLengthCompatibility(*cluster) ) continue;
+    }
         
     CalibratedClusterPtr calib_cluster(new CalibratedPFCluster(cluster));
     switch( cluster->layer() ) {
@@ -251,6 +263,10 @@ loadAndSortPFClusters(const edm::Event &iEvent) {
 	_clustersEE.push_back(calib_cluster);
       }
       break;
+    case PFLayer::HGC_ECAL:
+      if( calib_cluster->energy() > threshPFClusterEndcap_ ) {
+	_clustersEE.push_back(calib_cluster);
+      }
     default:
       break;
     }
@@ -288,7 +304,7 @@ buildAllSuperClusters(CalibClusterPtrVector& clusters,
 void PFECALSuperClusterAlgo::
 buildSuperCluster(CalibClusterPtr& seed,
 		  CalibClusterPtrVector& clusters) {
-  IsClustered IsClusteredWithSeed(seed,_clustype,_useDynamicDPhi);
+  IsClustered IsClusteredWithSeed(seed,_clustype,_useDynamicDPhi,_usePUEtHardCut);
   IsLinkedByRecHit MatchesSeedByRecHit(seed,satelliteThreshold_,
 				       fractionForMajority_,0.1,0.2);
   bool isEE = false;
@@ -308,6 +324,13 @@ buildSuperCluster(CalibClusterPtr& seed,
 				 << superClustersEE_->size() + 1
 				 << " in the ECAL endcap!" << std::endl;
     isEE = true;
+    break;
+  case PFLayer::HGC_ECAL:    
+    IsClusteredWithSeed.phiwidthSuperCluster_ = phiwidthSuperClusterEndcap_; 
+    IsClusteredWithSeed.etawidthSuperCluster_ = etawidthSuperClusterEndcap_;
+    edm::LogInfo("PFClustering") << "Building HGC SC number "  
+				 << superClustersEE_->size() + 1
+				 << " in the HGC ECAL!" << std::endl;    
     break;
   default:
     break;
@@ -489,6 +512,9 @@ buildSuperCluster(CalibClusterPtr& seed,
       superClustersEB_->push_back(new_sc);
       break;
     case PFLayer::ECAL_ENDCAP:    
+      superClustersEE_->push_back(new_sc);    
+      break;
+    case PFLayer::HGC_ECAL:    
       superClustersEE_->push_back(new_sc);    
       break;
     default:

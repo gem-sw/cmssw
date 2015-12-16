@@ -13,6 +13,14 @@ import ROOT
 ROOT.gROOT.SetBatch(1)
 
 import optparse
+def getEtaRange( station ) :
+	etaRange = [1.55,2.15,1.65,2.05,1.65,2.45]
+	if ( station ==1 or station==2 or station ==3 ) :
+		return etaRange[ (station-1)*2], etaRange[ (station-1)*2+1 ]
+	else :
+		print "Something is wrong"
+		return 1.5,2.6
+		
 def draw_occ(target_dir, h, ext =".png", opt = ""):
   gStyle.SetStatStyle(0)
   gStyle.SetOptStat(1110)
@@ -39,17 +47,93 @@ def draw_bx(target_dir, h , ext = ".png", opt = ""):
   c.SaveAs(target_dir + c_title + ext)
 
 def draw_col(target_dir, h, ext =".png", opt = "col"):
-  gStyle.SetStatStyle(0)
-  gStyle.SetOptStat(1110)
-  c = TCanvas(h.GetTitle(),h.GetName(),600,600)
-  c_title = c.GetTitle()
-  c.Clear()
-  if not h:
-    sys.exit('h does not exist')
-  h.SetLineWidth(2)
-  h.SetLineColor(kBlue)
-  h.Draw(opt)
-  c.SaveAs(target_dir + c_title + ext)
+	gStyle.SetStatStyle(0)
+	gStyle.SetOptStat(1110)
+	c = TCanvas(h.GetTitle(),h.GetName(),600,600)
+	c_title = c.GetTitle()
+	c.Clear()
+	if not h:
+		sys.exit('h does not exist')
+	h.SetLineWidth(2)
+	h.SetLineColor(kBlue)
+	h.Draw(opt)
+	c.SaveAs(target_dir + c_title + ext)
+
+def draw_col_overflow(target_dir, h, ext =".png", opt = "col"):
+	gStyle.SetStatStyle(0)
+	gStyle.SetOptStat(110200)
+	c = TCanvas(h.GetTitle(),h.GetName(),600,600)
+	c_title = c.GetTitle()
+	c.Clear()
+	if not h:
+		sys.exit('h does not exist')
+	h.SetLineWidth(2)
+	h.SetLineColor(kBlue)
+	h.Draw(opt)
+	c.SaveAs(target_dir + c_title + ext)
+
+def draw_eff(target_dir, h, ext = ".png", opt = ""):
+	c = TCanvas(h.GetTitle(), h.GetName(),600,600)
+	c_title = c.GetTitle()
+	c.Clear()
+	if not h: 
+		sys.exit('h does not exist')
+	gPad.SetGrid(1)
+	gStyle.SetStatStyle(0)
+	gStyle.SetOptStat(0)
+	gStyle.SetOptFit(0)
+	h.GetYaxis().SetRangeUser(0,1.05)
+	h.SetLineWidth(2)
+	h.SetLineColor(kBlue)
+	h.SetMarkerStyle(1)
+	h.SetMarkerColor(kBlue)
+	h.SetMarkerSize(1)
+	h.Draw(opt);
+	xmin=h.GetXaxis().GetXmin()
+	xmax=h.GetXaxis().GetXmax()
+	if ( h.GetName().find("eta") != -1) :
+		if ( h.GetName().find("st1") != -1) :
+			xmin,xmax = getEtaRange(1)
+		elif ( h.GetName().find("st2_short") != -1 ) :
+			xmin,xmax = getEtaRange(2)
+		elif ( h.GetName().find("st2_long") != -1 ) :
+			xmin,xmax = getEtaRange(3)
+		else :
+			print "Use default setting."
+
+	f1 = TF1("fit1","pol0", xmin, xmax )
+	r = h.Fit("fit1","RQS")
+	ptstats = TPaveStats(0.25,0.35,0.75,0.55,"brNDC")
+	ptstats.SetName("stats")
+	ptstats.SetBorderSize(0)
+	ptstats.SetLineWidth(0)
+	ptstats.SetFillColor(0)
+	ptstats.SetTextAlign(11)
+	ptstats.SetTextFont(42)
+	ptstats.SetTextSize(.05)
+	ptstats.SetTextColor(kRed)
+	ptstats.SetOptStat(0)
+	ptstats.SetOptFit(1111)
+	chi2 = int(r.Chi2())
+	ndf = int(r.Ndf())
+	 ## prob = r.Prob()
+	round(2.675, 2)
+	p0 = f1.GetParameter(0)
+	p0e = f1.GetParError(0)
+	ptstats.AddText("#chi^{2} / ndf: %d/%d" %(chi2,ndf))
+	## ptstats.AddText("Fit probability: %f %" %(prob))
+	ptstats.AddText("Efficiency: %f #pm %f %%"%(p0,p0e))
+	ptstats.Draw("same")
+	pt = TPaveText(0.09899329,0.9178322,0.8993289,0.9737762,"blNDC")
+	pt.SetName("title")
+	pt.SetBorderSize(1)
+	pt.SetFillColor(0)
+	pt.SetFillStyle(0)
+	pt.SetTextFont(42)
+	pt.AddText(h.GetTitle())
+	pt.Draw("same")
+	c.SaveAs(target_dir + c_title + ext)
+
 
 def draw_plot( file, tDir,oDir ) :
 	c = TCanvas("c","c",600,600)
@@ -75,14 +159,19 @@ def draw_plot( file, tDir,oDir ) :
 	for x in tlist :
 		key_list.append(x.GetName())
 	for hist in key_list :
-		if hist.find("eff") != -1 or hist.find("track_") != -1 :
-			continue
-		if (hist.find("lx") !=-1 or hist.find("ly") != -1 ) :
-			continue
+		if hist.find("track_") != -1 :
+			draw_occ( oDir,d1.Get(hist)) 
+		if (hist.find("lx") !=-1 or hist.find("ly") != -1 or hist.find("dphi") != -1 or hist.find("_phi_dist") != -1 ) :
+			draw_occ( oDir,d1.Get(hist))
 		if ( hist.find("bx") != -1 ) :
 			draw_bx( oDir, d1.Get(hist)  )
 		elif ( hist.find("xy") !=-1 or hist.find("zr") !=-1 or hist.find("roll_vs_strip")!= -1 or hist.find("phipad")!=-1 or hist.find("phistrip") != -1 ) :
 			draw_col( oDir, d1.Get(hist) )
+		elif ( hist.find("phiz") != -1 ) :
+			draw_col_overflow( oDir, d1.Get(hist) )
+		elif ( hist.find("eff") != -1 ) :
+			draw_eff( oDir, d1.Get(hist) )
+			#print "found "
 		else :
 			draw_occ( oDir, d1.Get(hist) )
 

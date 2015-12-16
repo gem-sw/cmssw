@@ -1,4 +1,4 @@
-#include "Validation/MuonGEMHits/interface/GEMSimTrackMatch.h"
+#include "Validation/MuonGEMHits/interface/GEMTrackMatch.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
@@ -6,11 +6,14 @@
 #include <TMath.h>
 #include <TH1F.h>
 
-GEMTrackMatch::GEMTrackMatch(DQMStore* dbe, std::string simInputLabel , edm::ParameterSet cfg)
+GEMTrackMatch::GEMTrackMatch(DQMStore* dbe, edm::EDGetToken& simTracks, edm::EDGetToken& simVertices, edm::ParameterSet cfg)
 {
    cfg_= cfg; 
-   simInputLabel_= simInputLabel;
    dbe_= dbe;
+   useRoll_ = 1 ;
+   etaRangeForPhi = cfg_.getUntrackedParameter< std::vector<double> >("EtaRangeForPhi");
+   simTracksToken_ = simTracks;
+   simVerticesToken_ = simVertices;
 }
 
 
@@ -19,6 +22,7 @@ GEMTrackMatch::~GEMTrackMatch() {
 
 bool GEMTrackMatch::isSimTrackGood(const SimTrack &t)
 {
+
   // SimTrack selection
   if (t.noVertex())   return false; 
   if (t.noGenpart()) return false;
@@ -32,13 +36,15 @@ bool GEMTrackMatch::isSimTrackGood(const SimTrack &t)
 
 void GEMTrackMatch::buildLUT()
 {
+
   const int maxChamberId_ = theGEMGeometry->regions()[0]->stations()[0]->superChambers().size();
   edm::LogInfo("GEMTrackMatch")<<"max chamber "<<maxChamberId_<<"\n";
+  
   std::vector<int> pos_ids;
-  pos_ids.push_back(GEMDetId(1,1,1,1,maxChamberId_,2).rawId());
+  pos_ids.push_back(GEMDetId(1,1,1,1,maxChamberId_,useRoll_).rawId());
 
   std::vector<int> neg_ids;
-  neg_ids.push_back(GEMDetId(-1,1,1,1,maxChamberId_,2).rawId());
+  neg_ids.push_back(GEMDetId(-1,1,1,1,maxChamberId_,useRoll_).rawId());
 
   // VK: I would really suggest getting phis from GEMGeometry
   
@@ -46,8 +52,8 @@ void GEMTrackMatch::buildLUT()
   phis.push_back(0.);
   for(int i=1; i<maxChamberId_+1; ++i)
   {
-    pos_ids.push_back(GEMDetId(1,1,1,1,i,2).rawId());
-    neg_ids.push_back(GEMDetId(-1,1,1,1,i,2).rawId());
+    pos_ids.push_back(GEMDetId(1,1,1,1,i,useRoll_).rawId());
+    neg_ids.push_back(GEMDetId(-1,1,1,1,i,useRoll_).rawId());
     phis.push_back(i*10.);
   }
   positiveLUT_ = std::make_pair(phis,pos_ids);
@@ -58,9 +64,15 @@ void GEMTrackMatch::buildLUT()
 void GEMTrackMatch::setGeometry(const GEMGeometry* geom)
 {
   theGEMGeometry = geom;
-  //Must use roll 2 as first eta partition.
-  const auto top_chamber = static_cast<const GEMEtaPartition*>(theGEMGeometry->idToDetUnit(GEMDetId(1,1,1,1,1,2))); 
-  const int nEtaPartitions(theGEMGeometry->chamber(GEMDetId(1,1,1,1,1,2))->nEtaPartitions());
+	 bool isEvenOK = true;
+	 bool isOddOK  = true;
+   useRoll_=1;
+	 if ( theGEMGeometry->etaPartition( GEMDetId(1,1,1,1,1,1) ) == nullptr) isOddOK = false;
+	 if ( theGEMGeometry->etaPartition( GEMDetId(1,1,1,1,2,1) ) == nullptr) isEvenOK = false;
+	 if ( !isEvenOK || !isOddOK) useRoll_=2;
+
+  const auto top_chamber = static_cast<const GEMEtaPartition*>(theGEMGeometry->idToDetUnit(GEMDetId(1,1,1,1,1,useRoll_))); 
+  const int nEtaPartitions(theGEMGeometry->chamber(GEMDetId(1,1,1,1,1,useRoll_))->nEtaPartitions());
   const auto bottom_chamber = static_cast<const GEMEtaPartition*>(theGEMGeometry->idToDetUnit(GEMDetId(1,1,1,1,1,nEtaPartitions)));
   const float top_half_striplength = top_chamber->specs()->specificTopology().stripLength()/2.;
   const float bottom_half_striplength = bottom_chamber->specs()->specificTopology().stripLength()/2.;
@@ -85,4 +97,13 @@ std::pair<int,int> GEMTrackMatch::getClosestChambers(int region, float phi)
   return std::make_pair(LUT.at(upper - phis.begin()), (LUT.at((upper - phis.begin() + 1)%maxChamberId_)));
 }
 
+std::pair<double, double> GEMTrackMatch::getEtaRangeForPhi( int station ) 
+{
+	std::pair<double, double> range;
+	if( station== 0 )      range = std::make_pair( etaRangeForPhi[0],etaRangeForPhi[1]) ; 
+	else if( station== 1 ) range = std::make_pair( etaRangeForPhi[2],etaRangeForPhi[3]) ; 
+	else if( station== 2 ) range = std::make_pair( etaRangeForPhi[4],etaRangeForPhi[5]) ; 
+
+	return range;
+}
 

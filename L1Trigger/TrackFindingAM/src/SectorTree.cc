@@ -3,6 +3,7 @@
 SectorTree::SectorTree(){
   srand ( time(NULL) );
   superStripSize=-1;
+  mapNeedsUpdate=true;
 }
 
 SectorTree::~SectorTree(){
@@ -12,6 +13,11 @@ SectorTree::~SectorTree(){
 }
 
 Sector* SectorTree::getSector(vector<int> ladders, vector<int> modules){
+
+  // check that the multimap is populated
+  if(mapNeedsUpdate)
+    updateSectorMap();
+
   pair<multimap<string,Sector*>::iterator,multimap<string,Sector*>::iterator> ret;
   multimap<string,Sector*>::iterator first;
 
@@ -63,10 +69,7 @@ Sector* SectorTree::getSector(const Hit& h){
 void SectorTree::addSector(Sector s){
   Sector* ns = new Sector(s);
   sector_list.push_back(ns);
-  vector<string> keys = ns->getKeys();
-  for(unsigned int i=0;i<keys.size();i++){
-    sectors.insert(pair<string, Sector*>(keys[i],ns));
-  }
+  mapNeedsUpdate = true;
 }
 
 void SectorTree::updateSectorMap(){
@@ -78,6 +81,7 @@ void SectorTree::updateSectorMap(){
       sectors.insert(pair<string, Sector*>(keys[i],ns));
     }
   }
+  mapNeedsUpdate=false;
 }
 
 vector<Sector*> SectorTree::getAllSectors(){
@@ -113,11 +117,33 @@ void SectorTree::link(Detector& d){
   }
 }
 
+#ifdef IPNL_USE_CUDA
+void SectorTree::linkCuda(patternBank* p, deviceDetector* d){
+  for(unsigned int i=0;i<sector_list.size();i++){
+    sector_list[i]->linkCuda(p,d);
+  }
+}
+#endif
+
 vector<Sector*> SectorTree::getActivePatternsPerSector(int active_threshold){
   vector<Sector*> list;
   for(unsigned int i=0;i<sector_list.size();i++){
     Sector* copy = new Sector(*sector_list[i]);
     vector<GradedPattern*> active_patterns = sector_list[i]->getActivePatterns(active_threshold);
+    for(unsigned int j=0;j<active_patterns.size();j++){
+      copy->getPatternTree()->addPattern(active_patterns[j], NULL);
+      delete active_patterns[j];
+    }
+    list.push_back(copy);
+  }
+  return list;
+}
+
+vector<Sector*> SectorTree::getActivePatternsPerSectorUsingMissingHit(int max_nb_missing_hit, int active_threshold){
+  vector<Sector*> list;
+  for(unsigned int i=0;i<sector_list.size();i++){
+    Sector* copy = new Sector(*sector_list[i]);
+    vector<GradedPattern*> active_patterns = sector_list[i]->getActivePatternsUsingMissingHit(max_nb_missing_hit, active_threshold);
     for(unsigned int j=0;j<active_patterns.size();j++){
       copy->getPatternTree()->addPattern(active_patterns[j], NULL);
       delete active_patterns[j];

@@ -5,8 +5,11 @@
 <use   name="DataFormats/ParticleFlowReco"/>
 <use   name="RecoLocalCalo/HcalRecAlgos"/>
 <use   name="DataFormats/HcalDetId"/>
+<use   name="Geometry/FCalGeometry"/>
 <use   name="RecoEcal/EgammaCoreTools"/>
+<use   name="RecoEcal/EgammaClusterAlgos"/>
 <use   name="RecoParticleFlow/PFClusterTools"/>
+<use   name="TrackingTools/MaterialEffects"/>
 <use   name="vdt"/>
 <use   name="rootmath"/>
 <use   name="root"/>

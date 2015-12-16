@@ -21,14 +21,15 @@ public:
 
   enum HGCNumberingParameters { HGCCellSize };
 
-  HGCNumberingScheme(const DDCompactView & cpv, std::string& name);
+  HGCNumberingScheme(const DDCompactView & cpv, std::string& name, bool check,
+		     int verbose);
 
   virtual ~HGCNumberingScheme();
 
   /**
      @short assigns the det id to a hit
    */
-  virtual uint32_t getUnitID(ForwardSubdetector &subdet, int &layer, int &module, int &iz, G4ThreeVector &pos);
+  virtual uint32_t getUnitID(ForwardSubdetector subdet, int layer, int module, int iz, const G4ThreeVector &pos);
 
   /**
      @short maps a hit position to a sequential cell in a trapezoid surface defined by h,b,t
@@ -49,6 +50,8 @@ private:
   
   HGCNumberingScheme();
 
+  bool                   check_;
+  int                    verbosity;
   HGCalDDDConstants     *hgcons;
 };
 

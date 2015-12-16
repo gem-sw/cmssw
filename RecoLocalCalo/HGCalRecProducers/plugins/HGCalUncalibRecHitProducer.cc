@@ -50,7 +50,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         eeDigis = pHGCEEDigis.product(); // get a ptr to the product
                         edm::LogInfo("HGCalUncalibRecHitInfo") << "total # eeDigis: " << eeDigis->size() ;
                 } else {
-                        edm::LogError("HGCalUncalibRecHitError") << "Error! can't get the product " << eeDigiCollection_;
+                        edm::LogInfo("HGCalUncalibRecHitInfo") << "Info!? can't get the product " << eeDigiCollection_;
                 }
         }
 
@@ -60,7 +60,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         hefDigis = pHGCHEFDigis.product(); // get a ptr to the product
                         edm::LogInfo("HGCalUncalibRecHitInfo") << "total # hefDigis: " << hefDigis->size() ;
                 } else {
-                        edm::LogError("HGCalUncalibRecHitError") << "Error! can't get the product " << hefDigiCollection_;
+                        edm::LogInfo("HGCalUncalibRecHitInfo") << "Info!? can't get the product " << hefDigiCollection_;
                 }
         }
 
@@ -70,7 +70,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         hebDigis = pHGCHEBDigis.product(); // get a ptr to the product
                         edm::LogInfo("HGCalUncalibRecHitInfo") << "total # hebDigis: " << hebDigis->size() ;
                 } else {
-                        edm::LogError("HGCalUncalibRecHitError") << "Error! can't get the product " << hebDigiCollection_;
+                        edm::LogInfo("HGCalUncalibRecHitInfo") << "Info!? can't get the product " << hebDigiCollection_;
                 }
         }
 
@@ -90,7 +90,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         worker_->run1(evt, itdg, *eeUncalibRechits);
                 }
         }
-
+        
         // loop over HGCHEF digis
         if (hefDigis)
         {
@@ -99,7 +99,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         worker_->run2(evt, itdg, *hefUncalibRechits);
                 }
         }
-
+        
         // loop over HGCHEB digis
         if (hebDigis)
         {
@@ -108,8 +108,7 @@ HGCalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                         worker_->run3(evt, itdg, *hebUncalibRechits);
                 }
         }
-
-
+        
         // put the collection of recunstructed hits in the event
         evt.put( eeUncalibRechits, eeHitCollection_ );
         evt.put( hefUncalibRechits, hefHitCollection_ );

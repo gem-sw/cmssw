@@ -35,6 +35,7 @@ GeometryConf={
     'ExtendedPhase2TkBE'   : 'ExtendedPhase2TkBE,ExtendedPhase2TkBEReco',
     'ExtendedPhase2TkBE5D'   : 'ExtendedPhase2TkBE5D,ExtendedPhase2TkBE5DReco',
     'ExtendedPhase2TkBE5DPixel10D'   : 'ExtendedPhase2TkBE5DPixel10D,ExtendedPhase2TkBE5DPixel10DReco',
+    'ExtendedPhase2TkBE5DPixel10DLHCC'   : 'ExtendedPhase2TkBE5DPixel10DLHCC,ExtendedPhase2TkBE5DPixel10DLHCCReco',
     'ExtendedPhase2TkLB_6PS'   : 'ExtendedPhase2TkLB6PS,ExtendedPhase2TkLB6PSReco',
     'ExtendedPhase2TkLB_4LPS_2L2S'   : 'ExtendedPhase2TkLB4LPS_2L2S,ExtendedPhase2TkLB4LPS_2L2SReco',
     'ExtendedGFlash' : 'ExtendedGFlash,ExtendedGFlashReco',
@@ -62,8 +63,10 @@ GeometryConf={
     'HCal'        : 'Configuration.Geometry.GeometrySimHCAL_cff,Configuration.Geometry.GeometryRecoHCAL_cff',
     'IdealAPD1'   : 'Configuration/StandardSequences/GeometryIdealAPD1_cff,Configuration/StandardSequences/GeometryIdeal_cff',
     'SLHC'        : 'Configuration.Geometry.GeometrySLHCSimIdeal_cff,Configuration.Geometry.GeometrySLHCReco_cff',
-    'Design'      : 'Design,DesignReco'
-    }
+    'Design'      : 'Design,DesignReco',
+    'Extended2023SHCalNoTaperNoExtPix'    : 'Extended2023SHCalNoTaperNoExtPix,Extended2023SHCalNoTaperNoExtPixReco',
+    'Extended2023HGCalNoExtPix'    : 'Extended2023HGCalNoExtPix,Extended2023HGCalNoExtPixReco'
+     }
 
 FastSimGeometryConf={
     'MC'                        : 'FastSimulation/Configuration/Geometries_MC_cff',

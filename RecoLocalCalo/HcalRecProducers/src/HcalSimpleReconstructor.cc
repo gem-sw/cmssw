@@ -10,6 +10,7 @@
 #include "CalibFormats/HcalObjects/interface/HcalDbService.h"
 #include "CalibFormats/HcalObjects/interface/HcalDbRecord.h"
 #include "Geometry/CaloTopology/interface/HcalTopology.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <iostream>
     
@@ -26,8 +27,11 @@ HcalSimpleReconstructor::HcalSimpleReconstructor(edm::ParameterSet const& conf):
   upgradeHBHE_(false),
   upgradeHF_(false),
   paramTS(0),
-  theTopology(0)
+  theTopology(0), 
+  puCorrMethod_(conf.existsAs<int>("puCorrMethod") ? conf.getParameter<int>("puCorrMethod") : 0)
 {
+  
+  
 
   if ( conf.exists("firstDepthWeight") ) {
     firstDepthWeight_ = conf.getParameter<double>("firstDepthWeight");
@@ -61,7 +65,33 @@ HcalSimpleReconstructor::HcalSimpleReconstructor(edm::ParameterSet const& conf):
   } 
   else {
     std::cout << "HcalSimpleReconstructor is not associated with a specific subdetector!" << std::endl;
-  }       
+  } 
+  
+  reco_.setpuCorrMethod(puCorrMethod_);
+  if(puCorrMethod_ == 2) { 
+    reco_.setpuCorrParams(
+              conf.getParameter<bool>  ("applyPedConstraint"),
+              conf.getParameter<bool>  ("applyTimeConstraint"),
+              conf.getParameter<bool>  ("applyPulseJitter"),
+              conf.getParameter<bool>  ("applyUnconstrainedFit"),
+              conf.getParameter<bool>  ("applyTimeSlew"),
+              conf.getParameter<double>("ts4Min"),
+              conf.getParameter<double>("ts4Max"),
+              conf.getParameter<double>("pulseJitter"),
+              conf.getParameter<double>("meanTime"),
+              conf.getParameter<double>("timeSigma"),
+              conf.getParameter<double>("meanPed"),
+              conf.getParameter<double>("pedSigma"),
+              conf.getParameter<double>("noise"),
+              conf.getParameter<double>("timeMin"),
+              conf.getParameter<double>("timeMax"),
+              conf.getParameter<double>("ts3chi2"),
+              conf.getParameter<double>("ts4chi2"),
+              conf.getParameter<double>("ts345chi2"),
+              conf.getParameter<double>("chargeMax"), //For the unconstrained Fit
+              conf.getParameter<int>   ("fitTimes")
+              );
+  }
   
 }
 
@@ -241,5 +271,21 @@ void HcalSimpleReconstructor::produce(edm::Event& e, const edm::EventSetup& even
     } else if (subdet_==HcalOther && subdetOther_==HcalCalibration) {
       process<HcalCalibDigiCollection, HcalCalibRecHitCollection>(e, eventSetup);
     }
-  } 
+  }
+
+  //
+  // Print a message stating how many fit errors occurred (rather than printing each error individually)
+  //
+  auto errorFrequency=reco_.fitErrorCodeFrequency();
+  if( !errorFrequency.empty() )
+  {
+    std::string message="Fit errors produced:\n";
+    for( const auto& codeFrequencyPair : errorFrequency )
+    {
+      if( codeFrequencyPair.first==0 ) message+="\t"+std::to_string(codeFrequencyPair.second)+ " successful fits.\n";
+      else message+="\tError "+std::to_string(codeFrequencyPair.first)+" occurred "+std::to_string(codeFrequencyPair.second)+ " times.\n";
+    }
+    edm::LogWarning( "HcalSimpleReconstructor" ) << message;
+  }
+  reco_.resetFitErrorFrequency(); // Now that data has been output, reset ready for the next event.
 }

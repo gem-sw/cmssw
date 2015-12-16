@@ -256,20 +256,40 @@ GsfElectronBaseProducer::GsfElectronBaseProducer( const edm::ParameterSet& cfg )
   cutsCfgPflow_.seedFromTEC = true ; // not applied for pflow
 
   // hcal helpers
-  hcalCfg_.hOverEConeSize = cfg.getParameter<double>("hOverEConeSize") ;
-  if (hcalCfg_.hOverEConeSize>0)
+  // barrel
+  hcalCfgBarrel_.hOverEConeSize = cfg.getParameter<double>("hOverEConeSizeBarrel") ;
+  if (hcalCfgBarrel_.hOverEConeSize>0)
    {
-    hcalCfg_.useTowers = true ;
-    hcalCfg_.hcalTowers = cfg.getParameter<edm::InputTag>("hcalTowers") ;
-    hcalCfg_.hOverEPtMin = cfg.getParameter<double>("hOverEPtMin") ;
+    hcalCfgBarrel_.useTowers = true ;
+    hcalCfgBarrel_.hcalTowers = cfg.getParameter<edm::InputTag>("hcalTowers") ;
    }
+  hcalCfgBarrel_.hOverEPtMin = cfg.getParameter<double>("hOverEPtMin") ;
+  hcalCfgBarrel_.hOverEMethod = cfg.getParameter<int>("hOverEMethodBarrel") ; 
+  if (hcalCfgBarrel_.hOverEMethod==3)
+     { 
+        hcalCfgBarrel_.hcalClusters = cfg.getParameter<edm::InputTag>("hcalBarrelClusters") ;
+     }
+  // endcap
+  hcalCfgEndcap_.hOverEConeSize = cfg.getParameter<double>("hOverEConeSizeEndcap") ;
+  if (hcalCfgEndcap_.hOverEConeSize>0)
+   {
+    hcalCfgEndcap_.useTowers = true ;
+    hcalCfgEndcap_.hcalTowers = cfg.getParameter<edm::InputTag>("hcalTowers") ;
+   }
+  hcalCfgEndcap_.hOverEPtMin = cfg.getParameter<double>("hOverEPtMin") ;
+  hcalCfgEndcap_.hOverEMethod = cfg.getParameter<int>("hOverEMethodEndcap") ; 
+  if (hcalCfgEndcap_.hOverEMethod==3)
+     { 
+        hcalCfgEndcap_.hcalClusters = cfg.getParameter<edm::InputTag>("hcalEndcapClusters") ;
+     }
   hcalCfgPflow_.hOverEConeSize = cfg.getParameter<double>("hOverEConeSizePflow") ;
   if (hcalCfgPflow_.hOverEConeSize>0)
    {
     hcalCfgPflow_.useTowers = true ;
     hcalCfgPflow_.hcalTowers = cfg.getParameter<edm::InputTag>("hcalTowers") ;
-    hcalCfgPflow_.hOverEPtMin = cfg.getParameter<double>("hOverEPtMinPflow") ;
    }
+  hcalCfgPflow_.hOverEPtMin = cfg.getParameter<double>("hOverEPtMinPflow") ;
+  hcalCfgPflow_.hOverEMethod = cfg.getParameter<int>("hOverEMethodPflow") ;
 
   // Ecal rec hits configuration
   GsfElectronAlgo::EcalRecHitsConfiguration recHitsCfg ;
@@ -331,7 +351,7 @@ GsfElectronBaseProducer::GsfElectronBaseProducer( const edm::ParameterSet& cfg )
   algo_ = new GsfElectronAlgo
    ( inputCfg_, strategyCfg_,
      cutsCfg_,cutsCfgPflow_,
-     hcalCfg_,hcalCfgPflow_,
+     hcalCfgBarrel_,hcalCfgEndcap_,hcalCfgPflow_,
      isoCfg,recHitsCfg,
      superClusterErrorFunction,
      crackCorrectionFunction ) ;
@@ -406,17 +426,15 @@ void GsfElectronBaseProducer::checkEcalSeedingParameters( edm::ParameterSetID co
 
   if (seedConfiguration.getParameter<bool>("applyHOverECut"))
    {
-    if ((hcalCfg_.hOverEConeSize!=0)&&(hcalCfg_.hOverEConeSize!=seedConfiguration.getParameter<double>("hOverEConeSize")))
-     { edm::LogWarning("GsfElectronAlgo|InconsistentParameters") <<"The H/E cone size ("<<hcalCfg_.hOverEConeSize<<") is different from ecal seeding ("<<seedConfiguration.getParameter<double>("hOverEConeSize")<<")." ; }
     if (cutsCfg_.maxHOverEBarrel<seedConfiguration.getParameter<double>("maxHOverEBarrel"))
      { edm::LogWarning("GsfElectronAlgo|InconsistentParameters") <<"The max barrel H/E is lower than during ecal seeding." ; }
     if (cutsCfg_.maxHOverEEndcaps<seedConfiguration.getParameter<double>("maxHOverEEndcaps"))
      { edm::LogWarning("GsfElectronAlgo|InconsistentParameters") <<"The max endcaps H/E is lower than during ecal seeding." ; }
    }
 
-  if (cutsCfg_.minSCEtBarrel<seedConfiguration.getParameter<double>("SCEtCut"))
+  if (cutsCfg_.minSCEtBarrel<seedConfiguration.getParameter<double>("SCEtCutBarrel"))
    { edm::LogWarning("GsfElectronAlgo|InconsistentParameters") <<"The minimum super-cluster Et in barrel is lower than during ecal seeding." ; }
-  if (cutsCfg_.minSCEtEndcaps<seedConfiguration.getParameter<double>("SCEtCut"))
+  if (cutsCfg_.minSCEtEndcaps<seedConfiguration.getParameter<double>("SCEtCutEndcap"))
    { edm::LogWarning("GsfElectronAlgo|InconsistentParameters") <<"The minimum super-cluster Et in endcaps is lower than during ecal seeding." ; }
  }
 

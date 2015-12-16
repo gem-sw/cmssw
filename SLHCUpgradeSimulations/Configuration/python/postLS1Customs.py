@@ -1,7 +1,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-from muonCustoms import customise_csc_PostLS1,customise_csc_hlt
+from SLHCUpgradeSimulations.Configuration.muonCustoms import customise_csc_PostLS1,customise_csc_hlt
 
 
 def customisePostLS1(process):
@@ -82,6 +82,21 @@ def customise_HLT(process):
 
 
 def customise_Reco(process):
+    #lowering HO threshold with SiPM
+    for prod in process.particleFlowRecHitHO.producers:
+        prod.qualityTests = cms.VPSet(
+            cms.PSet(
+                name = cms.string("PFRecHitQTestThreshold"),
+                threshold = cms.double(0.05) # new threshold for SiPM HO
+            ),
+            cms.PSet(
+                name = cms.string("PFRecHitQTestHCALChannel"),
+                maxSeverities      = cms.vint32(11),
+                cleaningThresholds = cms.vdouble(0.0),
+                flags              = cms.vstring('Standard')
+            )
+        )
+
     return process
 
 

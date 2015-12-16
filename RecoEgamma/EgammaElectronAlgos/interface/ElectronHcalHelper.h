@@ -14,6 +14,8 @@ class EgammaTowerIsolation ;
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 
 class EgammaHadTower;
 
@@ -26,6 +28,9 @@ class ElectronHcalHelper
       // common parameters
       double hOverEConeSize ;
 
+      // method (0 = cone; 1 = single tower ; 2 towers behind cluster)
+      int hOverEMethod ; 
+
       // strategy
       bool useTowers ;
 
@@ -37,6 +42,9 @@ class ElectronHcalHelper
       edm::InputTag hcalRecHits ;
       double hOverEHBMinE ;
       double hOverEHFMinE ;
+
+      // specific parameters if use hgcal HF Clusters
+      edm::InputTag hcalClusters ;
      } ;
 
     ElectronHcalHelper( const Configuration & ) ;
@@ -47,12 +55,21 @@ class ElectronHcalHelper
     double hcalESum( const reco::SuperCluster & , const std::vector<CaloTowerDetId> * excludeTowers = 0) ;
     double hcalESumDepth1( const reco::SuperCluster &, const std::vector<CaloTowerDetId> * excludeTowers = 0) ;
     double hcalESumDepth2( const reco::SuperCluster & ,const std::vector<CaloTowerDetId> * excludeTowers = 0 ) ;
+
+    double hcalESumCone( const reco::SuperCluster & , const std::vector<CaloTowerDetId> * excludeTowers = 0) ;
+    double hcalESumDepth1Cone( const reco::SuperCluster &, const std::vector<CaloTowerDetId> * excludeTowers = 0) ;
+    double hcalESumDepth2Cone( const reco::SuperCluster & ,const std::vector<CaloTowerDetId> * excludeTowers = 0 ) ;
     double hOverEConeSize() const { return cfg_.hOverEConeSize ; }
 
     // Behind clusters
     std::vector<CaloTowerDetId> hcalTowersBehindClusters( const reco::SuperCluster & sc ) ;
     double hcalESumDepth1BehindClusters( const std::vector<CaloTowerDetId> & towers ) ;
     double hcalESumDepth2BehindClusters( const std::vector<CaloTowerDetId> & towers ) ;
+    
+    // HGCal using HCAL clusters
+    double HCALClustersBehindSC( const reco::SuperCluster & ) ;
+    
+    const Configuration& getConfig() const { return cfg_; }
 
   private:
 
@@ -72,6 +89,10 @@ class ElectronHcalHelper
     EgammaTowerIsolation * towerIso1_ ;
     EgammaTowerIsolation * towerIso2_ ;
     EgammaHadTower * hadTower_;
+    
+    //hgcal HF Clusters
+    edm::Handle<reco::PFClusterCollection> * hcalClusters_ ;
+ 
  } ;
 
 #endif

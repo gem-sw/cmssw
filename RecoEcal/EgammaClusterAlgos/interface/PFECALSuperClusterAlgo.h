@@ -16,6 +16,7 @@
 
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibration.h"
 #include "RecoEgamma/EgammaTools/interface/BaselinePFSCRegression.h"
+#include "RecoEcal/EgammaClusterAlgos/interface/HGCALShowerBasedEmIdentification.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -54,8 +55,8 @@ class PFECALSuperClusterAlgo {
   public:
     CalibratedPFCluster(const edm::Ptr<reco::PFCluster>& p) : cluptr(p) {}
     
-    double energy() const { return cluptr->correctedEnergy(); }
-    double energy_nocalib() const { return cluptr->energy(); }
+    double energy() const { return ( cluptr->layer() == PFLayer::HGC_ECAL ? cluptr->emEnergy() : cluptr->correctedEnergy() ); }
+    double energy_nocalib() const { return ( cluptr->layer() == PFLayer::HGC_ECAL ? cluptr->emEnergy() : cluptr->energy() ); }
     double eta() const { return cluptr->positionREP().eta(); }
     double phi() const { return cluptr->positionREP().phi(); }
     
@@ -80,6 +81,7 @@ class PFECALSuperClusterAlgo {
   void setUseETForSeeding(bool useET) { threshIsET_ = useET; } 
 
   void setUseDynamicDPhi(bool useit) { _useDynamicDPhi = useit; } 
+  void setUsePUEtHardCut(bool useit) { _usePUEtHardCut = useit; } 
 
   void setUseRegression(bool useRegression) { useRegression_ = useRegression; }
   
@@ -105,6 +107,13 @@ class PFECALSuperClusterAlgo {
   void setMajorityFraction( const double f ) { fractionForMajority_ = f; }
   //void setThreshPFClusterMustacheOutBarrel(double thresh){ threshPFClusterMustacheOutBarrel_ = thresh;}
   //void setThreshPFClusterMustacheOutEndcap(double thresh){ threshPFClusterMustacheOutEndcap_ = thresh;}
+
+  void setUseHGCPreId(bool useHGCPreId) { 
+    useHGCPreId_ = useHGCPreId;
+    if( useHGCPreId_ ) {
+      hgcEmPreId_.reset(new HGCALShowerBasedEmIdentification(true) );
+    }
+  }
 
   void setCrackCorrections( bool applyCrackCorrections) { applyCrackCorrections_ = applyCrackCorrections;}
   
@@ -147,6 +156,10 @@ class PFECALSuperClusterAlgo {
   // regression
   bool useRegression_;
   std::unique_ptr<PFSCRegressionCalc> regr_;  
+
+  // HGCal light EM pre-ID
+  bool useHGCPreId_;
+  std::unique_ptr<HGCALShowerBasedEmIdentification> hgcEmPreId_;
   
   double threshSuperClusterEt_;  
 
@@ -170,6 +183,7 @@ class PFECALSuperClusterAlgo {
   double satelliteThreshold_, fractionForMajority_;
 
   bool _useDynamicDPhi;
+  bool _usePUEtHardCut;
 
   bool applyCrackCorrections_;
   bool threshIsET_;

@@ -50,14 +50,12 @@ class InputInfo(object):
         self.ib_blacklist = ib_blacklist
         self.ib_block = ib_block
         
-    def das(self):
-        query_by = "block" if self.ib_block else "dataset"
-        query_source = "{0}#{1}".format(self.dataSet, self.ib_block) if self.ib_block else self.dataSet
+    def das(self, das_options):
         if len(self.run) is not 0:
-            command = ";".join(["das_client.py --limit=0 --query 'file {0}={1} run={2}'".format(query_by, query_source, query_run) for query_run in self.run])
+            command = ";".join(["das_client.py %s --query '%s'" % (das_options, query) for query in self.queries()])
             command = "({0})".format(command)
         else:
-            command = "das_client.py --limit=0 --query 'file {0}={1} site=T2_CH_CERN'".format(query_by, query_source)
+            command = "das_client.py %s --query '%s'" % (das_options, self.queries()[0])
        
         # Run filter on DAS output 
         if self.ib_blacklist:
@@ -70,6 +68,14 @@ class InputInfo(object):
         if len(self.run) != 0:
             return "echo '{\n"+",".join(('"%d":[[1,268435455]]\n'%(x,) for x in self.run))+"}'"
         return None
+
+    def queries(self):
+        query_by = "block" if self.ib_block else "dataset"
+        query_source = "{0}#{1}".format(self.dataSet, self.ib_block) if self.ib_block else self.dataSet
+        if len(self.run) is not 0:
+            return ["file {0}={1} run={2}".format(query_by, query_source, query_run) for query_run in self.run]
+        else:
+            return ["file {0}={1} site=T2_CH_CERN".format(query_by, query_source)]
 
     def __str__(self):
         if self.ib_block:
@@ -555,7 +561,7 @@ def addForAll(steps,d):
 step1FastDefaults =merge([{'-s':'GEN,SIM,RECO,EI,HLT:@relval,VALIDATION',
                            '--fast':'',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
                            '--relval':'27000,3000'},
                           step1Defaults])
 
@@ -646,7 +652,7 @@ steps['TTbarFSPU2']=merge([PUFS2,Kby(100,500),steps['TTbarFS']])
 ##no forseen to do things in two steps GEN-SIM then FASTIM->end: maybe later
 step1FastDefaultsP1 =merge([{'-s':'GEN,SIM,RECO,VALIDATION',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
                            '--conditions':'auto:upgradePLS3', 
 			   '--fast':'',
 			   '--geometry' : 'Extended2017',
@@ -664,7 +670,7 @@ steps['MinBias_TuneZ2star8FSP1']=merge([{'cfg':'MinBias_TuneZ2star_8TeV_pythia6_
 
 step1FastDefaultsP1PU =merge([{'-s':'GEN,SIM,RECO,VALIDATION',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
                            '--conditions':'auto:upgradePLS3', 
 			   '--fast':'',
 			   '--pileup':'default',
@@ -677,7 +683,7 @@ steps['TTbar8FSPUP1']=merge([{'cfg':'TTbar_Tauola_8TeV_cfi'},Kby(100,1000),step1
 
 step1FastDefaultsP2 =merge([{'-s':'GEN,SIM,RECO,VALIDATION',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
 			   '--fast':'',
                            '--conditions':'auto:upgradePLS3', 
 			   '--geometry' : 'ExtendedPhase2TkBE',
@@ -696,7 +702,7 @@ steps['MinBias_TuneZ2star8FSP2']=merge([{'cfg':'MinBias_TuneZ2star_8TeV_pythia6_
 
 step1FastDefaultsP2PU =merge([{'-s':'GEN,SIM,RECO,VALIDATION',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
 			   '--fast':'',
 			   '--pileup':'default',
                            '--conditions':'auto:upgradePLS3', 
@@ -708,7 +714,7 @@ steps['TTbar8FSPUP2']=merge([{'cfg':'TTbar_Tauola_8TeV_cfi'},Kby(100,1000),step1
 
 step1FastDefaultsP2Forw =merge([{'-s':'GEN,SIM,RECO,VALIDATION',
                            '--eventcontent':'FEVTDEBUGHLT,DQM',
-                           '--datatier':'GEN-SIM-DIGI-RECO,DQM',
+                           '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
                            '--conditions':'auto:upgradePLS3', 
 			   '--geometry' : 'ExtendedPhase2TkBEForward',
 			   '--fast':'',
@@ -768,8 +774,8 @@ steps['DIGIHI']=merge([{'--conditions':'auto:starthi_HIon', '-s':'DIGI:pdigi_val
 
 dataReco={'--conditions':'auto:com10',
           '-s':'RAW2DIGI,L1Reco,RECO,ALCA:SiStripCalZeroBias+SiStripCalMinBias+TkAlMinBias,DQM',
-          '--datatier':'RECO,DQMROOT',
-          '--eventcontent':'RECO,DQMROOT',
+          '--datatier':'RECO,DQMIO',
+          '--eventcontent':'RECO,DQM',
           '--data':'',
           '--process':'reRECO',
           '--scenario':'pp',
@@ -778,8 +784,8 @@ dataReco={'--conditions':'auto:com10',
 
 dataReco={'--conditions':'auto:com10',
           '-s':'RAW2DIGI,L1Reco,RECO,EI,ALCA:SiStripCalZeroBias+SiStripCalMinBias+TkAlMinBias,DQM',
-          '--datatier':'RECO,DQMROOT',
-          '--eventcontent':'RECO,DQMROOT',
+          '--datatier':'RECO,DQMIO',
+          '--eventcontent':'RECO,DQM',
           '--data':'',
           '--process':'reRECO',
           '--scenario':'pp',
@@ -809,8 +815,8 @@ steps['REPACKHID']=merge([{'--scenario':'HeavyIons',
                         steps['RECOD']])
 steps['RECOHID10']=merge([{'--scenario':'HeavyIons',
                          '-s':'RAW2DIGI,L1Reco,RECO,ALCA:SiStripCalZeroBias+SiStripCalMinBias+TkAlMinBiasHI+HcalCalMinBias,DQM',
-                         '--datatier':'RECO,DQMROOT',
-                         '--eventcontent':'RECO,DQMROOT'},
+                         '--datatier':'RECO,DQMIO',
+                         '--eventcontent':'RECO,DQM'},
                         steps['RECOD']])
 steps['RECOHID11']=merge([{'--repacked':''},
                         steps['RECOHID10']])
@@ -820,12 +826,12 @@ steps['RECOHID10']['--eventcontent']+=',REPACKRAW'
 
 steps['TIER0']=merge([{'--customise':'Configuration/DataProcessing/RecoTLR.customisePrompt',
                        '-s':'RAW2DIGI,L1Reco,RECO,EI,ALCAPRODUCER:@allForPrompt,DQM,ENDJOB',
-                       '--datatier':'RECO,AOD,ALCARECO,DQMROOT',
-                       '--eventcontent':'RECO,AOD,ALCARECO,DQMROOT',
+                       '--datatier':'RECO,AOD,ALCARECO,DQMIO',
+                       '--eventcontent':'RECO,AOD,ALCARECO,DQM',
                        '--process':'RECO'
                        },dataReco])
 steps['TIER0EXP']=merge([{'-s':'RAW2DIGI,L1Reco,RECO,EI,ALCAPRODUCER:@allForExpress,DQM,ENDJOB',
-                          '--datatier':'ALCARECO,DQM',
+                          '--datatier':'ALCARECO,DQMIO',
                           '--eventcontent':'ALCARECO,DQM',
                           '--customise':'Configuration/DataProcessing/RecoTLR.customiseExpress',
                           },steps['TIER0']])
@@ -849,7 +855,7 @@ step3Defaults = {
                   '-s'            : 'RAW2DIGI,L1Reco,RECO,EI,VALIDATION,DQM',
                   '--conditions'  : 'auto:startup',
                   '--no_exec'     : '',
-                  '--datatier'    : 'GEN-SIM-RECO,DQM',
+                  '--datatier'    : 'GEN-SIM-RECO,DQMIO',
                   '--eventcontent': 'RECOSIM,DQM'
                   }
 
@@ -1087,146 +1093,40 @@ steps['COPYPASTE']={'-s':'NONE',
 
 
 
-# You will need separate scenarios HERE for full and fast. DON'T CHANGE THE ORDER, only
-# append new keys. Otherwise the numbering for the runTheMatrix tests will change.
-upgradeKeys=['2017',
-             '2019',
-             'BE5D',
-             '2017Fast',
-             'BE5DFast',
-             'BE5DForwardFast',
-             '2019WithGEM',
-             'BE5DPixel10D',
-             '2017Aging',
-             '2019Aging',
-             'Extended2023',
-             'Extended2023HGCalMuon',
-             'Extended2023SHCal',
-             'Extended2023SHCal4Eta',
-             'Extended2023TTI',
-             'Extended2023Muon',
-             'Extended2023CFCal',
-             'Extended2023CFCal4Eta',
-             'Extended2023Pixel',            
-             'Extended2023SHCalNoTaper',
-             'Extended2023SHCalNoTaper4Eta',
-             'Extended2023HGCal',
-             'Extended2023HGCalMuon4Eta',
-             'Extended2023Muon4Eta'
-	     ]
-upgradeGeoms={ '2017' : 'Extended2017',
-               '2019' : 'Extended2019',
-               '2019WithGEM' : 'Extended2019',
-               '2017Aging' : 'Extended2017',
-               '2019Aging' : 'Extended2019',
-               'BE5D' : 'ExtendedPhase2TkBE5D',
-               'BE5DPixel10D' : 'ExtendedPhase2TkBE5DPixel10D',
-               '2017Fast' : 'Extended2017',
-               'BE5DFast' : 'ExtendedPhase2TkBE',
-               'BE5DForwardFast' : 'ExtendedPhase2TkBEForward',
-               'Extended2023' : 'Extended2023,Extended2023Reco',
-               'Extended2023HGCalMuon' : 'Extended2023HGCalMuon,Extended2023HGCalMuonReco',
-               'Extended2023SHCal' : 'Extended2023SHCal,Extended2023SHCalReco',
-               'Extended2023SHCal4Eta' : 'Extended2023SHCal4Eta,Extended2023SHCalReco',
-               'Extended2023TTI' : 'Extended2023TTI,Extended2023TTIReco',
-               'Extended2023Muon' : 'Extended2023Muon,Extended2023MuonReco',
-               'Extended2023Muon4Eta' : 'Extended2023Muon4Eta,Extended2023Muon4EtaReco',
-               'Extended2023CFCal' : 'Extended2023CFCal,Extended2023CFCalReco',
-               'Extended2023CFCal4Eta' : 'Extended2023CFCal4Eta,Extended2023CFCal4EtaReco',
-               'Extended2023Pixel' : 'Extended2023Pixel,Extended2023PixelReco',
-               'Extended2023SHCalNoTaper' : 'Extended2023SHCalNoTaper,Extended2023SHCalNoTaperReco',
-               'Extended2023SHCalNoTaper4Eta' : 'Extended2023SHCalNoTaper4Eta,Extended2023SHCalNoTaper4EtaReco',
-               'Extended2023HGCal' : 'Extended2023HGCal,Extended2023HGCalReco',
-               'Extended2023HGCalMuon4Eta' : 'Extended2023HGCalMuon4Eta,Extended2023HGCalMuon4EtaReco'
-               }
-upgradeGTs={ '2017' : 'auto:upgrade2017',
-             '2019' : 'auto:upgrade2019',
-             '2019WithGEM' : 'auto:upgrade2019',
-             '2017Aging' : 'W17_300_62E2::All',
-             '2019Aging' : 'W19_300_62E2::All',
-             'BE5D' : 'auto:upgradePLS3',
-             'BE5DPixel10D' : 'auto:upgradePLS3',
-             '2017Fast' : 'auto:upgrade2017',
-             'BE5DFast' : 'auto:upgrade2019',
-             'BE5DForwardFast' : 'auto:upgrade2019',
-             'Extended2023' : 'auto:upgradePLS3',
-             'Extended2023HGCalMuon' : 'auto:upgradePLS3',
-             'Extended2023SHCal' : 'auto:upgradePLS3',
-             'Extended2023SHCal4Eta' : 'auto:upgradePLS3',
-             'Extended2023TTI' : 'auto:upgradePLS3',
-             'Extended2023Muon' : 'auto:upgradePLS3',
-             'Extended2023Muon4Eta' : 'auto:upgradePLS3',
-             'Extended2023CFCal' : 'auto:upgradePLS3',
-             'Extended2023CFCal4Eta' : 'auto:upgradePLS3',
-             'Extended2023Pixel' : 'auto:upgradePLS3',
-             'Extended2023SHCalNoTaper' : 'auto:upgradePLS3',
-             'Extended2023SHCalNoTaper4Eta' : 'auto:upgradePLS3',
-             'Extended2023HGCal' : 'auto:upgradePLS3',
-             'Extended2023HGCalMuon4Eta' : 'auto:upgradePLS3'
-             }
-upgradeCustoms={ '2017' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2017',
-                 '2019' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2019',
-                 '2019WithGEM' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2019WithGem',
-                 '2017Aging' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2017,SLHCUpgradeSimulations/Configuration/aging.customise_aging_300',
-                 '2019Aging' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2019,SLHCUpgradeSimulations/Configuration/aging.customise_aging_300',
-                 'BE5D' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_phase2_BE5D',
-                 'BE5DPixel10D' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_phase2_BE5DPixel10D',
-                 '2017Fast' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.fastsimDefault',
-                 'BE5DFast' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.fastsimPhase2',
-                 'BE5DForwardFast' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.fastsimPhase2',
-                 'Extended2023' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023',
-                 'Extended2023HGCalMuon' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCalMuon',
-                 'Extended2023SHCal' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023SHCal',
-                 'Extended2023SHCal4Eta' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023SHCal',
-                 'Extended2023TTI' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023TTI',
-                 'Extended2023Muon' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023Muon',
-                 'Extended2023Muon4Eta' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023Muon',
-                 'Extended2023CFCal' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023',
-                 'Extended2023CFCal4Eta' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023',
-                 'Extended2023Pixel' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023Pixel',
-                 'Extended2023SHCalNoTaper' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023SHCal',
-                 'Extended2023SHCalNoTaper4Eta' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023SHCal',
-                 'Extended2023HGCal' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCal',
-                 'Extended2023HGCalMuon4Eta' : 'SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCalMuon'
-                 }
-### remember that you need to add a new step for phase 2 to include the track trigger
-### remember that you need to add fastsim
+from  Configuration.PyReleaseValidation.upgradeWorkflowComponents import *
 
-# step1 is normal gen-sim
-# step2 is digi
-# step3 is reco
-# step4 is harvest
-# step5 is digi+l1tracktrigger
-# step6 is fastsim
-# step7 is fastsim harvesting
+# for each geometry define the GT and processing string here
+defaultDataSets={}
+defaultDataSets['Extended2023HGCalMuon']='CMSSW_6_2_0_SLHC20_patch1-DES23_62_V1_refHGCALV5-v'
+defaultDataSets['Extended2023HGCalMuonPandora']=defaultDataSets['Extended2023HGCalMuon'] # Geometry is the same, only reco is different
+defaultDataSets['Extended2023SHCalNoTaper']='CMSSW_6_2_0_SLHC20_patch1-DES23_62_V1_refSHNoTaper-v'
+defaultDataSets['2019WithGEMAging']='CMSSW_6_2_0_SLHC20-DES19_62_V8_UPG2019withGEM-v'
+defaultDataSets['Extended2023HGCalScopeDoc_ee28_fh12']=defaultDataSets['Extended2023HGCalMuon']
+defaultDataSets['Extended2023HGCalScopeDoc_ee24_fh11']=defaultDataSets['Extended2023HGCalMuon']
+defaultDataSets['Extended2023HGCalScopeDoc_ee18_fh9']=defaultDataSets['Extended2023HGCalMuon']
+defaultDataSets['Extended2023HGCalNoExtPix_ee18']=defaultDataSets['Extended2023HGCalMuon']
+keys=defaultDataSets.keys()
+for key in keys:
+  defaultDataSets[key+'PU']=defaultDataSets[key]
+  
+# sometimes v1 won't be used - override it here - the dictionary key is gen fragment + '_' + geometry
+versionOverrides={}
 
-upgradeSteps=['GenSimFull','GenSimHLBeamSpotFull','DigiFull','RecoFull','HARVESTFull','DigiTrkTrigFull','FastSim','HARVESTFast']
+baseDataSetReleaseBetter={}
+for gen in upgradeFragments:
+    for ds in defaultDataSets: 
+       	key=gen[:-4]+'_'+ds   
+        version='1'
+        if key in versionOverrides:
+            version = versionOverrides[key]
+        baseDataSetReleaseBetter[key]=defaultDataSets[ds]+version
 
-upgradeScenToRun={ '2017':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   '2019':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   '2019WithGEM':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   '2017Aging':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   '2019Aging':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'BE5D':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'BE5DPixel10D':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   '2017Fast':['FastSim','HARVESTFast'],
-                   'BE5DFast':['FastSim','HARVESTFast'],
-                   'BE5DForwardFast':['FastSim','HARVESTFast'],
-                   'Extended2023':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023HGCalMuon':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023SHCal':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023SHCal4Eta':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023TTI':['GenSimHLBeamSpotFull','DigiTrkTrigFull'], ##no need to go beyond local reco
-                   'Extended2023Muon':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023Muon4Eta':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023CFCal':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023CFCal4Eta':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023Pixel':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],          
-                   'Extended2023SHCalNoTaper':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023SHCalNoTaper4Eta':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023HGCal':['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
-                   'Extended2023HGCalMuon4Eta':['GenSimFull','DigiFull','RecoFull','HARVESTFull']
-                   }
+PUDataSets={}
+for ds in defaultDataSets:
+    key='MinBias_TuneZ2star_14TeV_pythia6'+'_'+ds
+    name=baseDataSetReleaseBetter[key]
+    PUDataSets[ds]={'-n':10,'--pileup':'AVE_140_BX_25ns','--pileup_input':'das:/RelValMinBias_TuneZ2star_14TeV/%s/GEN-SIM'%(name,)}
+
 
 upgradeStepDict={}
 for step in upgradeSteps:
@@ -1235,241 +1135,138 @@ for step in upgradeSteps:
 # just make all combinations - yes, some will be nonsense.. but then these are not used unless
 # specified above
 for k in upgradeKeys:
+    k2=k
+    if 'PU' in k[-2:]:
+        k2=k[:-2]
+    geom=upgradeGeoms[k2]
+    gt=upgradeGTs[k2]
+    cust=upgradeCustoms[k2]
     upgradeStepDict['GenSimFull'][k]= {'-s' : 'GEN,SIM',
                                        '-n' : 10,
-                                       '--conditions' : upgradeGTs[k],
+                                       '--conditions' : gt,
                                        '--beamspot' : 'Gauss',
                                        '--magField' : '38T_PostLS1',
                                        '--datatier' : 'GEN-SIM',
                                        '--eventcontent': 'FEVTDEBUG',
-                                       '--geometry' : upgradeGeoms[k]
+                                       '--geometry' : geom
                                        }
-    if upgradeCustoms[k]!=None : upgradeStepDict['GenSimFull'][k]['--customise']=upgradeCustoms[k]
-    
+    if cust!=None : upgradeStepDict['GenSimFull'][k]['--customise']=cust
+        
     upgradeStepDict['GenSimHLBeamSpotFull'][k]= {'-s' : 'GEN,SIM',
                                        '-n' : 10,
-                                       '--conditions' : upgradeGTs[k],
+                                       '--conditions' : gt,
                                        '--beamspot' : 'HLLHC',
                                        '--magField' : '38T_PostLS1',
                                        '--datatier' : 'GEN-SIM',
                                        '--eventcontent': 'FEVTDEBUG',
-                                       '--geometry' : upgradeGeoms[k]
+                                       '--geometry' : geom
                                        }
-    if upgradeCustoms[k]!=None : upgradeStepDict['GenSimHLBeamSpotFull'][k]['--customise']=upgradeCustoms[k]
-
+    if cust!=None : upgradeStepDict['GenSimHLBeamSpotFull'][k]['--customise']=cust
+    
+    upgradeStepDict['GenSimHLBeamSpotfixFull'][k]= {'-s' : 'GEN,SIM',
+                                       '-n' : 10,
+                                       '--conditions' : gt,
+                                       '--beamspot' : 'HLLHC_Fix',
+                                       '--magField' : '38T_PostLS1',
+                                       '--datatier' : 'GEN-SIM',
+                                       '--eventcontent': 'FEVTDEBUG',
+                                       '--geometry' : geom
+                                       }
+    if cust!=None : upgradeStepDict['GenSimHLBeamSpotfixFull'][k]['--customise']=cust
+    
     upgradeStepDict['DigiFull'][k] = {'-s':'DIGI:pdigi_valid,L1,DIGI2RAW',
-                                      '--conditions':upgradeGTs[k],
+                                      '--conditions':gt,
                                       '--datatier':'GEN-SIM-DIGI-RAW',
                                       '-n':'10',
                                       '--magField' : '38T_PostLS1',
                                       '--eventcontent':'FEVTDEBUGHLT',
-                                      '--geometry' : upgradeGeoms[k]
+                                      '--geometry' : geom
                                       }
-    if upgradeCustoms[k]!=None : upgradeStepDict['DigiFull'][k]['--customise']=upgradeCustoms[k]
-
+    if cust!=None : upgradeStepDict['DigiFull'][k]['--customise']=cust
+    
+    upgradeStepDict['DigiFullTrigger'][k] = {'-s':'DIGI:pdigi_valid,L1,L1TrackTrigger,DIGI2RAW',
+                                      '--conditions':gt,
+                                      '--datatier':'GEN-SIM-DIGI-RAW',
+                                      '-n':'10',
+                                      '--magField' : '38T_PostLS1',
+                                      '--eventcontent':'FEVTDEBUGHLT',
+                                      '--geometry' : geom
+                                      }
+    if cust!=None : upgradeStepDict['DigiFullTrigger'][k]['--customise']=cust
+    
+    
+    if k2 in PUDataSets:
+        upgradeStepDict['DigiFullPU'][k]=merge([PUDataSets[k2],upgradeStepDict['DigiFull'][k]])
     upgradeStepDict['DigiTrkTrigFull'][k] = {'-s':'DIGI:pdigi_valid,L1,L1TrackTrigger,DIGI2RAW,RECO:pixeltrackerlocalreco',
-                                             '--conditions':upgradeGTs[k],
+                                             '--conditions':gt,
                                              '--datatier':'GEN-SIM-DIGI-RAW',
                                              '-n':'10',
                                              '--magField' : '38T_PostLS1',
                                              '--eventcontent':'FEVTDEBUGHLT',
-                                             '--geometry' : upgradeGeoms[k]
+                                             '--geometry' : geom
                                              }
-    if upgradeCustoms[k]!=None : upgradeStepDict['DigiTrkTrigFull'][k]['--customise']=upgradeCustoms[k]
+    if cust!=None : upgradeStepDict['DigiTrkTrigFull'][k]['--customise']=cust
 
     upgradeStepDict['RecoFull'][k] = {'-s':'RAW2DIGI,L1Reco,RECO,VALIDATION,DQM',
-                                      '--conditions':upgradeGTs[k],
-                                      '--datatier':'GEN-SIM-RECO,DQM',
+                                      '--conditions':gt,
+                                      '--datatier':'GEN-SIM-RECO,DQMIO',
                                       '-n':'10',
                                       '--eventcontent':'FEVTDEBUGHLT,DQM',
                                       '--magField' : '38T_PostLS1',
-                                      '--geometry' : upgradeGeoms[k]
+                                      '--geometry' : geom
                                       }
-    if upgradeCustoms[k]!=None : upgradeStepDict['RecoFull'][k]['--customise']=upgradeCustoms[k]
-    
+    if cust!=None : upgradeStepDict['RecoFull'][k]['--customise']=cust
+
+ 
+    if k2 in PUDataSets:
+        upgradeStepDict['RecoFullPU'][k]=merge([PUDataSets[k2],{'-s':'RAW2DIGI,L1Reco,RECO,DQM'},upgradeStepDict['RecoFull'][k]])
+
+    upgradeStepDict['RecoFullHGCAL'][k] = {'-s':'RAW2DIGI,L1Reco,RECO',
+                                      '--conditions':gt,
+                                      '--datatier':'GEN-SIM-RECO',
+                                      '-n':'10',
+                                      '--eventcontent':'RECOSIM',
+                                      '--magField' : '38T_PostLS1',
+                                      '--geometry' : geom
+                                      }
+    if cust!=None : upgradeStepDict['RecoFullHGCAL'][k]['--customise']=cust
+
+    if k2 in PUDataSets:
+        upgradeStepDict['RecoFullPUHGCAL'][k]=merge([PUDataSets[k2],{'-s':'RAW2DIGI,L1Reco,RECO'},upgradeStepDict['RecoFullHGCAL'][k]])
+
     upgradeStepDict['HARVESTFull'][k]={'-s':'HARVESTING:validationHarvesting+dqmHarvesting',
-                                    '--conditions':upgradeGTs[k],
+                                    '--conditions':gt,
                                     '--mc':'',
                                     '--magField' : '38T_PostLS1',
-                                    '--geometry' : upgradeGeoms[k],
-                                    '--scenario' : 'pp'
+                                    '--geometry' : geom,
+                                    '--scenario' : 'pp',
+                                    '--filetype':'DQM'
                                     }
-    if upgradeCustoms[k]!=None : upgradeStepDict['HARVESTFull'][k]['--customise']=upgradeCustoms[k]
+    if cust!=None : upgradeStepDict['HARVESTFull'][k]['--customise']=cust
+
+    if k2 in PUDataSets:
+        upgradeStepDict['HARVESTFullPU'][k]=merge([PUDataSets[k2],{'-s':'HARVESTING:dqmHarvesting'},upgradeStepDict['HARVESTFull'][k]])
 
     upgradeStepDict['FastSim'][k]={'-s':'GEN,SIM,RECO,VALIDATION',
                                    '--eventcontent':'FEVTDEBUGHLT,DQM',
-                                   '--datatier':'GEN-SIM-DIGI-RECO,DQM',
-                                   '--conditions':upgradeGTs[k],
+                                   '--datatier':'GEN-SIM-DIGI-RECO,DQMIO',
+                                   '--conditions':gt,
                                    '--fast':'',
-                                   '--geometry' : upgradeGeoms[k],
+                                   '--geometry' : geom,
                                    '--relval':'27000,3000'}
-    if upgradeCustoms[k]!=None : upgradeStepDict['FastSim'][k]['--customise']=upgradeCustoms[k]
+    if cust!=None : upgradeStepDict['FastSim'][k]['--customise']=cust
 
     upgradeStepDict['HARVESTFast'][k]={'-s':'HARVESTING:validationHarvestingFS',
-                                    '--conditions':upgradeGTs[k],
+                                    '--conditions':gt,
                                     '--mc':'',
                                     '--magField' : '38T_PostLS1',
-                                    '--geometry' : upgradeGeoms[k],
+                                    '--geometry' : geom,
                                     '--scenario' : 'pp'
                                     }
-    if upgradeCustoms[k]!=None : upgradeStepDict['HARVESTFast'][k]['--customise']=upgradeCustoms[k]
-
-
-upgradeFragments=['FourMuPt_1_200_cfi','SingleElectronPt10_cfi',
-                  'SingleElectronPt35_cfi','SingleElectronPt1000_cfi',
-                  'SingleGammaPt10_cfi','SingleGammaPt35_cfi','SingleMuPt1_cfi','SingleMuPt10_cfi',
-                  'SingleMuPt100_cfi','SingleMuPt1000_cfi','TTbarLepton_Tauola_8TeV_cfi','Wjet_Pt_80_120_8TeV_cfi',
-                  'Wjet_Pt_3000_3500_8TeV_cfi','LM1_sfts_8TeV_cfi','QCD_Pt_3000_3500_8TeV_cfi','QCD_Pt_600_800_8TeV_cfi',
-                  'QCD_Pt_80_120_8TeV_cfi','H200ChargedTaus_Tauola_8TeV_cfi','JpsiMM_8TeV_cfi','TTbar_Tauola_8TeV_cfi',
-                  'WE_8TeV_cfi','ZEE_8TeV_cfi','ZTT_Tauola_All_hadronic_8TeV_cfi','H130GGgluonfusion_8TeV_cfi',
-                  'PhotonJet_Pt_10_8TeV_cfi','QQH1352T_Tauola_8TeV_cfi','MinBias_TuneZ2star_8TeV_pythia6_cff','WM_8TeV_cfi',
-                  'ZMM_8TeV_cfi','ADDMonoJet_8TeV_d3MD3_cfi','ZpMM_8TeV_cfi','WpM_8TeV_cfi',
-                  'Wjet_Pt_80_120_14TeV_cfi','Wjet_Pt_3000_3500_14TeV_cfi','LM1_sfts_14TeV_cfi','QCD_Pt_3000_3500_14TeV_cfi',
-                  'QCD_Pt_80_120_14TeV_cfi','H200ChargedTaus_Tauola_14TeV_cfi','JpsiMM_14TeV_cfi','TTbar_Tauola_14TeV_cfi',
-                  'WE_14TeV_cfi','ZEE_14TeV_cfi','ZTT_Tauola_All_hadronic_14TeV_cfi','H130GGgluonfusion_14TeV_cfi',
-                  'PhotonJet_Pt_10_14TeV_cfi','QQH1352T_Tauola_14TeV_cfi',
-                  'MinBias_TuneZ2star_14TeV_pythia6_cff','WM_14TeV_cfi','ZMM_14TeV_cfi',
-		  'FourMuExtendedPt_1_200_cfi',
-		  'TenMuExtendedE_0_200_cfi',
-		  'SingleElectronPt10Extended_cfi',
-                  'SingleElectronPt35Extended_cfi',
-		  'SingleElectronPt1000Extended_cfi',
-                  'SingleGammaPt10Extended_cfi',
-		  'SingleGammaPt35Extended_cfi',
-		  'SingleMuPt1Extended_cfi',
-		  'SingleMuPt10Extended_cfi',
-                  'SingleMuPt100Extended_cfi',
-		  'SingleMuPt1000Extended_cfi','TenMuE_0_200_cfi']
-
-howMuches={'FourMuPt_1_200_cfi':Kby(10,100),
-           'TenMuE_0_200_cfi':Kby(10,100),
-           'FourMuExtendedPt_1_200_cfi':Kby(10,100),
-           'TenMuExtendedE_0_200_cfi':Kby(10,100),
-           'SingleElectronPt10_cfi':Kby(9,300),
-           'SingleElectronPt35_cfi':Kby(9,500),
-           'SingleElectronPt1000_cfi':Kby(9,50),
-           'SingleGammaPt10_cfi':Kby(9,300),
-           'SingleGammaPt35_cfi':Kby(9,50),
-           'SingleMuPt1_cfi':Kby(25,1000),
-           'SingleMuPt10_cfi':Kby(25,500),
-           'SingleMuPt100_cfi':Kby(9,500),
-           'SingleMuPt1000_cfi':Kby(9,500),
-           'SingleElectronPt10Extended_cfi':Kby(9,300),
-           'SingleElectronPt35Extended_cfi':Kby(9,500),
-           'SingleElectronPt1000Extended_cfi':Kby(9,50),
-           'SingleGammaPt10Extended_cfi':Kby(9,300),
-           'SingleGammaPt35Extended_cfi':Kby(9,50),
-           'SingleMuPt1Extended_cfi':Kby(25,1000),
-           'SingleMuPt10Extended_cfi':Kby(25,500),
-           'SingleMuPt100Extended_cfi':Kby(9,500),
-           'SingleMuPt1000Extended_cfi':Kby(9,500),
-           'TTbarLepton_Tauola_8TeV_cfi':Kby(9,100),
-           'Wjet_Pt_80_120_8TeV_cfi':Kby(9,100),
-           'Wjet_Pt_3000_3500_8TeV_cfi':Kby(9,50),
-           'LM1_sfts_8TeV_cfi':Kby(9,100),
-           'QCD_Pt_3000_3500_8TeV_cfi':Kby(9,25),
-           'QCD_Pt_600_800_8TeV_cfi':Kby(9,50),
-           'QCD_Pt_80_120_8TeV_cfi':Kby(9,100),
-           'H200ChargedTaus_Tauola_8TeV_cfi':Kby(9,100),
-           'JpsiMM_8TeV_cfi':Kby(66,1000),
-           'TTbar_Tauola_8TeV_cfi':Kby(9,100),
-           'WE_8TeV_cfi':Kby(9,100),
-           'ZEE_8TeV_cfi':Kby(9,100),
-           'ZTT_Tauola_All_hadronic_8TeV_cfi':Kby(9,15),
-           'H130GGgluonfusion_8TeV_cfi':Kby(9,100),
-           'PhotonJet_Pt_10_8TeV_cfi':Kby(9,150),
-           'QQH1352T_Tauola_8TeV_cfi':Kby(9,100),
-           'MinBias_TuneZ2star_8TeV_pythia6_cff':Kby(9,30),
-           'WM_8TeV_cfi':Kby(9,200),
-           'ZMM_8TeV_cfi':Kby(18,300),
-           'ADDMonoJet_8TeV_d3MD3_cfi':Kby(9,100),
-           'ZpMM_8TeV_cfi':Kby(9,200),
-           'WpM_8TeV_cfi':Kby(9,200),
-           'Wjet_Pt_80_120_14TeV_cfi':Kby(9,100),
-           'Wjet_Pt_3000_3500_14TeV_cfi':Kby(9,50),
-           'LM1_sfts_14TeV_cfi':Kby(9,100),
-           'QCD_Pt_3000_3500_14TeV_cfi':Kby(9,25),
-           'QCD_Pt_80_120_14TeV_cfi':Kby(9,100),
-           'H200ChargedTaus_Tauola_14TeV_cfi':Kby(9,100),
-           'JpsiMM_14TeV_cfi':Kby(66,1000),
-           'TTbar_Tauola_14TeV_cfi':Kby(9,100),
-           'WE_14TeV_cfi':Kby(9,100),
-           'ZEE_14TeV_cfi':Kby(9,100),
-           'ZTT_Tauola_All_hadronic_14TeV_cfi':Kby(9,150),
-           'H130GGgluonfusion_14TeV_cfi':Kby(9,100),
-           'PhotonJet_Pt_10_14TeV_cfi':Kby(9,150),
-           'QQH1352T_Tauola_14TeV_cfi':Kby(9,100),
-           'MinBias_TuneZ2star_14TeV_pythia6_cff':Kby(9,300),
-           'WM_14TeV_cfi':Kby(9,200),
-           'ZMM_14TeV_cfi':Kby(18,300)
-           }
-
-upgradeDatasetFromFragment={'FourMuPt_1_200_cfi': 'FourMuPt1_200',
-                            'FourMuExtendedPt_1_200_cfi': 'FourMuExtendedPt1_200',
-                            'TenMuE_0_200_cfi': 'TenMuE_0_200',
-                            'TenMuExtendedE_0_200_cfi': 'TenMuExtendedE_0_200',
-                            'SingleElectronPt10_cfi' : 'SingleElectronPt10',
-                            'SingleElectronPt35_cfi' : 'SingleElectronPt35',
-                            'SingleElectronPt1000_cfi' : 'SingleElectronPt1000',
-                            'SingleGammaPt10_cfi' : 'SingleGammaPt10',
-                            'SingleGammaPt35_cfi' : 'SingleGammaPt35',
-                            'SingleMuPt1_cfi' : 'SingleMuPt1',
-                            'SingleMuPt10_cfi' : 'SingleMuPt10',
-                            'SingleMuPt100_cfi' : 'SingleMuPt100',
-                            'SingleMuPt1000_cfi' : 'SingleMuPt1000',
-                            'SingleElectronPt10Extended_cfi' : 'SingleElectronPt10Extended',
-                            'SingleElectronPt35Extended_cfi' : 'SingleElectronPt35Extended',
-                            'SingleElectronPt1000Extended_cfi' : 'SingleElectronPt1000Extended',
-                            'SingleGammaPt10Extended_cfi' : 'SingleGammaPt10Extended',
-                            'SingleGammaPt35Extended_cfi' : 'SingleGammaPt35Extended',
-                            'SingleMuPt1Extended_cfi' : 'SingleMuPt1Extended',
-                            'SingleMuPt10Extended_cfi' : 'SingleMuPt10Extended',
-                            'SingleMuPt100Extended_cfi' : 'SingleMuPt100Extended',
-                            'SingleMuPt1000Extended_cfi' : 'SingleMuPt1000Extended',
-                            'TTbarLepton_Tauola_8TeV_cfi' : 'TTbarLepton_8TeV',
-                            'Wjet_Pt_80_120_8TeV_cfi' : 'Wjet_Pt_80_120_8TeV',
-                            'Wjet_Pt_3000_3500_8TeV_cfi' : 'Wjet_Pt_3000_3500_8TeV',
-                            'LM1_sfts_8TeV_cfi' : 'LM1_sfts_8TeV',
-                            'QCD_Pt_3000_3500_8TeV_cfi' : 'QCD_Pt_3000_3500_8TeV',
-                            'QCD_Pt_600_800_8TeV_cfi' : 'QCD_Pt_600_800_8TeV',
-                            'QCD_Pt_80_120_8TeV_cfi' : 'QCD_Pt_80_120_8TeV',
-                            'H200ChargedTaus_Tauola_8TeV_cfi' : 'Higgs200ChargedTaus_8TeV',
-                            'JpsiMM_8TeV_cfi' : 'JpsiMM_8TeV',
-                            'TTbar_Tauola_8TeV_cfi' : 'TTbar_8TeV',
-                            'WE_8TeV_cfi' : 'WE_8TeV',
-                            'ZEE_8TeV_cfi' : 'ZEE_8TeV',
-                            'ZTT_Tauola_All_hadronic_8TeV_cfi' : 'ZTT_8TeV',
-                            'H130GGgluonfusion_8TeV_cfi' : 'H130GGgluonfusion_8TeV',
-                            'PhotonJet_Pt_10_8TeV_cfi' : 'PhotonJets_Pt_10_8TeV',
-                            'QQH1352T_Tauola_8TeV_cfi' : 'QQH1352T_Tauola_8TeV',
-                            'MinBias_TuneZ2star_8TeV_pythia6_cff': 'MinBias_TuneZ2star_8TeV',
-                            'WM_8TeV_cfi' : 'WM_8TeV',
-                            'ZMM_8TeV_cfi' : 'ZMM_8TeV',
-                            'ADDMonoJet_8TeV_d3MD3_cfi' : 'ADDMonoJet_d3MD3_8TeV',
-                            'ZpMM_8TeV_cfi' : 'ZpMM_8TeV',
-                            'WpM_8TeV_cfi' : 'WpM_8TeV',
-                            'Wjet_Pt_80_120_14TeV_cfi' : 'Wjet_Pt_80_120_14TeV',
-                            'Wjet_Pt_3000_3500_14TeV_cfi' : 'Wjet_Pt_3000_3500_14TeV',
-                            'LM1_sfts_14TeV_cfi' : 'LM1_sfts_14TeV',
-                            'QCD_Pt_3000_3500_14TeV_cfi' : 'QCD_Pt_3000_3500_14TeV',
-                            'QCD_Pt_80_120_14TeV_cfi' : 'QCD_Pt_80_120_14TeV',
-                            'H200ChargedTaus_Tauola_14TeV_cfi' : 'Higgs200ChargedTaus_14TeV',
-                            'JpsiMM_14TeV_cfi' : 'JpsiMM_14TeV',
-                            'TTbar_Tauola_14TeV_cfi' : 'TTbar_14TeV',
-                            'WE_14TeV_cfi' : 'WE_14TeV',
-                            'ZEE_14TeV_cfi' : 'ZEE_14TeV',
-                            'ZTT_Tauola_All_hadronic_14TeV_cfi' : 'ZTT_14TeV',
-                            'H130GGgluonfusion_14TeV_cfi' : 'H130GGgluonfusion_14TeV',
-                            'PhotonJet_Pt_10_14TeV_cfi' : 'PhotonJets_Pt_10_14TeV',
-                            'QQH1352T_Tauola_14TeV_cfi' : 'QQH1352T_Tauola_14TeV',
-                            'MinBias_TuneZ2star_14TeV_pythia6_cff' : 'MinBias_TuneZ2star_14TeV',
-                            'WM_14TeV_cfi' : 'WM_14TeV',
-                            'ZMM_14TeV_cfi' : 'ZMM_14TeV'
-                            }
+    if cust!=None : upgradeStepDict['HARVESTFast'][k]['--customise']=cust
 
 
 
-#just do everything...
 
 for step in upgradeSteps:
     # we need to do this for each fragment
@@ -1479,8 +1276,15 @@ for step in upgradeSteps:
             for key in upgradeKeys:
                 k=frag[:-4]+'_'+key+'_'+step
                 steps[k]=merge([ {'cfg':frag},howMuch,upgradeStepDict[step][key]])
+                #get inputs in case of -i...but no need to specify in great detail
+                #however, there can be a conflict of beam spots but this is lost in the dataset name
+                #so please be careful   
+                s=frag[:-4]+'_'+key
+                if 'FastSim' not in k and s+'INPUT' not in steps and s in baseDataSetReleaseBetter:
+                    steps[k+'INPUT']={'INPUT':InputInfo(dataSet='/RelVal'+upgradeDatasetFromFragment[frag]+'/%s/GEN-SIM'%(baseDataSetReleaseBetter[s],),location='STD')}
    else:
         for key in upgradeKeys:
             k=step+'_'+key
-            steps[k]=merge([upgradeStepDict[step][key]])
+            if step in upgradeStepDict and key in upgradeStepDict[step]: 
+                steps[k]=merge([upgradeStepDict[step][key]])
             

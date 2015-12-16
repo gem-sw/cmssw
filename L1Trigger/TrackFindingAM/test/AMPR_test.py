@@ -16,7 +16,7 @@
 # Author: S.Viret (viret@in2p3.fr)
 # Date        : 17/02/2014
 #
-# Script tested with release CMSSW_6_2_0_SLHC7
+# Script tested with release CMSSW_6_2_0_SLHC14
 #
 #########################
 
@@ -28,8 +28,8 @@ process = cms.Process('AMPR')
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DReco_cff')
-process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5D_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DPixel10DReco_cff')
+process.load('Configuration.Geometry.GeometryExtendedPhase2TkBE5DPixel10D_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('L1Trigger.TrackFindingAM.L1AMTrack_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
@@ -44,7 +44,7 @@ process.maxEvents = cms.untracked.PSet(
 #
 # You can use as input file the result of the script SLHC_PGUN_off.py of part 2.2 of the tutorial
 #
-# Any other EDM file containing stubs and produced with CMSSW 620_SLHC6 and later should also work
+# Any other EDM file containing stubs and produced with CMSSW 620_SLHC13 and later should also work
 # 
 # Below some examples are given
 #
@@ -63,6 +63,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 # Some pattern recognition options
 process.TTPatternsFromStub.inputBankFile = cms.string('/afs/cern.ch/work/s/sviret/testarea/PatternBanks/BE_5D/Eta7_Phi8/ss32_cov40/612_SLHC6_MUBANK_lowmidhig_sec35_ss32_cov40.pbk')
 process.TTPatternsFromStub.threshold     = cms.int32(5)
+process.TTPatternsFromStub.nbMissingHits = cms.int32(-1)
+process.TTPatternsFromStub.debugMode = cms.int32(0)
 
 # The name of the stub container over which the association is done, please note that the filtered cluster container is
 # not associated due to the lack of simPixelDigis in official samples
@@ -97,10 +99,14 @@ process.RAWSIMoutput_step    = cms.EndPath(process.RAWSIMoutput)
 
 process.schedule = cms.Schedule(process.L1AMPR_step,process.endjob_step,process.RAWSIMoutput_step)
 
+
 # Automatic addition of the customisation function
 
-from SLHCUpgradeSimulations.Configuration.phase2TkCustomsBE5D import customise as customiseBE5D
-from SLHCUpgradeSimulations.Configuration.phase2TkCustomsBE5D import l1EventContent as customise_ev_BE5D
+from SLHCUpgradeSimulations.Configuration.combinedCustoms import customiseBE5DPixel10D
+from SLHCUpgradeSimulations.Configuration.combinedCustoms import customise_ev_BE5DPixel10D
 
-process=customiseBE5D(process)
-process=customise_ev_BE5D(process)
+process=customiseBE5DPixel10D(process)
+process=customise_ev_BE5DPixel10D(process)
+
+# End of customisation functions	
+

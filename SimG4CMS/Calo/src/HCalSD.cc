@@ -40,7 +40,7 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
          p.getParameter<edm::ParameterSet>("HCalSD").getParameter<bool>("IgnoreTrackID")), 
   numberingFromDDD(0), numberingScheme(0), showerLibrary(0), hfshower(0), 
   showerParam(0), showerPMT(0), showerBundle(0), m_HEDarkening(0),
-  m_HFDarkening(0) {
+  m_HBDarkening(0), m_HFDarkening(0) {
 
   //static SimpleConfigurable<bool>   on1(false, "HCalSD:UseBirkLaw");
   //static SimpleConfigurable<double> bk1(0.013, "HCalSD:BirkC1");
@@ -64,7 +64,8 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
   eminHitHF        = m_HC.getParameter<double>("EminHitHF")*MeV;
   useFibreBundle   = m_HC.getParameter<bool>("UseFibreBundleHits");
   deliveredLumi    = m_HC.getParameter<double>("DelivLuminosity");
-  bool ageingFlagHE= m_HC.getParameter<bool>("HEDarkening");
+  unsigned int ageingFlagHE= m_HC.getParameter<unsigned>("HEDarkening");
+  unsigned int ageingFlagHB= m_HC.getParameter<unsigned>("HBDarkening");
   bool ageingFlagHF= m_HC.getParameter<bool>("HFDarkening");
   useHF            = m_HC.getUntrackedParameter<bool>("UseHF",true);
   bool forTBH2     = m_HC.getUntrackedParameter<bool>("ForTBH2",false);
@@ -101,10 +102,14 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
                           << eminHitHO << " HF: " << eminHitHF << "\n"
 			  << "Delivered luminosity for Darkening " 
 			  << deliveredLumi << " Flag (HE) " << ageingFlagHE
+			  << " (" << HEDarkening::scenarioDescription(ageingFlagHE) << ")"
+			  << " Flag (HB) " << ageingFlagHB
+			  << " (" << HBDarkening::scenarioDescription(ageingFlagHB) << ")"
 			  << " Flag (HF) " << ageingFlagHF << "\n"
 			  << "Application of Fiducial Cut " << applyFidCut;
 
   numberingFromDDD = new HcalNumberingFromDDD(name, cpv);
+  const HcalDDDSimConstants& hcons = numberingFromDDD->ddConstants(); 
   HcalNumberingScheme* scheme;
   if (testNumber || forTBH2) 
     scheme = dynamic_cast<HcalNumberingScheme*>(new HcalTestNumberingScheme(forTBH2));
@@ -118,10 +123,10 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
   std::string attribute, value;
   if (useHF) {
     if (useParam) {
-      showerParam = new HFShowerParam(name, cpv, p);
+      showerParam = new HFShowerParam(name, cpv, hcons, p);
     }  else {
-      if (useShowerLibrary) showerLibrary = new HFShowerLibrary(name, cpv, p);
-      hfshower  = new HFShower(name, cpv, p, 0);
+      if (useShowerLibrary) showerLibrary = new HFShowerLibrary(name, cpv, hcons, p);
+      hfshower  = new HFShower(name, cpv, hcons, p, 0);
     }
 
     // HF volume names
@@ -202,7 +207,7 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
       edm::LogInfo("HcalSim") << "HCalSD:  (" << i << ") " << pmtNames[i]
                               << " LV " << pmtLV[i];
     }
-    if (pmtNames.size() > 0) showerPMT = new HFShowerPMT (name, cpv, p);
+    if (pmtNames.size() > 0) showerPMT = new HFShowerPMT (name, cpv, hcons, p);
   
     // HF Fibre bundles
     value     = "HFFibreBundleStraight";
@@ -252,30 +257,21 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
                               << " LV " << fibre2LV[i];
     }
     if (fibre1LV.size() > 0 || fibre2LV.size() > 0) 
-      showerBundle = new HFShowerFibreBundle (name, cpv, p);
+      showerBundle = new HFShowerFibreBundle (name, cpv, hcons, p);
 
-    attribute = "OnlyForHcalSimNumbering"; 
-    value     = "any";
-    DDSpecificsFilter filter6;
-    DDValue           ddv6(attribute,value,0);
-    filter6.setCriteria(ddv6, DDSpecificsFilter::not_equals,
-			DDSpecificsFilter::AND, true, true);
-    DDFilteredView fv6(cpv);
-    fv6.addFilter(filter6);
-    if (fv6.firstChild()) {
-      DDsvalues_type sv(fv6.mergedSpecifics());
-      //Special Geometry parameters
-      gpar      = getDDDArray("gparHF",sv);
-      edm::LogInfo("HcalSim") << "HCalSD: " << gpar.size() << " gpar (cm)";
-      for (unsigned int ig=0; ig<gpar.size(); ig++)
-	edm::LogInfo("HcalSim") << "HCalSD: gpar[" << ig << "] = "
-				<< gpar[ig]/cm << " cm";
-    } else {
-      edm::LogWarning("HcalSim") << "HCalSD: cannot get filtered "
-				 << " view for " << attribute << " matching " 
-				 << name;
-    }
+    //Special Geometry parameters
+    gpar      = hcons.getGparHF();
+    edm::LogInfo("HcalSim") << "HCalSD: " << gpar.size() << " gpar (cm)";
+    for (unsigned int ig=0; ig<gpar.size(); ig++)
+      edm::LogInfo("HcalSim") << "HCalSD: gpar[" << ig << "] = "
+			      << gpar[ig]/cm << " cm";
   }
+
+  //Layer0 Weight
+  layer0wt = hcons.getLayer0Wt();
+  edm::LogInfo("HcalSim") << "HCalSD: " << layer0wt.size() << " Layer0Wt";
+  for (unsigned int it=0; it<layer0wt.size(); ++it)
+    edm::LogInfo("HcalSim") << "HCalSD: [" << it << "] " << layer0wt[it];
 
   //Material list for HB/HE/HO sensitive detectors
   attribute = "OnlyForHcalSimNumbering"; 
@@ -289,12 +285,6 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
   bool dodet = fv2.firstChild();
 
   DDsvalues_type sv(fv2.mergedSpecifics());
-  //Layer0 Weight
-  layer0wt = getDDDArray("Layer0Wt",sv);
-  edm::LogInfo("HcalSim") << "HCalSD: " << layer0wt.size() << " Layer0Wt";
-  for (unsigned int it=0; it<layer0wt.size(); ++it)
-    edm::LogInfo("HcalSim") << "HCalSD: [" << it << "] " << layer0wt[it];
-
   const G4MaterialTable * matTab = G4Material::GetMaterialTable();
   std::vector<G4Material*>::const_iterator matite;
   while (dodet) {
@@ -337,7 +327,8 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
   for (int i=0;  i<9; ++i) hit_[i] = time_[i]= dist_[i] = 0;
   hzvem = hzvhad = 0;
 
-  if (ageingFlagHE) m_HEDarkening = new HEDarkening();
+  if (ageingFlagHE) m_HEDarkening = new HEDarkening(ageingFlagHE);
+  if (ageingFlagHB) m_HBDarkening = new HBDarkening(ageingFlagHB);
   if (ageingFlagHF) m_HFDarkening = new HFDarkening();
 #ifdef plotDebug
   edm::Service<TFileService> tfile;
@@ -388,6 +379,7 @@ HCalSD::~HCalSD() {
   if (showerPMT)        delete showerPMT;
   if (showerBundle)     delete showerBundle;
   if (m_HEDarkening)    delete m_HEDarkening;
+  if (m_HBDarkening)    delete m_HBDarkening;
   if (m_HFDarkening)    delete m_HFDarkening;
 }
 
@@ -525,6 +517,28 @@ double HCalSD::getEnergyDeposit(G4Step* aStep) {
 			<< "    lay: " << lay-2;
 #endif 
     float dweight = m_HEDarkening->degradation(deliveredLumi,ieta,lay-2);//NB:diff. layer count
+    weight *= dweight;
+#ifdef DebugLog
+    edm::LogInfo("HcalSimDark") << "HCalSD:         >>> Lumi: " << deliveredLumi
+			<< "    coefficient = " << dweight;
+#endif  
+  }
+  
+  else if (m_HBDarkening !=0 && det == 0) {
+    int lay = (touch->GetReplicaNumber(0)/10)%100 + 1;
+	int ieta;
+	uint32_t detid = setDetUnitId(aStep);
+	if(testNumber) {
+	  int det, z, depth, eta, phi, lay;
+	  HcalTestNumbering::unpackHcalIndex(detid,det,z,depth,eta,phi,lay);
+	  ieta = eta;
+	}
+	else ieta = HcalDetId(detid).ietaAbs();
+#ifdef DebugLog
+    edm::LogInfo("HcalSimDark") << "HCalSD:HB_Darkening >>>  ieta: "<< ieta //<< " vs. ietaAbs(): " << HcalDetId(detid).ietaAbs()
+			<< "    lay: " << lay-1;
+#endif 
+    float dweight = m_HBDarkening->degradation(deliveredLumi,ieta,lay-1);//NB:diff. layer count
     weight *= dweight;
 #ifdef DebugLog
     edm::LogInfo("HcalSimDark") << "HCalSD:         >>> Lumi: " << deliveredLumi

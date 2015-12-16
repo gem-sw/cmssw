@@ -12,9 +12,13 @@
 #include "SimCalorimetry/HGCSimProducers/interface/HGCHEfrontDigitizer.h"
 #include "SimCalorimetry/HGCSimProducers/interface/HGCHEbackDigitizer.h"
 #include "DataFormats/HGCDigi/interface/HGCDigiCollections.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "Geometry/FCalGeometry/interface/HGCalGeometry.h"
 
 #include <vector>
 #include <map>
+#include <memory>
+#include <tuple>
 
 class PCaloHit;
 class PileUpEventPrincipal;
@@ -23,8 +27,22 @@ class HGCDigitizer
 {
 public:
   
-  explicit HGCDigitizer(const edm::ParameterSet& ps);
-  virtual ~HGCDigitizer();
+  HGCDigitizer(const edm::ParameterSet& ps);
+  ~HGCDigitizer() { }
+
+  typedef std::tuple<int,uint32_t,float> HGCCaloHitTuple_t;
+  static bool orderByDetIdThenTime(const HGCCaloHitTuple_t &a, const HGCCaloHitTuple_t &b)
+  {
+    unsigned int detId_a(std::get<1>(a)), detId_b(std::get<1>(b));
+
+    if(detId_a<detId_b) return true;
+    if(detId_a>detId_b) return false;
+
+    double time_a(std::get<2>(a)), time_b(std::get<2>(b));
+    if(time_a<time_b) return true;
+
+    return false;
+  }
 
 
   /**
@@ -32,7 +50,7 @@ public:
    */
   void accumulate(edm::Event const& e, edm::EventSetup const& c);
   void accumulate(PileUpEventPrincipal const& e, edm::EventSetup const& c);
-  void accumulate(edm::Handle<edm::PCaloHitContainer> const &hits, int bxCrossing);
+  void accumulate(edm::Handle<edm::PCaloHitContainer> const &hits, int bxCrossing,const edm::ESHandle<HGCalGeometry> &geom);
 
   /**
      @short actions at the start/end of event
@@ -42,9 +60,9 @@ public:
 
   /**
    */
-  bool producesEEDigis()       { return (hitCollection_.find("EE")!=std::string::npos);      } 
-  bool producesHEfrontDigis()  { return (hitCollection_.find("HEfront")!=std::string::npos); } 
-  bool producesHEbackDigis()   { return (hitCollection_.find("HEback")!=std::string::npos);  } 
+  bool producesEEDigis()       { return (mySubDet_==ForwardSubdetector::HGCEE);  }
+  bool producesHEfrontDigis()  { return (mySubDet_==ForwardSubdetector::HGCHEF); }
+  bool producesHEbackDigis()   { return (mySubDet_==ForwardSubdetector::HGCHEB); }
   std::string digiCollection() { return digiCollection_; }
 
   /**
@@ -55,26 +73,40 @@ public:
 
 private :
 
+  //used for initialization
+  bool checkValidDetIds_;
+
   //input/output names
   std::string hitCollection_,digiCollection_;
 
-  //flag for trivial digitization
-  bool doTrivialDigis_;
+  //digitization type (it's up to the specializations to decide it's meaning)
+  int digitizationType_;
 
   //handle sim hits
   int maxSimHitsAccTime_;
-  int bxTime_;
-  HGCSimHitDataAccumulator simHitAccumulator_;  
+  double bxTime_;
+  std::unique_ptr<HGCSimHitDataAccumulator> simHitAccumulator_;  
   void resetSimHitDataAccumulator();
 
   //digitizers
-  HGCEEDigitizer theHGCEEDigitizer_;
-  HGCHEbackDigitizer theHGCHEbackDigitizer_;
-  HGCHEfrontDigitizer theHGCHEfrontDigitizer_;
+  std::unique_ptr<HGCEEDigitizer>      theHGCEEDigitizer_;
+  std::unique_ptr<HGCHEbackDigitizer>  theHGCHEbackDigitizer_;
+  std::unique_ptr<HGCHEfrontDigitizer> theHGCHEfrontDigitizer_;
 
   //subdetector id
   ForwardSubdetector mySubDet_;
+
+  //misc switches
+  bool useAllChannels_;
+  uint32_t verbosity_;
+
+  //reference speed to evaluate time of arrival at the sensititive detector, assuming the center of CMS
+  float refSpeed_;
+
+  //delay to apply after evaluating time of arrival at the sensitive detector
+  float tofDelay_;
 };
+
 
 #endif
 

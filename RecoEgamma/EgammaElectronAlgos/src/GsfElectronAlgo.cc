@@ -21,6 +21,7 @@
 #include "DataFormats/EcalDetId/interface/EcalSubdetector.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCEEDetId.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"
 
@@ -65,7 +66,8 @@ struct GsfElectronAlgo::GeneralData
      const StrategyConfiguration &,
      const CutsConfiguration & cutsCfg,
      const CutsConfiguration & cutsCfgPflow,
-     const ElectronHcalHelper::Configuration & hcalCfg,
+     const ElectronHcalHelper::Configuration & hcalCfgBarrel,
+     const ElectronHcalHelper::Configuration & hcalCfgEndcap,
      const ElectronHcalHelper::Configuration & hcalCfgPflow,
      const IsolationConfiguration &,
      const EcalRecHitsConfiguration &,
@@ -82,7 +84,9 @@ struct GsfElectronAlgo::GeneralData
   const EcalRecHitsConfiguration recHitsCfg ;
 
   // additional configuration and helpers
-  ElectronHcalHelper * hcalHelper, * hcalHelperPflow ;
+  ElectronHcalHelper * hcalHelperBarrel ; 
+  ElectronHcalHelper * hcalHelperEndcap ; 
+  ElectronHcalHelper * hcalHelperPflow ;
   EcalClusterFunctionBaseClass * superClusterErrorFunction ;
   EcalClusterFunctionBaseClass * crackCorrectionFunction ;
  } ;
@@ -92,7 +96,8 @@ struct GsfElectronAlgo::GeneralData
    const StrategyConfiguration & strategyConfig,
    const CutsConfiguration & cutsConfig,
    const CutsConfiguration & cutsConfigPflow,
-   const ElectronHcalHelper::Configuration & hcalConfig,
+   const ElectronHcalHelper::Configuration & hcalConfigBarrel,
+   const ElectronHcalHelper::Configuration & hcalConfigEndcap,
    const ElectronHcalHelper::Configuration & hcalConfigPflow,
    const IsolationConfiguration & isoConfig,
    const EcalRecHitsConfiguration & recHitsConfig,
@@ -105,7 +110,8 @@ struct GsfElectronAlgo::GeneralData
    cutsCfgPflow(cutsConfigPflow),
    isoCfg(isoConfig),
    recHitsCfg(recHitsConfig),
-   hcalHelper(new ElectronHcalHelper(hcalConfig)),
+   hcalHelperBarrel(new ElectronHcalHelper(hcalConfigBarrel)),
+   hcalHelperEndcap(new ElectronHcalHelper(hcalConfigEndcap)),
    hcalHelperPflow(new ElectronHcalHelper(hcalConfigPflow)),
    superClusterErrorFunction(superClusterErrorFunc),
    crackCorrectionFunction(crackCorrectionFunc)
@@ -113,7 +119,8 @@ struct GsfElectronAlgo::GeneralData
 
 GsfElectronAlgo::GeneralData::~GeneralData()
  {
-  delete hcalHelper ;
+  delete hcalHelperBarrel ;
+  delete hcalHelperEndcap ;
   delete hcalHelperPflow ;
  }
 
@@ -563,11 +570,35 @@ void GsfElectronAlgo::calculateShowerShape( const reco::SuperClusterRef & theClu
    }
   else
    {
-    showerShape.hcalDepth1OverEcal = generalData_->hcalHelper->hcalESumDepth1(*theClus)/theClus->energy() ;
-    showerShape.hcalDepth2OverEcal = generalData_->hcalHelper->hcalESumDepth2(*theClus)/theClus->energy() ;
-    showerShape.hcalTowersBehindClusters = generalData_->hcalHelper->hcalTowersBehindClusters(*theClus) ;
-    showerShape.hcalDepth1OverEcalBc = generalData_->hcalHelper->hcalESumDepth1BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
-    showerShape.hcalDepth2OverEcalBc = generalData_->hcalHelper->hcalESumDepth2BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+    if (detector==EcalBarrel) {
+      if( generalData_->hcalHelperBarrel->getConfig().hOverEMethod != 3 ) {
+	showerShape.hcalDepth1OverEcal = generalData_->hcalHelperBarrel->hcalESumDepth1(*theClus)/theClus->energy() ; 
+	showerShape.hcalDepth2OverEcal = generalData_->hcalHelperBarrel->hcalESumDepth2(*theClus)/theClus->energy() ;
+	showerShape.hcalTowersBehindClusters = generalData_->hcalHelperBarrel->hcalTowersBehindClusters(*theClus) ;
+	showerShape.hcalDepth1OverEcalBc = generalData_->hcalHelperBarrel->hcalESumDepth1BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+	showerShape.hcalDepth2OverEcalBc = generalData_->hcalHelperBarrel->hcalESumDepth2BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+      } else {
+	 showerShape.hcalDepth1OverEcal = generalData_->hcalHelperBarrel->HCALClustersBehindSC(*theClus)/theClus->energy() ; 
+      }
+    }
+    else if (detector==EcalEndcap || detector==EcalShashlik) {
+      if( generalData_->hcalHelperEndcap->getConfig().hOverEMethod != 3 ) {
+	showerShape.hcalDepth1OverEcal = generalData_->hcalHelperEndcap->hcalESumDepth1(*theClus)/theClus->energy() ; 
+	showerShape.hcalDepth2OverEcal = generalData_->hcalHelperEndcap->hcalESumDepth2(*theClus)/theClus->energy() ;
+	showerShape.hcalTowersBehindClusters = generalData_->hcalHelperEndcap->hcalTowersBehindClusters(*theClus) ;
+	showerShape.hcalDepth1OverEcalBc = generalData_->hcalHelperEndcap->hcalESumDepth1BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+	showerShape.hcalDepth2OverEcalBc = generalData_->hcalHelperEndcap->hcalESumDepth2BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+      } else {
+	 showerShape.hcalDepth1OverEcal = generalData_->hcalHelperEndcap->HCALClustersBehindSC(*theClus)/theClus->energy() ; 
+      }
+    }
+    else if (detector==HGCEE ) {
+    showerShape.hcalDepth1OverEcal = generalData_->hcalHelperEndcap->HCALClustersBehindSC(*theClus)/theClus->energy() ; 
+    //showerShape.hcalDepth2OverEcal = generalData_->hcalHelperBarrel->hcalESumDepth2(*theClus)/theClus->energy() ;
+    //showerShape.hcalTowersBehindClusters = generalData_->hcalHelperBarrel->hcalTowersBehindClusters(*theClus) ;
+    //showerShape.hcalDepth1OverEcalBc = generalData_->hcalHelperBarrel->hcalESumDepth1BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+    //showerShape.hcalDepth2OverEcalBc = generalData_->hcalHelperBarrel->hcalESumDepth2BehindClusters(showerShape.hcalTowersBehindClusters)/theClus->energy() ;
+    }
    }
  }
 
@@ -581,14 +612,15 @@ GsfElectronAlgo::GsfElectronAlgo
    const StrategyConfiguration & strategyCfg,
    const CutsConfiguration & cutsCfg,
    const CutsConfiguration & cutsCfgPflow,
-   const ElectronHcalHelper::Configuration & hcalCfg,
+   const ElectronHcalHelper::Configuration & hcalCfgBarrel,
+   const ElectronHcalHelper::Configuration & hcalCfgEndcap,
    const ElectronHcalHelper::Configuration & hcalCfgPflow,
    const IsolationConfiguration & isoCfg,
    const EcalRecHitsConfiguration & recHitsCfg,
    EcalClusterFunctionBaseClass * superClusterErrorFunction,
    EcalClusterFunctionBaseClass * crackCorrectionFunction
  )
- : generalData_(new GeneralData(inputCfg,strategyCfg,cutsCfg,cutsCfgPflow,hcalCfg,hcalCfgPflow,isoCfg,recHitsCfg,superClusterErrorFunction,crackCorrectionFunction)),
+ : generalData_(new GeneralData(inputCfg,strategyCfg,cutsCfg,cutsCfgPflow,hcalCfgBarrel,hcalCfgEndcap,hcalCfgPflow,isoCfg,recHitsCfg,superClusterErrorFunction,crackCorrectionFunction)),
    eventSetupData_(new EventSetupData),
    eventData_(0), electronData_(0)
  {}
@@ -635,7 +667,8 @@ void GsfElectronAlgo::checkSetup( const edm::EventSetup & es )
     es.get<CaloTopologyRecord>().get(eventSetupData_->caloTopo);
   }
 
-  generalData_->hcalHelper->checkSetup(es) ;
+  generalData_->hcalHelperBarrel->checkSetup(es) ;
+  generalData_->hcalHelperEndcap->checkSetup(es) ;
   generalData_->hcalHelperPflow->checkSetup(es) ;
 
   if (generalData_->superClusterErrorFunction)
@@ -690,7 +723,8 @@ void GsfElectronAlgo::beginEvent( edm::Event & event )
   eventData_->beamspot = recoBeamSpotHandle.product() ;
 
   // prepare access to hcal data
-  generalData_->hcalHelper->readEvent(event) ;
+  generalData_->hcalHelperBarrel->readEvent(event) ;
+  generalData_->hcalHelperEndcap->readEvent(event) ;
   generalData_->hcalHelperPflow->readEvent(event) ;
 
   // Isolation algos
@@ -1032,15 +1066,20 @@ void GsfElectronAlgo::setCutBasedPreselectionFlag( GsfElectron * ele, const reco
   LogTrace("GsfElectronAlgo") << "HoE1 : " << ele->hcalDepth1OverEcal() << ", HoE2 : " << ele->hcalDepth2OverEcal();
   double had = ele->hcalOverEcal()*ele->superCluster()->energy() ;
   const reco::CaloCluster & seedCluster = *(ele->superCluster()->seed()) ;
+  int component = seedCluster.hitsAndFractions()[0].first.det();
   int detector = seedCluster.hitsAndFractions()[0].first.subdetId() ;
   bool HoEveto = false ;
-  if (detector==EcalBarrel && (had<cfg->maxHBarrel || (had/ele->superCluster()->energy())<cfg->maxHOverEBarrel)) HoEveto=true;
-  else if (detector==EcalEndcap && (had<cfg->maxHEndcaps || (had/ele->superCluster()->energy())<cfg->maxHOverEEndcaps)) HoEveto=true;
+  if (component== DetId::Ecal && detector==EcalBarrel && (had<cfg->maxHBarrel || (had/ele->superCluster()->energy())<cfg->maxHOverEBarrel)) HoEveto=true;
+  else if (component== DetId::Ecal && detector==EcalEndcap && (had<cfg->maxHEndcaps || (had/ele->superCluster()->energy())<cfg->maxHOverEEndcaps)) HoEveto=true;
+  else if (component== DetId::Ecal && detector==EcalShashlik && (had<cfg->maxHEndcaps || (had/ele->superCluster()->energy())<cfg->maxHOverEEndcaps)) HoEveto=true;
+  else if (component== DetId::Forward && detector==HGCEE && (had<cfg->maxHEndcaps || (had/ele->superCluster()->energy())<cfg->maxHOverEEndcaps)) HoEveto=true;
   if ( !HoEveto ) return ;
   LogTrace("GsfElectronAlgo") << "H/E criteria are satisfied";
 
-  // delta eta criteria
-  double deta = ele->deltaEtaSuperClusterTrackAtVtx() ;
+  //ROB delta eta criteria
+  
+  float deta = ele->deltaEtaSeedClusterTrackAtCalo() ; //ROB
+  //double deta = ele->deltaEtaSuperClusterTrackAtVtx() ; //ROB
   LogTrace("GsfElectronAlgo") << "delta eta : " << deta ;
   if (ele->isEB() && (std::abs(deta) > cfg->maxDeltaEtaBarrel)) return ;
   if (ele->isEE() && (std::abs(deta) > cfg->maxDeltaEtaEndcaps)) return ;
@@ -1198,6 +1237,7 @@ void GsfElectronAlgo::createElectron()
   //====================================================
 
   reco::GsfElectron::FiducialFlags fiducialFlags ;
+  int component = seedXtalId.det();
   int detector = seedXtalId.subdetId() ;
   double feta=std::abs(electronData_->superClusterRef->position().eta()) ;
   if (detector==EcalBarrel)
@@ -1232,6 +1272,9 @@ void GsfElectronAlgo::createElectron()
     {
       fiducialFlags.isEE = true;
     }
+  else if( component == DetId::Forward && detector==HGCEE ) {
+    fiducialFlags.isEE = true;
+  }
   else
    { throw cms::Exception("GsfElectronAlgo|UnknownXtalRegion")<<"createElectron(): do not know if it is a barrel or endcap seed cluster !!!!" ; }
 

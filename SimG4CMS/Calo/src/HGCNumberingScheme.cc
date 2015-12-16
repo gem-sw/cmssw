@@ -9,11 +9,11 @@
 #include "CLHEP/Units/GlobalSystemOfUnits.h"
 #include <iostream>
 
-#define DebugLog
-
 HGCNumberingScheme::HGCNumberingScheme(const DDCompactView & cpv, 
-				       std::string & name) :
-  CaloNumberingScheme(0), hgcons(new HGCalDDDConstants(cpv,name)) {
+				       std::string & name, bool check,
+				       int verbose) :
+  CaloNumberingScheme(0), check_(check), verbosity(verbose),
+  hgcons(new HGCalDDDConstants(cpv,name)) {
   edm::LogInfo("HGCSim") << "Creating HGCNumberingScheme for " << name;
 }
 
@@ -22,21 +22,33 @@ HGCNumberingScheme::~HGCNumberingScheme() {
 }
 
 //
-uint32_t HGCNumberingScheme::getUnitID(ForwardSubdetector &subdet, int &layer, int &sector, int &iz, G4ThreeVector &pos) {
+uint32_t HGCNumberingScheme::getUnitID(ForwardSubdetector subdet, int layer, int sector, int iz, const G4ThreeVector &pos) {
   
   std::pair<int,int> phicell = hgcons->assignCell(pos.x(),pos.y(),layer,0,false);
   int phiSector = phicell.first;
   int icell     = phicell.second;
   
-  //check if it fits
-  if (icell>0xffff) {
-    edm::LogError("HGCSim") << "[HGCNumberingScheme] cell id seems to be out of bounds cell id=" << icell << "\n"
-			    << "\tLocal position: (" << pos.x() << "," << pos.y() << "," << pos.z() << ")\n"
-			    << "\tlayer " << layer << "\tsector " << sector;
-  }    
-  
   //build the index
   uint32_t index = HGCalDetId(subdet,iz,layer,sector,phiSector,icell).rawId();
+  
+  //check if it fits
+  if ((!HGCalDetId::isValid(subdet,iz,layer,sector,phiSector,icell)) ||
+      (!hgcons->isValid(layer,sector,icell,false))) {
+    index = 0;
+    if (check_ && icell != -1) {
+      edm::LogError("HGCSim") << "[HGCNumberingScheme] ID out of bounds :"
+			      << " Subdet= " << subdet << " Zside= " << iz
+			      << " Layer= " << layer << " Sector= " << sector
+			      << " SubSector= " << phiSector << " Cell= "
+			      << icell << " Local position: (" << pos.x() 
+			      << "," << pos.y() << "," << pos.z() << ")";
+    }
+  }    
+  if (verbosity > 0)
+    std::cout << "HGCNumberingScheme::i/p " << subdet << ":" << layer << ":" 
+	      << sector << ":" << iz << ":" << pos << " o/p " << phiSector 
+	      << ":" << icell << ":" << std::hex << index << std::dec << " " 
+	      << HGCalDetId(index) << std::endl;
   return index;
 }
 

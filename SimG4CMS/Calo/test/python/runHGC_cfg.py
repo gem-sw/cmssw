@@ -3,12 +3,13 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("PROD")
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.load("IOMC.EventVertexGenerators.VtxSmearedGauss_cfi")
-process.load("Geometry.HGCalCommonData.testHGCXML_cfi")
-process.load("Geometry.TrackerNumberingBuilder.trackerNumberingGeometry_cfi")
+process.load("Geometry.HGCalCommonData.ecalhcalPhaseIIGeometryXML_cfi")
+#process.load("Geometry.HGCalCommonData.testHGCXML_cfi")
+#process.load("Geometry.TrackerNumberingBuilder.trackerNumberingGeometry_cfi")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.EventContent.EventContent_cff")
 process.load("SimG4Core.Application.g4SimHits_cfi")
-#process.load("Geometry.HGCalCommonData.shashlikNumberingInitialization_cfi")
+process.load("Geometry.HGCalCommonData.hgcalV6NumberingInitialization_cfi")
 
 process.MessageLogger = cms.Service("MessageLogger",
     destinations = cms.untracked.vstring('cout'),
@@ -49,7 +50,7 @@ process.RandomNumberGeneratorService.VtxSmeared.initialSeed = 123456789
 process.Timing = cms.Service("Timing")
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(2)
+    input = cms.untracked.int32(100)
 )
 
 process.source = cms.Source("EmptySource",
@@ -59,7 +60,7 @@ process.source = cms.Source("EmptySource",
 
 process.generator = cms.EDProducer("FlatRandomEGunProducer",
     PGunParameters = cms.PSet(
-        PartID = cms.vint32(13),
+        PartID = cms.vint32(211),
         MinEta = cms.double(1.75),
         MaxEta = cms.double(2.50),
         MinPhi = cms.double(-3.1415926),

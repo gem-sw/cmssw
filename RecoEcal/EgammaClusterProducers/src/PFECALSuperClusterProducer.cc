@@ -81,6 +81,7 @@ PFECALSuperClusterProducer::PFECALSuperClusterProducer(const edm::ParameterSet& 
   bool seedThresholdIsET = iConfig.getParameter<bool>("seedThresholdIsET");
 
   bool useDynamicDPhi = iConfig.getParameter<bool>("useDynamicDPhiWindow");
+  bool usePUEtHardCut = iConfig.getParameter<bool>("usePUEtHardCut");
 
   double threshPFClusterSeedBarrel = iConfig.getParameter<double>("thresh_PFClusterSeedBarrel");
   double threshPFClusterBarrel = iConfig.getParameter<double>("thresh_PFClusterBarrel");
@@ -99,7 +100,7 @@ PFECALSuperClusterProducer::PFECALSuperClusterProducer(const edm::ParameterSet& 
   //double threshPFClusterMustacheOutBarrel = iConfig.getParameter<double>("thresh_PFClusterMustacheOutBarrel");
   //double threshPFClusterMustacheOutEndcap = iConfig.getParameter<double>("thresh_PFClusterMustacheOutEndcap");
 
-  double doSatelliteClusterMerge = 
+  bool doSatelliteClusterMerge = 
     iConfig.getParameter<bool>("doSatelliteClusterMerge");
   double satelliteClusterSeedThreshold = 
     iConfig.getParameter<double>("satelliteClusterSeedThreshold");
@@ -111,6 +112,7 @@ PFECALSuperClusterProducer::PFECALSuperClusterProducer(const edm::ParameterSet& 
   superClusterAlgo_.setEnergyWeighting(_theenergyweight);
   superClusterAlgo_.setUseETForSeeding(seedThresholdIsET);
   superClusterAlgo_.setUseDynamicDPhi(useDynamicDPhi);
+  superClusterAlgo_.setUsePUEtHardCut(usePUEtHardCut);
 
   superClusterAlgo_.setThreshSuperClusterEt( iConfig.getParameter<double>("thresh_SCEt") );
   
@@ -155,6 +157,9 @@ PFECALSuperClusterProducer::PFECALSuperClusterProducer(const edm::ParameterSet& 
   PFClusterAssociationEBEE_ = "PFClusterAssociationEBEE";
   PFClusterAssociationES_ = "PFClusterAssociationES";
   
+  bool useHGCID = iConfig.getParameter<bool>("useHGCEmPreID");
+  superClusterAlgo_.setUseHGCPreId(useHGCID);
+
   produces<reco::SuperClusterCollection>(PFSuperClusterCollectionBarrel_);  
   produces<reco::SuperClusterCollection>(PFSuperClusterCollectionEndcapWithPreshower_);
   produces<reco::CaloClusterCollection>(PFBasicClusterCollectionBarrel_);

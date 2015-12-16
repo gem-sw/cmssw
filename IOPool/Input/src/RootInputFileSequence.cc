@@ -24,6 +24,8 @@
 #include "InputFile.h"
 #include "TSystem.h"
 
+#include <random>
+
 namespace edm {
   RootInputFileSequence::RootInputFileSequence(
                 ParameterSet const& pset,
@@ -54,7 +56,7 @@ namespace edm {
     // yet, so the ParameterSet does not get validated yet.  As soon as all the modules with a SecSource
     // have defined descriptions, the defaults in the getUntrackedParameterSet function calls can
     // and should be deleted from the code.
-    initialNumberOfEventsToSkip_(inputType == InputType::Primary ? pset.getUntrackedParameter<unsigned int>("skipEvents", 0U) : 0U),
+    initialNumberOfEventsToSkip_(inputType != InputType::SecondaryFile ? pset.getUntrackedParameter<unsigned int>("skipEvents", 0U) : 0U),
     noEventSort_(inputType == InputType::Primary ? pset.getUntrackedParameter<bool>("noEventSort", true) : false),
     skipBadFiles_(pset.getUntrackedParameter<bool>("skipBadFiles", false)),
     treeCacheSize_(noEventSort_ ? pset.getUntrackedParameter<unsigned int>("cacheSize", roottree::defaultCacheSize) : 0U),
@@ -77,31 +79,51 @@ namespace edm {
       enablePrefetching_ = pSLC->enablePrefetching();
     }
 
-    StorageFactory *factory = StorageFactory::get();
-    for(fileIter_ = fileIterBegin_; fileIter_ != fileIterEnd_; ++fileIter_) {
-      factory->activateTimeout(fileIter_->fileName());
-      factory->stagein(fileIter_->fileName());
-      //NOTE: we do not want to stage in all secondary files since we can be given a list of
-      // thousands of files and prestaging all those files can cause a site to fail.
-      // So, we stage in the first secondary file only.
-      if(inputType_ != InputType::Primary) {
-        break;
-      }
-    }
-
     std::string parametersMustMatch = pset.getUntrackedParameter<std::string>("parametersMustMatch", std::string("permissive"));
     if(parametersMustMatch == std::string("strict")) parametersMustMatch_ = BranchDescription::Strict;
 
     std::string branchesMustMatch = pset.getUntrackedParameter<std::string>("branchesMustMatch", std::string("permissive"));
     if(branchesMustMatch == std::string("strict")) branchesMustMatch_ = BranchDescription::Strict;
 
-    for(fileIter_ = fileIterBegin_; fileIter_ != fileIterEnd_; ++fileIter_) {
-      initFile(skipBadFiles_);
-      if(rootFile_) break;
+    StorageFactory *factory = StorageFactory::get();
+
+    if(inputType == InputType::SecondarySource) {
+      // For the secondary input source we do not stage in,
+      // and we randomly choose the first file to open.
+      // We cannot use the random number service yet.
+      std::ifstream f("/dev/urandom");
+      unsigned int seed;
+      f.read(reinterpret_cast<char*>(&seed), sizeof(seed));
+      std::default_random_engine dre(seed);
+      size_t count = fileIterEnd_ - fileIterBegin_;
+      std::uniform_int_distribution<int> distribution(0, count - 1);
+      while(!rootFile_ && count != 0) {
+        --count;
+        int offset = distribution(dre);
+        fileIter_ = fileIterBegin_ + offset;
+        initFile(skipBadFiles_);
+      }
+    } else {
+      // Prestage the files
+      for(fileIter_ = fileIterBegin_; fileIter_ != fileIterEnd_; ++fileIter_) {
+        factory->activateTimeout(fileIter_->fileName());
+        factory->stagein(fileIter_->fileName());
+        //NOTE: we do not want to stage in all secondary files since we can be given a list of
+        // thousands of files and prestaging all those files can cause a site to fail.
+        // So, we stage in the first secondary file only.
+        if(inputType_ != InputType::Primary) {
+          break;
+        }
+      }
+      // Open the first file.
+      for(fileIter_ = fileIterBegin_; fileIter_ != fileIterEnd_; ++fileIter_) {
+        initFile(skipBadFiles_);
+        if(rootFile_) break;
+      }
     }
     if(rootFile_) {
       productRegistryUpdate().updateFromInput(rootFile_->productRegistry()->productList());
-      if(initialNumberOfEventsToSkip_ != 0) {
+      if(inputType == InputType::Primary && initialNumberOfEventsToSkip_ != 0) {
         skipEvents(initialNumberOfEventsToSkip_);
       }
     }
@@ -225,7 +247,10 @@ namespace edm {
       try {
         std::unique_ptr<InputSource::FileOpenSentry>
           sentry(inputType_ == InputType::Primary ? new InputSource::FileOpenSentry(input_) : 0);
-        filePtr.reset(new InputFile(gSystem->ExpandPathName(fallbackName.c_str()), "  Fallback request to file "));
+        std::string fallbackFullName = gSystem->ExpandPathName(fallbackName.c_str());
+        StorageFactory *factory = StorageFactory::get();
+        if (factory) {factory->activateTimeout(fallbackFullName);}
+        filePtr.reset(new InputFile(fallbackFullName.c_str(), "  Fallback request to file "));
         usedFallback_ = true;
       }
       catch (cms::Exception const& e) {
@@ -591,23 +616,45 @@ namespace edm {
     productSelectorRules_ = ProductSelectorRules(pset, "inputCommands", "InputSource");
   }
 
+  void
+  RootInputFileSequence::skipEntries(unsigned int offset) {
+    while(offset > 0) {
+      while(offset > 0 && rootFile_->nextEventEntry()) {
+        --offset;
+      }
+      if(offset > 0) {
+        ++fileIter_;
+        if(fileIter_ == fileIterEnd_) {
+          fileIter_ = fileIterBegin_;
+        }
+        initFile(false);
+        assert(rootFile_);
+        rootFile_->setAtEventEntry(IndexIntoFile::invalidEntry);
+      }
+    }
+  }
+
   EventPrincipal*
   RootInputFileSequence::readOneSequential(EventPrincipal& cache) {
     skipBadFiles_ = false;
-    if(fileIter_ == fileIterEnd_ || !rootFile_) {
+    if(firstFile_) {
+      firstFile_ = false;
       if(fileIterEnd_ == fileIterBegin_) {
         throw Exception(errors::Configuration) << "RootInputFileSequence::readOneSequential(): no input files specified for secondary input source.\n";
       }
-      fileIter_ = fileIterBegin_;
-      initFile(false);
+      if(fileIter_ != fileIterBegin_) {
+        fileIter_ = fileIterBegin_;
+        initFile(false);
+      }
       rootFile_->setAtEventEntry(-1);
+      skipEntries(initialNumberOfEventsToSkip_);
     }
     rootFile_->nextEventEntry();
     EventPrincipal* ep = rootFile_->readCurrentEvent(cache);
     if(ep == 0) {
       ++fileIter_;
       if(fileIter_ == fileIterEnd_) {
-        return 0;
+        fileIter_ = fileIterBegin_;
       }
       initFile(false);
       rootFile_->setAtEventEntry(-1);
@@ -618,11 +665,29 @@ namespace edm {
 
   EventPrincipal*
   RootInputFileSequence::readOneSequentialWithID(EventPrincipal& cache, LuminosityBlockID const& id) {
-    if(fileIterEnd_ == fileIterBegin_) {
-      throw Exception(errors::Configuration) << "RootInputFileSequence::readOneSequentialWithID(): no input files specified for secondary input source.\n";
-    }
     skipBadFiles_ = false;
-    if(fileIter_ == fileIterEnd_ || !rootFile_ ||
+    if(firstFile_) {
+      firstFile_ = false;
+      if(fileIterEnd_ == fileIterBegin_) {
+        throw Exception(errors::Configuration) << "RootInputFileSequence::readOneSequential(): no input files specified for secondary input source.\n";
+      }
+      if(fileIter_ != fileIterBegin_) {
+        fileIter_ = fileIterBegin_;
+        initFile(false);
+      }
+      assert(rootFile_);
+      rootFile_->setAtEventEntry(IndexIntoFile::invalidEntry);
+      int offset = initialNumberOfEventsToSkip_;
+      while(offset > 0) {
+        bool found = readOneSequentialWithID(cache, id);
+        if(!found) {
+          return nullptr;
+        }
+        --offset;
+      }
+    }
+    assert(rootFile_);
+    if(fileIter_ == fileIterEnd_ ||
         rootFile_->indexIntoFileIter().run() != id.run() || 
         rootFile_->indexIntoFileIter().lumi() != id.luminosityBlock()) {
       bool found = skipToItem(id.run(), id.luminosityBlock(), 0, false);
@@ -643,6 +708,7 @@ namespace edm {
 
   EventPrincipal*
   RootInputFileSequence::readOneSpecified(EventPrincipal& cache, EventID const& id) {
+    firstFile_ = false;
     if(fileIterEnd_ == fileIterBegin_) {
       throw Exception(errors::Configuration) << "RootInputFileSequence::readOneSpecified(): no input files specified for secondary input source.\n";
     }
@@ -660,6 +726,7 @@ namespace edm {
 
   EventPrincipal*
   RootInputFileSequence::readOneRandom(EventPrincipal& cache) {
+    firstFile_ = false;
     if(fileIterEnd_ == fileIterBegin_) {
       throw Exception(errors::Configuration) << "RootInputFileSequence::readOneRandom(): no input files specified for secondary input source.\n";
     }
@@ -700,6 +767,7 @@ namespace edm {
 
   EventPrincipal*
   RootInputFileSequence::readOneRandomWithID(EventPrincipal& cache, LuminosityBlockID const& id) {
+    firstFile_ = false;
     if(fileIterEnd_ == fileIterBegin_) {
       throw Exception(errors::Configuration) << "RootInputFileSequence::readOneRandomWithID(): no input files specified for secondary input source.\n";
     }

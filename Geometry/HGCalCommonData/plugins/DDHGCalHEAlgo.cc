@@ -101,13 +101,19 @@ void DDHGCalHEAlgo::constructLayers(DDLogicalPart module, DDCompactView& cpv) {
     type[ii]       =-ityp;
     double zi      = zMinBlock[ii];
     zMinBlock[ii] += thickModule;
-    double zlayer = zz + thickModule;
+    if (heightType[i] == 0) zz = zi;
+
+    double zlayer  = zz + 2*thickModule;
+    if((i % 6)>2) zlayer  = zz + thickModule;
+
     double zo      = zi + thick[ii];
     double rinF    = zi * slopeB;
     double rinB    = zlayer * slopeB;
+
     double routF   = (heightType[i] == 0) ? rMax(zi) : rMax(zz);
+    if((i % 6)>2) routF   = (heightType[i] == 0) ? rMax(zi-thickModule) : rMax(zz-thickModule);
+    
     double routB   = rMax(zo);
-    if (heightType[i] == 0) zz = zi;
     std::string name = "HGCal"+names[ii]+dbl_to_string(copy);
     edm::LogInfo("HGCalGeom") << "DDHGCalEEAlgo test: Layer " << i << ":" 
 			      << ii << ":" << ityp << " Front " << zi << ", " 
@@ -126,7 +132,7 @@ void DDHGCalHEAlgo::constructLayers(DDLogicalPart module, DDCompactView& cpv) {
                    DDSplit(materials[ii]).second);
     DDMaterial matter(matName);
     DDLogicalPart glog = DDLogicalPart(solid.ddname(), matter, solid);
-    edm::LogInfo("HGCalGeom") << "DDHGCalHEAlgo test: " 
+          edm::LogInfo("HGCalGeom") << "DDHGCalHEAlgo test: " 
 			      << solid.name() << " Trap made of " << matName
 			      << " of dimensions " << 0.5*thick[ii] << ", "
 			      << parm.theta/CLHEP::deg << ", " 
@@ -134,7 +140,7 @@ void DDHGCalHEAlgo::constructLayers(DDLogicalPart module, DDCompactView& cpv) {
 			      << ", " << parm.bl1 << ", " << parm.tl1 
 			      << ", " << parm.alp/CLHEP::deg << ", " 
 			      << parm.yh2 << ", " << parm.bl2 << ", " 
-			      << parm.tl2 << ", " << parm.alp/CLHEP::deg;
+      			      << parm.tl2 << ", " << parm.alp/CLHEP::deg;
     DDTranslation r1(parm.xpos, parm.ypos, parm.zpos);
     cpv.position(glog, module, copy, r1, rot);
     edm::LogInfo("HGCalGeom") << "DDHGCalHEAlgo test: " << glog.name()
@@ -153,23 +159,25 @@ DDHGCalHEAlgo::parameterLayer(double rinF, double routF, double rinB,
   //Given rin, rout compute parameters of the trapezoid and 
   //position of the trapezoid for a standrd layer
   double alpha = CLHEP::pi/sectors;
-  edm::LogInfo("HCalGeom") << "Input: Front " << rinF << " " << routF << " "
-			   << zi << " Back " << rinB << " " << routB << " "
-			   << zo << " Alpha " << alpha/CLHEP::deg;
+  double rout  = routF;
+  edm::LogInfo("HGCalGeom") << "Input: Front " << rinF << " " << routF << " "
+			    << zi << " Back " << rinB << " " << routB << " "
+			    << zo << " Alpha " << alpha/CLHEP::deg << " Rout "
+			    << rout;
 
-  parm.yh2  = parm.yh1  = 0.5 * (routF*cos(alpha) - rinB);
+  parm.yh2  = parm.yh1  = 0.5 * (rout*cos(alpha) - rinB);
   parm.bl2  = parm.bl1  = rinB  * tan(alpha);
-  parm.tl2  = parm.tl1  = routF * sin(alpha);
-  parm.xpos = 0.5*(routF*cos(alpha)+rinB);
+  parm.tl2  = parm.tl1  = rout  * sin(alpha);
+  parm.xpos = 0.5*(rout*cos(alpha)+rinB);
   parm.ypos = 0.0;
   parm.zpos = 0.5*(zi+zo);
   parm.alp  = parm.theta  = parm.phi = 0;
-  edm::LogInfo("HCalGeom") << "Output Dimensions " << parm.yh1 << " " 
-			   << parm.bl1 << " " << parm.tl1 << " " << parm.yh2 
-			   << " " << parm.bl2 << " " << parm.tl2 << " " 
-			   << parm.alp/CLHEP::deg <<" " <<parm.theta/CLHEP::deg
-			   << " " << parm.phi/CLHEP::deg << " Position " 
-			   << parm.xpos << " " << parm.ypos << " " <<parm.zpos;
+  edm::LogInfo("HGCalGeom") << "Output Dimensions " << parm.yh1 << " " 
+			    << parm.bl1 << " " << parm.tl1 << " " << parm.yh2 
+			    << " " << parm.bl2 << " " << parm.tl2 << " " 
+			    << parm.alp/CLHEP::deg <<" "<<parm.theta/CLHEP::deg
+			    << " " << parm.phi/CLHEP::deg << " Position " 
+			    << parm.xpos << " " << parm.ypos <<" " <<parm.zpos;
   return parm;
 }
 
@@ -181,17 +189,18 @@ DDHGCalHEAlgo::parameterLayer(int type, double rinF, double routF, double rinB,
   //Given rin, rout compute parameters of the trapezoid and 
   //position of the trapezoid for a standrd layer
   double alpha = CLHEP::pi/sectors;
+  double rout  = routF;
   edm::LogInfo("HGCalGeom") << "Input " << type << " Front " << rinF << " " 
 			    << routF << " " << zi << " Back " << rinB << " " 
 			    << routB << " " << zo <<" Alpha " 
-			    << alpha/CLHEP::deg;
+			    << alpha/CLHEP::deg << " rout " << rout;
 
-  parm.yh2  = parm.yh1  = 0.5 * (routF*cos(alpha) - rinB);
+  parm.yh2  = parm.yh1  = 0.5 * (rout*cos(alpha) - rinB);
   parm.bl2  = parm.bl1  = 0.5 * rinB  * tan(alpha);
-  parm.tl2  = parm.tl1  = 0.5 * routF * sin(alpha);
+  parm.tl2  = parm.tl1  = 0.5 * rout  * sin(alpha);
   double dx = 0.25* (parm.bl2+parm.tl2-parm.bl1-parm.tl1);
   double dy = 0.0;
-  parm.xpos = 0.5*(routF*cos(alpha)+rinB);
+  parm.xpos = 0.5*(rout*cos(alpha)+rinB);
   parm.ypos = 0.25*(parm.bl2+parm.tl2+parm.bl1+parm.tl1);
   parm.zpos = 0.5*(zi+zo);
   parm.alp  = atan(0.5 * tan(alpha));
@@ -221,9 +230,12 @@ DDHGCalHEAlgo::parameterLayer(int type, double rinF, double routF, double rinB,
 double DDHGCalHEAlgo::rMax(double z) {
 
   double r(0);
+  unsigned int ik(0);
   for (unsigned int k=0; k<slopeT.size(); ++k) {
     if (z < zFront[k]) break;
-    r = rMaxFront[k] + (z - zFront[k]) * slopeT[k];
+    r  = rMaxFront[k] + (z - zFront[k]) * slopeT[k];
+    ik = k;
   }
+  edm::LogInfo("HGCalGeom") << "rMax : " << z << ":" << ik << ":" << r ;
   return r;
 }

@@ -11,11 +11,18 @@ HGCalRecHitWorkerSimple::HGCalRecHitWorkerSimple(const edm::ParameterSet&ps) :
         HGCalRecHitWorkerBaseClass(ps)
 {
         rechitMaker_ = new HGCalRecHitSimpleAlgo();
-	//        v_chstatus_ = ps.getParameter<std::vector<int> >("ChannelStatusToBeExcluded");
-	//	v_DB_reco_flags_ = ps.getParameter<std::vector<int> >("flagsMapDBReco");
-	//        killDeadChannels_ = ps.getParameter<bool>("killDeadChannels");
-	// uncomment at more advanced simulation or data
 
+	// HGCee constants 
+	HGCEE_keV2DIGI_   =  ps.getParameter<double>("HGCEE_keV2DIGI");
+	hgceeUncalib2GeV_ = 1.0e-6/HGCEE_keV2DIGI_;
+
+	// HGChef constants
+	HGCHEF_keV2DIGI_   =  ps.getParameter<double>("HGCHEF_keV2DIGI");
+	hgchefUncalib2GeV_ = 1.0e-6/HGCHEF_keV2DIGI_;
+
+	// HGCheb constants
+	HGCHEB_keV2DIGI_   =  ps.getParameter<double>("HGCHEB_keV2DIGI");
+	hgchebUncalib2GeV_ = 1.0e-6/HGCHEB_keV2DIGI_;
 }
 
 
@@ -33,31 +40,29 @@ void HGCalRecHitWorkerSimple::set(const edm::EventSetup& es)
 
 bool
 HGCalRecHitWorkerSimple::run( const edm::Event & evt,
-                const HGCUncalibratedRecHit& uncalibRH,
-                HGCRecHitCollection & result )
+			      const HGCUncalibratedRecHit& uncalibRH,
+			      HGCRecHitCollection & result )
 {
         DetId detid=uncalibRH.id();
-
+	
         uint32_t recoFlag = 0;
-
 
 	//	float offsetTime = 0; // the global time phase
 
         if ( detid.subdetId() == HGCEE ) {
-	  //                rechitMaker_->setADCToGeVConstant( float(agc->getEEValue()) );
+	  rechitMaker_->setADCToGeVConstant(float(hgceeUncalib2GeV_) );
 	  //		offsetTime = offtime->getEEValue();
         } else if ( detid.subdetId() == HGCHEF ) {
-	  //                rechitMaker_->setADCToGeVConstant( float(agc->getHEFValue()) );
+	  rechitMaker_->setADCToGeVConstant(float(hgchefUncalib2GeV_) );
 	  //		offsetTime = offtime->getHEFValue();
 	}else {
-          //      rechitMaker_->setADCToGeVConstant( float(agc->getHEBValue()) );
+	  rechitMaker_->setADCToGeVConstant(float(hgchebUncalib2GeV_) );
 	  //	offsetTime = offtime->getHEBValue();
         }
 	 
         // make the rechit and put in the output collection
 	if (recoFlag == 0) {
           HGCRecHit myrechit( rechitMaker_->makeRecHit(uncalibRH, /*recoflags_*/ 0) );	
-
 	  result.push_back(myrechit);
 	}
 

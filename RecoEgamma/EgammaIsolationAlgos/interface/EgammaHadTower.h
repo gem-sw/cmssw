@@ -3,6 +3,7 @@
 
 // Finds the towers behind a super-cluster using the CaloTowerConstituentMap
 // Florian Beaudette 22 Jun 2011
+// F.B. 17 Jul 2014. Added thresholds
 
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
@@ -10,28 +11,35 @@
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "Geometry/CaloTopology/interface/CaloTowerConstituentsMap.h"
+#include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 
+class PFClusterCollection;
 
 class EgammaHadTower {
  public:
 
-  enum HoeMode{SingleTower=0,TowersBehindCluster=1};
+  enum HoeMode{SingleTower=0,TowersBehindCluster=1,HCALCluster=2};
 
   EgammaHadTower(const edm::EventSetup &es,HoeMode mode=SingleTower);
   ~EgammaHadTower(){;}
-  double getDepth1HcalESum( const reco::SuperCluster & sc ) const ;
-  double getDepth2HcalESum( const reco::SuperCluster & sc ) const ;
-  double getDepth1HcalESum( const std::vector<CaloTowerDetId> & towers ) const ;
-  double getDepth2HcalESum( const std::vector<CaloTowerDetId> & towers ) const ;
+  double getDepth1HcalESum( const reco::SuperCluster & sc, float EtMin=0.) const ;
+  double getDepth2HcalESum( const reco::SuperCluster & sc, float EtMin=0.) const ;
+  double getDepth1HcalESum( const std::vector<CaloTowerDetId> & towers, float EtMin=0.) const ;
+  double getDepth2HcalESum( const std::vector<CaloTowerDetId> & towers, float EtMin=0.) const ;
   std::vector<CaloTowerDetId> towersOf(const reco::SuperCluster& sc) const ;
   CaloTowerDetId  towerOf(const reco::CaloCluster& cluster) const ;
   void setTowerCollection(const CaloTowerCollection* towercollection);
-
+  void setHCALClusterCollection(const std::vector<reco::PFCluster>* pfClusterCollection);
+  double getHCALClusterEnergy(const reco::SuperCluster & sc, float EtMin=0., double hOverEConeSize=0.15) const;
+  
  private:
   const CaloTowerConstituentsMap * towerMap_;
   HoeMode mode_;
   const CaloTowerCollection * towerCollection_;
   unsigned int NMaxClusters_;
+  const std::vector<reco::PFCluster>* hcalPFClusterCollection_;
+
 };
 
 bool ClusterGreaterThan(const reco::CaloClusterPtr& c1, const reco::CaloClusterPtr& c2) ;
