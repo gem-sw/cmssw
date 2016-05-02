@@ -33,15 +33,9 @@ GEMGeometryBuilderFromDDD::~GEMGeometryBuilderFromDDD()
 
 GEMGeometry* GEMGeometryBuilderFromDDD::build(const DDCompactView* cview, const MuonDDDConstants& muonConstants)
 {
-  // std::string attribute = "ReadOutName"; // could come from .orcarc
-  // std::string value     = "MuonGEMHits"; // could come from .orcarc
   std::string attribute = "MuStructure"; // could come from .orcarc
   std::string value     = "MuonEndCapGEM"; // could come from .orcarc
   DDValue val(attribute, value, 0.0);
-  // std::string attribute = "gem"; // could come from .orcarc
-  //std::string value     = "MuonGEMHits";    // could come from .orcarc
-  ///DDValue val("gem", 0.0);
-
 
   // Asking only for the MuonGEM's
   DDSpecificsFilter filter;
@@ -85,12 +79,11 @@ GEMGeometry* GEMGeometryBuilderFromDDD::buildGeometry(DDFilteredView& fv, const 
       GEMSuperChamber *gemSuperChamber = buildSuperChamber(fv, detIdCh);
       geometry->add(gemSuperChamber);
     }
+    GEMChamber *gemChamber = buildChamber(fv, detIdCh);
     
     // loop over chambers
     bool doChambers = fv.firstChild();
     while (doChambers){
-
-      GEMChamber *gemChamber = buildChamber(fv, detIdCh);
       
       //LogDebug("GEMGeometryBuilderFromDDD") <<" doChambers " << fv.translation()<<std::endl;
       // loop over eta partitions
@@ -168,7 +161,8 @@ GEMGeometry* GEMGeometryBuilderFromDDD::buildGeometry(DDFilteredView& fv, const 
 
 GEMSuperChamber* GEMGeometryBuilderFromDDD::buildSuperChamber(DDFilteredView& fv, GEMDetId detId) const {
   LogDebug("GEMGeometryBuilderFromDDD") << "buildSuperChamber "<< detId <<std::endl;
-  
+  std::cout << "buildSuperChamber "<<fv.logicalPart().name().name() <<" "<< detId <<std::endl;
+
   //std::vector<double> dpar = fv.logicalPart().solid().solidA().parameters();
   DDBooleanSolid solid = (DDBooleanSolid)(fv.logicalPart().solid());
   std::vector<double> dpar = solid.solidA().parameters();
@@ -178,10 +172,13 @@ GEMSuperChamber* GEMGeometryBuilderFromDDD::buildSuperChamber(DDFilteredView& fv
   double dx1= dpar[4]/cm;// bottom width is along local X
   double dx2= dpar[8]/cm;// top width is along local X
   dpar = solid.solidB().parameters();
-  dz += dpar[3];
-  
+  std::cout << "size "<< dx1 << " " << dx2 << " " << dy << " " << dz <<std::endl;
+  dz += dpar[3]/cm;// this is chamber size
+  dz *=2;
+  dz += 2.105;// 3.84;// superchamber size
   bool isOdd = detId.chamber()%2;
   RCPBoundPlane surf(boundPlane(fv, new TrapezoidalPlaneBounds(dx1,dx2,dy,dz), isOdd ));
+  std::cout << "size "<< dx1 << " " << dx2 << " " << dy << " " << dz <<std::endl;
 
   GEMSuperChamber* superChamber = new GEMSuperChamber(detId.superChamberId(), surf);
   return superChamber;
@@ -189,17 +186,21 @@ GEMSuperChamber* GEMGeometryBuilderFromDDD::buildSuperChamber(DDFilteredView& fv
 
 GEMChamber* GEMGeometryBuilderFromDDD::buildChamber(DDFilteredView& fv, GEMDetId detId) const {
   LogDebug("GEMGeometryBuilderFromDDD") << "buildChamber "<< detId <<std::endl;
+  std::cout << "buildChamber "<<fv.logicalPart().name().name() <<" "<< detId <<std::endl;
+ 
+  DDBooleanSolid solid = (DDBooleanSolid)(fv.logicalPart().solid());
+  std::vector<double> dpar = solid.solidA().parameters();
   
-  // Chamber specific parameter (size) 
-  std::vector<double> dpar = fv.logicalPart().solid().parameters();
-
   double dy = dpar[0]/cm;//length is along local Y
   double dz = dpar[3]/cm;// thickness is long local Z
   double dx1= dpar[4]/cm;// bottom width is along local X
   double dx2= dpar[8]/cm;// top width is along local X
-  
+  dpar = solid.solidB().parameters();
+  std::cout << "size "<< dx1 << " " << dx2 << " " << dy << " " << dz <<std::endl;
+  dz += dpar[3]/cm;// this is chamber size
   bool isOdd = detId.chamber()%2;
   RCPBoundPlane surf(boundPlane(fv, new TrapezoidalPlaneBounds(dx1,dx2,dy,dz), isOdd ));
+  std::cout << "size "<< dx1 << " " << dx2 << " " << dy << " " << dz <<std::endl;
 
   GEMChamber* chamber = new GEMChamber(detId.chamberId(), surf);
   return chamber;
@@ -207,6 +208,7 @@ GEMChamber* GEMGeometryBuilderFromDDD::buildChamber(DDFilteredView& fv, GEMDetId
 
 GEMEtaPartition* GEMGeometryBuilderFromDDD::buildEtaPartition(DDFilteredView& fv, GEMDetId detId) const {
   LogDebug("GEMGeometryBuilderFromDDD") << "buildEtaPartition "<< detId <<std::endl;
+  std::cout << "buildEtaPartition "<<fv.logicalPart().name().name() <<" "<< detId <<std::endl;
   
   // EtaPartition specific parameter (nstrips and npads) 
   DDValue numbOfStrips("nStrips");
@@ -243,6 +245,7 @@ GEMEtaPartition* GEMGeometryBuilderFromDDD::buildEtaPartition(DDFilteredView& fv
   std::string name = fv.logicalPart().name().name();
   GEMEtaPartitionSpecs* e_p_specs = new GEMEtaPartitionSpecs(GeomDetEnumerators::GEM, name, pars);
   
+  std::cout << "size "<< be << " " << te << " " << ap << " " << ti <<std::endl;
   GEMEtaPartition* etaPartition = new GEMEtaPartition(detId, surf, e_p_specs);
   return etaPartition;
 }
@@ -265,24 +268,23 @@ GEMGeometryBuilderFromDDD::boundPlane(const DDFilteredView& fv,
   DDRotationMatrix rotation = fv.rotation();//REMOVED .Inverse();
   DD3Vector x, y, z;
   rotation.GetComponents(x,y,z);
-  // LogDebug("GEMGeometryBuilderFromDDD") << "translation: "<< fv.translation() << std::endl;
-  // LogDebug("GEMGeometryBuilderFromDDD") << "rotation   : "<< fv.rotation() << std::endl;
+  LogDebug("GEMGeometryBuilderFromDDD") << "translation: "<< fv.translation() << std::endl;
+  LogDebug("GEMGeometryBuilderFromDDD") << "rotation   : "<< fv.rotation() << std::endl;
   // LogDebug("GEMGeometryBuilderFromDDD") << "INVERSE rotation manually: \n"
   // 	    << x.X() << ", " << x.Y() << ", " << x.Z() << std::endl
   // 	    << y.X() << ", " << y.Y() << ", " << y.Z() << std::endl
   // 	    << z.X() << ", " << z.Y() << ", " << z.Z() << std::endl;
 
   Surface::RotationType rotResult(float(x.X()),float(x.Y()),float(x.Z()),
-  				  float(y.X()),float(y.Y()),float(y.Z()),
-  				  float(z.X()),float(z.Y()),float(z.Z()));
-  
+   				  float(y.X()),float(y.Y()),float(y.Z()),
+   				  float(z.X()),float(z.Y()),float(z.Z()));
+
   //Change of axes for the forward
   Basic3DVector<float> newX(1.,0.,0.);
   Basic3DVector<float> newY(0.,0.,1.);
   Basic3DVector<float> newZ(0.,1.,0.);
-  // Odd chambers have wrong Z director assigned
-  if (isOddChamber) newY *= -1;
-  
+  //if (isOddChamber) 
+  newY *= -1;// if inverted in gem.xml
   rotResult.rotateAxes(newX, newY, newZ);
 
   return RCPBoundPlane( new BoundPlane( posResult, rotResult, bounds));
