@@ -1,0 +1,212 @@
+// -*- C++ -*-
+//
+// Package:    GEMFedRawProducer
+// Class:      GEMFedRawProducer
+// 
+/**\class GEMFedRawProducer GEMFedRawProducer.cc work/GEMFedRawProducer/plugins/GEMFedRawProducer.cc
+
+ Description: [one line class summary]
+
+ Implementation:
+     [Notes on implementation]
+*/
+//
+// Original Author:  Sergey Baranov
+//         Created:  Mon, 23 Nov 2015 14:33:52 GMT
+// $Id$
+//
+//
+
+
+// system include files
+#include <memory>
+#include <iostream>
+
+// user include files
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDProducer.h"
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/FEDRawData/interface/FEDRawDataCollection.h"
+//
+// class declaration
+//
+
+class GEMFedRawProducer : public edm::EDProducer {
+   public:
+      explicit GEMFedRawProducer(const edm::ParameterSet&);
+      ~GEMFedRawProducer();
+
+      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
+   private:
+      virtual void beginJob() override;
+      virtual void produce(edm::Event&, const edm::EventSetup&) override;
+      virtual void endJob() override;
+      
+      //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+      //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
+      //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+      //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+
+      // ----------member data ---------------------------
+};
+
+//
+// constants, enums and typedefs
+//
+
+
+//
+// static data member definitions
+//
+
+//
+// constructors and destructor
+//
+GEMFedRawProducer::GEMFedRawProducer(const edm::ParameterSet& iConfig)
+{
+   //register your products
+   //if do put with a label
+   produces<FEDRawDataCollection>("GEMTBData");
+ 
+
+  
+}
+
+
+GEMFedRawProducer::~GEMFedRawProducer()
+{
+ 
+   // do anything here that needs to be done at desctruction time
+   // (e.g. close files, deallocate resources etc.)
+
+}
+
+
+//
+// member functions
+//
+
+// ------------ method called to produce the data  ------------
+void
+GEMFedRawProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+   using namespace edm;
+/* This is an event example
+   //Read 'ExampleData' from the Event
+   Handle<ExampleData> pIn;
+   iEvent.getByLabel("example",pIn);
+
+   //Use the ExampleData to create an ExampleData2 which 
+   // is put into the Event
+   */
+   FEDRawData f1(64); // 6 bytes allocated
+   f1.data()[0]='m';
+   f1.data()[1]='a';
+   f1.data()[2]='r';
+   f1.data()[3]='c';
+   f1.data()[4]='e';
+   f1.data()[5]='l';
+   f1.data()[6]='l';
+   f1.data()[7]='o';
+   std::vector<unsigned char> byteVec;
+   byteVec.push_back('c');
+   byteVec.push_back('i');
+   byteVec.push_back('a');
+   byteVec.push_back('o');
+   byteVec.push_back('b');
+   byteVec.push_back('e');
+   byteVec.push_back('l');
+   byteVec.push_back('l');
+   byteVec.push_back('a');
+   byteVec.push_back('g');
+   byteVec.push_back('i');
+   byteVec.push_back('o');
+   byteVec.push_back('i');
+   byteVec.push_back('a');
+   f1.data()[8]=byteVec[0];
+   f1.data()[9]=byteVec[1];
+   f1.data()[10]=byteVec[2];
+   f1.data()[11]=byteVec[3];
+   f1.data()[12]=byteVec[4];
+   f1.data()[13]=byteVec[5];
+   f1.data()[14]=byteVec[6];
+   f1.data()[15]=byteVec[7];
+   f1.data()[16]=byteVec[8];
+   f1.data()[17]=byteVec[9];
+   f1.data()[18]=byteVec[10];
+   f1.data()[19]=byteVec[11];
+   f1.data()[20]=byteVec[12];
+   f1.data()[21]=byteVec[13];
+   std::auto_ptr<FEDRawDataCollection> pOut(new FEDRawDataCollection());
+   pOut->FEDData(999) = f1;
+   iEvent.put(pOut,"GEMTBData");
+
+/* this is an EventSetup example
+   //Read SetupData from the SetupRecord in the EventSetup
+   ESHandle<SetupData> pSetup;
+   iSetup.get<SetupRecord>().get(pSetup);
+*/
+   std::cout << " iEvent " << iEvent.eventAuxiliary().run() << " Run " << iEvent.eventAuxiliary().event() << std::endl;
+ 
+}
+
+// ------------ method called once each job just before starting event loop  ------------
+void 
+GEMFedRawProducer::beginJob()
+{
+}
+
+// ------------ method called once each job just after ending the event loop  ------------
+void 
+GEMFedRawProducer::endJob() {
+}
+
+// ------------ method called when starting to processes a run  ------------
+/*
+void
+GEMFedRawProducer::beginRun(edm::Run const&, edm::EventSetup const&)
+{
+}
+*/
+ 
+// ------------ method called when ending the processing of a run  ------------
+/*
+void
+GEMFedRawProducer::endRun(edm::Run const&, edm::EventSetup const&)
+{
+}
+*/
+ 
+// ------------ method called when starting to processes a luminosity block  ------------
+/*
+void
+GEMFedRawProducer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+{
+}
+*/
+ 
+// ------------ method called when ending the processing of a luminosity block  ------------
+/*
+void
+GEMFedRawProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+{
+}
+*/
+ 
+// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
+void
+GEMFedRawProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  //The following says we do not know what parameters are allowed so do no validation
+  // Please change this to state exactly what you do use, even if it is no parameters
+  edm::ParameterSetDescription desc;
+  desc.setUnknown();
+  descriptions.addDefault(desc);
+}
+
+//define this as a plug-in
+DEFINE_FWK_MODULE(GEMFedRawProducer);

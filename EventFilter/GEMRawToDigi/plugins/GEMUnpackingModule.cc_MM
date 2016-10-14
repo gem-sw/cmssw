@@ -1,0 +1,151 @@
+#include "EventFilter/GEMRawToDigi/interface/GEMUnpackingModule.h"
+#include "DataFormats/FEDRawData/interface/FEDRawData.h"
+#include "DataFormats/FEDRawData/interface/FEDNumbering.h"
+#include "DataFormats/FEDRawData/interface/FEDRawDataCollection.h"
+#include "DataFormats/FEDRawData/interface/FEDHeader.h"
+#include "DataFormats/FEDRawData/interface/FEDTrailer.h"
+//#include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
+
+#include "DataFormats/Common/interface/Handle.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/ESTransientHandle.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESWatcher.h"
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+
+#include "CondFormats/GEMObjects/interface/GEMEMap.h"
+#include "CondFormats/DataRecord/interface/GEMEMapRcd.h"
+
+#include <sstream>
+#include <bitset>
+
+typedef uint64_t Word64;
+
+
+GEMUnpackingModule::GEMUnpackingModule(const edm::ParameterSet& pset) 
+  : dataLabel_(pset.getParameter<edm::InputTag>("InputLabel"))
+{
+  //  produces<GEMDigiCollection>();
+}
+
+GEMUnpackingModule::~GEMUnpackingModule()
+{ 
+}
+
+void GEMUnpackingModule::beginRun(const edm::Run &run, const edm::EventSetup& es)
+{
+  if (gemMapWatcher.check(es)) {  
+    LogTrace("") << "record has CHANGED!!, (re)initialise readout map!";
+    edm::ESTransientHandle<GEMEMap> readoutMapping;
+    es.get<GEMEMapRcd>().get(readoutMapping);
+    LogTrace("") <<" GEM READOUT MAP VERSION: " << readoutMapping->version() << std::endl;
+  }
+}
+
+
+void GEMUnpackingModule::produce(edm::Event & ev, const edm::EventSetup& es)
+{
+  static bool debug = edm::MessageDrop::instance()->debugEnabled;
+  debug = true;
+  if (debug) LogDebug ("GEMUnpacker::produce") <<"Beginning To Unpack Event: "<<eventCounter_;
+ 
+  edm::Handle<FEDRawDataCollection> allFEDRawData; 
+  ev.getByLabel(dataLabel_,allFEDRawData); 
+
+
+  //  std::auto_ptr<GEMDigiCollection> producedGEMDigis(new GEMDigiCollection);
+
+  int status = 0;
+
+  //  for (int fedId= FEDNumbering::MINGEMFEDID; fedId<=FEDNumbering::MAXGEMFEDID; ++fedId){  
+  int fedId=999;
+  const FEDRawData & rawData = allFEDRawData->FEDData(fedId);
+  //  int triggerBX =0;
+  int nWords = rawData.size()/sizeof(Word64);
+  std::cout <<"Number of words found "<<nWords<<std::endl;
+  if (nWords>0) {
+    //
+    // check headers // No FED header for the moment
+    //
+    /*
+    const Word64* header = reinterpret_cast<const Word64* >(rawData.data()); header--;
+    bool moreHeaders = true;
+    while (moreHeaders) {
+      header++;
+      std::cout <<" Header "<< header<<std::endl;
+      FEDHeader fedHeader( reinterpret_cast<const unsigned char*>(header));
+      std::string fedh( reinterpret_cast<const char*>(header));
+      std::cout <<" Header  "<< header<<"  |"<<fedh<<"|"<<std::endl;
+      if (!fedHeader.check()) {
+        if (debug) LogTrace("") <<" ** PROBLEM **, header.check() failed, break"; 
+        break; 
+      }
+      if ( fedHeader.sourceID() != fedId) {
+
+        if (debug) LogTrace ("") <<" ** PROBLEM **, fedHeader.sourceID() != fedId"
+				 << "fedId = " << fedId<<" sourceID="<<fedHeader.sourceID(); 
+      }
+    }
+    */
+    //
+    // check trailers // No FED Trailer for the moment
+    //
+    /*
+    const Word64* trailer=reinterpret_cast<const Word64* >(rawData.data())+(nWords-1); trailer++;
+    bool moreTrailers = true;
+    while (moreTrailers) {
+      trailer--;
+      FEDTrailer fedTrailer(reinterpret_cast<const unsigned char*>(trailer));
+      std::string fedt( reinterpret_cast<const char*>(trailer));
+      std::cout <<" Trailer "<< trailer<<"  |"<<fedt<<"|"<<std::endl;
+      if ( !fedTrailer.check()) {
+        if (debug) LogTrace("") <<" ** PROBLEM **, trailer.check() failed, break";
+        break;
+      }
+      if ( fedTrailer.lenght()!= nWords) {
+        if (debug) LogTrace("")<<" ** PROBLEM **, fedTrailer.lenght()!= nWords, break";
+        break;
+      }
+      moreTrailers = fedTrailer.moreTrailers();
+    }
+    */
+    //
+    // data records
+    //
+    // tmp in absence of the FED header and FED trailer
+    const Word64* header = reinterpret_cast<const Word64* >(rawData.data());
+    const Word64* trailer=reinterpret_cast<const Word64* >(rawData.data())+(nWords-1); 
+    if (debug) {
+      std::ostringstream str;
+
+      
+      for (const Word64* word = header; word <= trailer; word++) {
+	std::string myd( reinterpret_cast<const char*>(word));
+	std::cout <<"data : "<<word<<"  Char "<<myd<<std::endl;
+	std::cout<<"    data: "<< *(reinterpret_cast<const std::bitset<64>*>(word)) << std::endl; 
+        str<<"    data: "<< *(reinterpret_cast<const std::bitset<64>*>(word)) << std::endl; 
+	
+      }
+      LogTrace("") << str.str();
+    }
+//    if (triggerBX != 51) continue;
+//    if (triggerBX != 2316) continue;
+    for (const Word64* word = header+1; word <= trailer; word++) {
+      for( int iRecord=1; iRecord<=4; iRecord++){
+	const uint16_t* pRecord = reinterpret_cast<const uint16_t* >(word)-iRecord;
+	std::cout <<" 16 bit datum "<<pRecord<<std::endl;
+       	std::string myd(reinterpret_cast<const char*>(pRecord+'\0'));
+	std::cout <<" 16 bit datum: "<<myd.substr(0,2)<<std::endl;
+
+	//            producedGEMDigis.get(), producedRawDataCounts.get(), producedRawSynchoCounts.get()); 
+      }
+    }
+  }
+  
+  if (status && debug) LogTrace("")<<" GEMUnpackingModule - There was unpacking PROBLEM in this event"<<std::endl;
+  //if (debug) LogTrace("") << DebugDigisPrintout()(producedGEMDigis.get()) <<std::endl;
+  //ev.put(producedGEMDigis);  
+
+}

@@ -1,0 +1,14 @@
+<lcgdict>
+
+  <class name="GEMEMap"/>
+  <class name="GEMEMapItem"/>
+  <class name="std::vector<GEMEMapItem>"/>
+
+  <class name="GEMEMap::GEMVFatMaptype"/>
+  <class name="std::vector<GEMEMap::GEMVFatMaptype>"/>
+
+  <class name="GEMEMap::GEMVFatMapInPos"/>
+  <class name="std::vector<GEMEMap::GEMVFatMapInPos>"/>
+
+
+</lcgdict>

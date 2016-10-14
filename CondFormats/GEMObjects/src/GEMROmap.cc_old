@@ -1,0 +1,24 @@
+      for (ipos=eMap->theVFatMapInPos.begin();ipos<eMap->theVFatMapInPos.end();ipos++){
+	if (ipos->position == position){
+	  mid = ipos->VFATmapTypeId;
+	  
+	  std::vector<GEMEMap::GEMVFatMaptype>::const_iterator imap;
+	  for (imap=eMap->theVFatMaptype.begin(); imap<eMap->theVFatMaptype.end();imap++){
+	    if (mid == imap->VFATmapTypeId){
+	      for (unsigned int ix=0;ix<imap->localStrip.size();ix++){
+		GEMROmap::eCoord ec;
+		ec.chamberId=i->ChamberID;
+		ec.vfatId=*v;
+		ec.channelId=imap->channel[ix];
+		GEMROmap::dCoord dc;
+		dc.etaId = 8-position%8;
+		dc.stripId = imap->localStrip[ix]+sPhi*128;
+		roMap[ec]=dc;
+	      }
+	    }
+	  }
+	}
+      }      
+    }
+  }
+}
