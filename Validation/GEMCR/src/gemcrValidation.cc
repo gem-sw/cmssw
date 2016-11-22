@@ -221,7 +221,6 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
         //check_tr_roll[index] = tid.roll();
         //float min_x = gemChambers[index].etaPartition(tid.roll())->centreOfStrip(0).x();
         //float max_x = gemChambers[index].etaPartition(tid.roll())->centreOfStrip(128*3).x();
-
         //check_tr_vfat[index] = findvfat(tr_rh_lp.x(),min_x, max_x);
         //cout << "roll : " << tid.roll() << ", vfat : " << findvfat(tr_rh_lp.x(),min_x, max_x) << endl;
       }

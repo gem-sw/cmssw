@@ -55,7 +55,7 @@ def findName(name):
   row = chamGEO[name][1]
   return chamList["{}_{}_{}".format(colum, row, layer)]  
 
-def makeBM():
+def makeSummary():
   head = """
 \documentclass{beamer}
 \usefonttheme[onlylarge]{structurebold}
@@ -434,4 +434,4 @@ if __name__ == '__main__' :
     os.system("mkdir -p "+oDir )
     draw_plot(args[0],tDir,oDir)  
    
-    #makeBM()
+    #makeSummary()

@@ -36,18 +36,17 @@ private:
   std::vector<MonitorElement*> gem_chamber_th2D_eff;
   
   MonitorElement* gemcr_g;
-  
   MonitorElement* gem_cls_tot;
   MonitorElement* gem_bx_tot;
   MonitorElement* tr_size;
   MonitorElement* tr_hit_size;
-
   MonitorElement* tr_chamber;
   MonitorElement* th_chamber;
   MonitorElement* rh_chamber;
 
   std::vector<GEMChamber> gemChambers;
   int n_ch;
+  
   MuonServiceProxy* theService;
 
   edm::EDGetToken InputTagToken_, InputTagToken_RH, InputTagToken_TR, InputTagToken_TS, InputTagToken_GP;
