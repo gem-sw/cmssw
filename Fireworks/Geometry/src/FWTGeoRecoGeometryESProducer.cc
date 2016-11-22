@@ -265,9 +265,6 @@ FWTGeoRecoGeometryESProducer::produce( const FWTGeoRecoGeometryRecord& record )
    m_fwGeometry = std::make_shared<FWTGeoRecoGeometry>();
    record.getRecord<GlobalTrackingGeometryRecord>().get( m_geomRecord );
   
-   DetId detId( DetId::Tracker, 0 );
-   m_trackerGeom = (const TrackerGeometry*) m_geomRecord->slaveGeometry( detId );
-
    if( m_calo )
      record.getRecord<CaloGeometryRecord>().get( m_caloGeom );
 
@@ -296,6 +293,9 @@ FWTGeoRecoGeometryESProducer::produce( const FWTGeoRecoGeometryRecord& record )
 
    if( m_tracker )
    {
+     DetId detId( DetId::Tracker, 0 );
+     m_trackerGeom = (const TrackerGeometry*) m_geomRecord->slaveGeometry( detId );
+
      addPixelBarrelGeometry();
      addPixelForwardGeometry();
 
@@ -307,11 +307,10 @@ FWTGeoRecoGeometryESProducer::produce( const FWTGeoRecoGeometryRecord& record )
    
    if( m_muon )
    {
-     addDTGeometry();
-
-     addCSCGeometry();
-     addRPCGeometry();
-     addME0Geometry();
+     // addDTGeometry();
+     // addCSCGeometry();
+     // addRPCGeometry();
+     // addME0Geometry();
      addGEMGeometry();
    }
 
