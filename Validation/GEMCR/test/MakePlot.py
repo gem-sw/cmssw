@@ -22,6 +22,94 @@ fi = ROOT.TColor.CreateGradientColorTable(5, astop, ared, agreen, ablue, 100 )
 for x in xrange(100): myPalette.append(fi+x)
 ROOT.gStyle.SetPalette(100, array("i", myPalette))
 
+import configureRun_cfi as runConfig
+SLOTLIST=[]
+VFATLIST=[] 
+COLUMNLIST=[] 
+ROWLIST=[]
+LAYERLIST=[]
+chamber=[]
+columnStand=[]
+rowStand=[]
+layerSC=[]
+
+runConfig.configureRun(SLOTLIST, VFATLIST, COLUMNLIST, ROWLIST, LAYERLIST, chamber, columnStand, rowStand, layerSC)
+
+chamList = {}
+for i, cn in enumerate(chamber):
+  chamList["{}_{}_{}".format(COLUMNLIST[i*24], ROWLIST[i*24], LAYERLIST[i*24])] = cn
+
+chIndex = [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29]
+chi = 0
+chamGEO = {}
+for c in [1,2,3]:
+  for r in [1,2,3,4,5]:
+    chamGEO["chamber_{}".format(chIndex[chi])] = [c,r]
+    chi+=1
+def findName(name):
+  if not name.startswith("chamber") : return name
+  tname = name.split("_")
+  layer = int(tname[3])
+  name = tname[0]+"_"+tname[1]
+  colum = chamGEO[name][0]
+  row = chamGEO[name][1]
+  return chamList["{}_{}_{}".format(colum, row, layer)]  
+
+def makeBM():
+  head = """
+\documentclass{beamer}
+\usefonttheme[onlylarge]{structurebold}
+\setbeamerfont*{frametitle}{size=\\normalsize,series=\\bfseries}
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{times}
+\usepackage{graphicx}
+
+\usepackage[T1]{fontenc}
+\usepackage{alltt}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\\tikzstyle{block}=[draw opacity=0.7,line width=1.4cm]
+
+\setbeamertemplate{itemize items}[circle]
+\setbeamerfont{page number in head/foot}{size=\small}
+\setbeamertemplate{footline}[frame number]
+
+\\newcommand{\\baseLoc}{./temp_plot_GEMRecHits/}
+
+\\newcommand{\imageFour}[4]{
+\scalebox{0.2}{
+\includegraphics{\\baseLoc#1}
+\includegraphics{\\baseLoc#2}
+}
+\\
+\scalebox{0.2}{
+\includegraphics{\\baseLoc#3}
+\includegraphics{\\baseLoc#4}
+}
+}
+
+\\begin{document}
+"""
+  tmp = """
+\\begin{frame}[plain]{%s}
+\imageFour{%s_firedStrip.png}{%s_x_roll.png}{%s_cl_size.png}{%s_tr2D_eff.png}
+\end{frame}
+
+""" 
+  outF = open(runConfig.OutputFileName.replace(".root", ".tex"), "w")
+  outF.write(head)
+  for x in chamber:
+    x = x.replace("GE1/1", "GE11")
+    outF.write(tmp%(x,x,x,x,x))
+  outF.write("\end{document}")
+  outF.close() 
+  import os
+  os.system("latex --output-format=pdf "+runConfig.OutputFileName.replace(".root", ".tex"))
+
+  
 import optparse
 def getEtaRange( station ) :
   etaRange = [1.55,2.15,1.65,2.05,1.65,2.45]
@@ -30,11 +118,18 @@ def getEtaRange( station ) :
   else :
     print "Something is wrong"
     return 1.5,2.6
-    
+
 def draw_occ(target_dir, h, ext =".png", opt = "colz"):
   gStyle.SetStatStyle(0)
   gStyle.SetOptStat(1110)
-  h.SetName("GE11-VII-S-CERN-0005_roll_"+h.GetName())
+  name = findName(h.GetName())
+  tname = h.GetName().split("_")
+  etc = "_"
+  for x in tname[4:]:
+    etc += x+"_"
+  title = name+" "+h.GetTitle()
+  h.SetTitle(title)
+  h.SetName(name.replace("GE1/1", "GE11")+etc[:-1])
   c = TCanvas(h.GetTitle(),h.GetName(),600,600)
   c_title = c.GetTitle()
   c.Clear()
@@ -261,60 +356,17 @@ def draw_plot( file, tDir,oDir ) :
       draw_col( oDir, d1.Get(hist) )
     elif ( hist.find("phiz") != -1 ) :
       draw_col_overflow( oDir, d1.Get(hist) )
-    #elif ( hist.find("eff") != -1 ) :
-    #  draw_eff( oDir, d1.Get(hist) )
-      #print "found "
     elif ( hist.find("geo_phi") != -1) :
       draw_col_userRange( oDir, d1.Get(hist))
-#    elif ( hist == "th_eff_ch"):
-#      tmp1 = d1.Get("th_eff_ch")
-#      tmp2 = d1.Get("tr_eff_ch")
-#      tmp2.Divide(tmp1)
-#      tmp3 = tmp2.Clone("chamber_eff")
-#      tmp3.SetTitle("Chamber efficiency fired chamber/track")
-#      draw_occ(oDir, tmp3)
-#    elif (hist == "chamber_1_layer_1_th_eff"):
-#      for x in [1,3,5,7,9]:
-#        for y in [1,2]:
-#          tmp1 = d1.Get("chamber_%d_layer_%d_th_eff"%(x,y))
-#          tmp2 = d1.Get("chamber_%d_layer_%d_tr_eff"%(x,y))
-#          tmp2 = tmp2.Clone("chamber_%d_layer_%d_tr_efficiency"%(x,y))
-#          tmp2.Divide(tmp1)
-#          tmp2.SetTitle("Chamber %d layer %d Efficiency"%(x,y))
-#          tmp2.SetStats(0)
-#          tmp2.SetXTitle("Roll Number (iEta)")
-#          tmp2.SetYTitle("Efficiency")
-#          draw_occ(oDir, tmp2)
-#          tmp12 = d1.Get("chamber_%d_layer_%d_th2D_eff"%(x,y))
-#          tmp22 = d1.Get("chamber_%d_layer_%d_tr2D_eff"%(x,y))
-#          tmp22 = tmp22.Clone("chamber_%d_layer_%d_tr2D_efficiency"%(x,y))
-#          tmp22.Divide(tmp12)
-#          tmp22.SetTitle("Chamber %d layer %d 2D Efficiency"%(x,y))
-#          tmp22.SetStats(0)
-#          tmp22.SetXTitle("track hit x position (cm)")
-#          tmp22.SetYTitle("track hit y position (cm)")
-#          draw_occ(oDir, tmp22)
-#          for r in xrange(1,9):
-#            print "chamber_%d_layer_%d_roll_%d_th_eff"%(x,y,r) 
-#            tmp1r = d1.Get("chamber_%d_layer_%d_roll_%d_th_eff"%(x,y,r))
-#            tmp2r = d1.Get("chamber_%d_layer_%d_roll_%d_tr_eff"%(x,y,r))
-#            tmp2r = tmp2r.Clone("chamber_%d_layer_%d_roll_%d_tr_efficiency"%(x,y,r))
-#            tmp2r.Divide(tmp1r)
-#            tmp2r.SetTitle("Chamber %d layer %d roll %d Efficiency"%(x,y,r))
-#            tmp2r.SetStats(0)
-#            tmp2r.SetXTitle("y position (cm)")
-#            tmp2r.SetYTitle("Efficiency")
-#            draw_occ(oDir, tmp2r)
-#    elif ( hist.startswith("chamber") and hist.endswith("bx")):
-#      tmph = d1.Get(hist)
-#      tmph.SetXTitle("BX [ns]")
-#      tmph.SetYTitle("Roll Number (iEta)") 
-#      draw_occ(oDir, tmph)
-#    elif ( hist.startswith("chamber") and hist.endswith("cl_size")):
-#      tmph = d1.Get(hist)
-#      tmph.SetXTitle("Cluster size")
-#      tmph.SetYTitle("Roll Number (iEta)") 
-#      draw_occ(oDir, tmph)
+    elif ( hist.startswith("chamber") and hist.endswith("th2D_eff")):
+      tmph = d1.Get(hist)
+      trEff = d1.Get(hist.replace("th2D", "tr2D"))
+      
+      trEff.Divide(tmph)
+      trEff.SetXTitle("vfat number")
+      trEff.SetYTitle("roll number")
+      draw_occ(oDir, trEff, ".png", "colz text")
+   
     elif ( hist.startswith("chamber") and hist.endswith("firedStrip")):
       tmph = d1.Get(hist)
       tmph.SetXTitle("Strip")
@@ -325,16 +377,16 @@ def draw_plot( file, tDir,oDir ) :
       tmph.SetXTitle("x [cm]")
       tmph.SetYTitle("Roll Number (iEta)") 
       draw_occ(oDir, tmph)
+    elif ( hist.startswith("chamber") and hist.endswith("cl_size")):
+      tmph = d1.Get(hist)
+      tmph.SetXTitle("cluster size")
+      tmph.SetYTitle("vfat number")
+      draw_occ(oDir, tmph)
     elif ( hist == "cluster_size"):
       tmph = d1.Get(hist)
       tmph.SetXTitle("cluster size")
       tmph.SetYTitle("count")
       draw_occ(oDir, tmph)
-#    elif ( hist == "bx"):
-#      tmph = d1.Get(hist)
-#      tmph.SetXTitle("bx [ns]")
-#      tmph.SetYTitle("count")
-#      draw_occ(oDir, tmph)
     else : continue
     #  draw_occ( oDir, d1.Get(hist) )
 
@@ -382,3 +434,4 @@ if __name__ == '__main__' :
     os.system("mkdir -p "+oDir )
     draw_plot(args[0],tDir,oDir)  
    
+    #makeBM()
