@@ -120,10 +120,13 @@ process.GEMCosmicMuon = cms.EDProducer("GEMCosmicMuon",
                                        trackResX = cms.double(runConfig.trackResX),
                                        trackResY = cms.double(runConfig.trackResY),
                                        MuonSmootherParameters = cms.PSet(
-                                           PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
-                                           PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
-                                           RescalingFactor = cms.double(5.0)
-                                           ),
+        PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
+        PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
+        RescalingFactor = cms.double(5.0)
+        ),
+                                       #Reference Chambers
+                                       #refChambers=cms.vint32( 1, 11, 21, 3, 13, 23, 5, 15, 25, 7, 17, 27, 9, 19, 29)
+                                       refChambers=cms.vint32( 11, 20)
                                        )
 process.GEMCosmicMuon.ServiceParameters.GEMLayers = cms.untracked.bool(True)
 
@@ -131,35 +134,38 @@ process.GEMCosmicMuon.ServiceParameters.RPCLayers = cms.bool(False)
 #process.GEMCosmicMuon.ServiceParameters.UseMuonNavigation = cms.untracked.bool(False)
 
 process.gemcrValidation = cms.EDAnalyzer('gemcrValidation',
-    process.MuonServiceProxy,
-    verboseSimHit = cms.untracked.int32(1),
-    simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
-    recHitsInputLabel = cms.InputTag('gemRecHits'),
-    tracksInputLabel = cms.InputTag('GEMCosmicMuon','','RECO'),
-    seedInputLabel = cms.InputTag('GEMCosmicMuon','','RECO'),
-    gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
-    #genParticleLabel = cms.InputTag('genParticles','','RECO'),
-    # st1, st2_short, st2_long of xbin, st1,st2_short,st2_long of ybin
-    nBinGlobalZR = cms.untracked.vdouble(200,200,200,150,180,250),
-    # st1 xmin, xmax, st2_short xmin, xmax, st2_long xmin, xmax, st1 ymin, ymax...
-    RangeGlobalZR = cms.untracked.vdouble(564,572,786,794,786,802,110,260,170,350,100,350),
-    #nBinGlobalXY = cms.untracked.int32(720),
-    #detailPlot = cms.bool(True),
-    #detailPlot = cms.bool(False),
-    maxClusterSize = cms.double(runConfig.maxClusterSize),
-    minClusterSize = cms.double(runConfig.minClusterSize),
-    maxResidual = cms.double(runConfig.maxResidual),
-    makeTrack = cms.bool(runConfig.makeTrack),
-    isMC = cms.bool(False),
-    trackChi2 = cms.double(runConfig.trackChi2),
-    trackResX = cms.double(runConfig.trackResX),
-    trackResY = cms.double(runConfig.trackResY),
-    MuonSmootherParameters = cms.PSet(
-                             PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
-                             PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
-                             RescalingFactor = cms.double(5.0))
-
-)
+                                         process.MuonServiceProxy,
+                                         verboseSimHit = cms.untracked.int32(1),
+                                         simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
+                                         recHitsInputLabel = cms.InputTag('gemRecHits'),
+                                         tracksInputLabel = cms.InputTag('GEMCosmicMuon','','RECO'),
+                                         seedInputLabel = cms.InputTag('GEMCosmicMuon','','RECO'),
+                                         gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
+                                         #genParticleLabel = cms.InputTag('genParticles','','RECO'),
+                                         # st1, st2_short, st2_long of xbin, st1,st2_short,st2_long of ybin
+                                         nBinGlobalZR = cms.untracked.vdouble(200,200,200,150,180,250),
+                                         # st1 xmin, xmax, st2_short xmin, xmax, st2_long xmin, xmax, st1 ymin, ymax...
+                                         RangeGlobalZR = cms.untracked.vdouble(564,572,786,794,786,802,110,260,170,350,100,350),
+                                         #nBinGlobalXY = cms.untracked.int32(720),
+                                         #detailPlot = cms.bool(True),
+                                         #detailPlot = cms.bool(False),
+                                         maxClusterSize = cms.double(runConfig.maxClusterSize),
+                                         minClusterSize = cms.double(runConfig.minClusterSize),
+                                         maxResidual = cms.double(runConfig.maxResidual),
+                                         makeTrack = cms.bool(runConfig.makeTrack),
+                                         isMC = cms.bool(False),
+                                         trackChi2 = cms.double(runConfig.trackChi2),
+                                         trackResX = cms.double(runConfig.trackResX),
+                                         trackResY = cms.double(runConfig.trackResY),
+                                         MuonSmootherParameters = cms.PSet(
+                                                                           PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
+                                                                           PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
+                                                                           RescalingFactor = cms.double(5.0)),
+                                         #Reference Chambers
+                                         #refChambers=cms.vint32( 1, 11, 21, 3, 13, 23, 5, 15, 25, 7, 17, 27, 9, 19, 29)
+                                         refChambers=cms.vint32( 11, 20)
+                                         
+                                         )
 
 # Path and EndPath definitions
 process.digi_step    = cms.Path(process.muonGEMDigis)

@@ -28,6 +28,7 @@
 <use name="RecoMuon/TrackingTools"/>
 <use name="RecoMuon/CosmicMuonProducer"/>
 <use name="DataFormats/GEMDigi"/>
+<use name="SimDataFormats/GEMDigiSimLink/"/>
 <export>
 <lib name="1"/>
 </export>
