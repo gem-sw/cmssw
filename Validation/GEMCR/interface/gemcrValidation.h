@@ -27,11 +27,6 @@
 #include <TFile.h>
 #include <TTree.h>
 
-typedef struct tagGPSeed {
-  GlobalPoint P1;
-  GlobalPoint P2;
-} GPSeed;
-
 
 class gemcrValidation : public GEMBaseValidation
 {
@@ -40,8 +35,8 @@ public:
   ~gemcrValidation();
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override;
-  int findIndex(GEMDetId id_, bool bIsFindCopad);
-  int findvfat(float x, float a, float b);
+  int findIndex(GEMDetId id_);
+  int findVFAT(float x, float a, float b);
   const GEMGeometry* initGeometry(edm::EventSetup const & iSetup);
   double maxCLS, minCLS,maxRes, trackChi2, trackResY, trackResX, MulSigmaOnWindow;
   std::vector<std::string> SuperChamType;
@@ -56,8 +51,6 @@ private:
   CosmicMuonSmoother* theSmoother;
   KFUpdator* theUpdator;
   edm::EDGetToken InputTagToken_, InputTagToken_RH, InputTagToken_TR, InputTagToken_TS, InputTagToken_TJ, InputTagToken_TI, InputTagToken_TT, InputTagToken_DG, InputTagToken_US; 
-  
-  bool isPassedScintillators(GlobalPoint p1, GlobalPoint p2);
 
   TH1D *hev;
   TH3D *hvfatHit_numerator;

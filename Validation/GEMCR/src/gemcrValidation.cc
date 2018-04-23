@@ -155,15 +155,16 @@ void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const
   printf("End of gemcrValidation::bookHistograms() at %s\n", asctime(localtime(&rawTime)));
 }
 
-int gemcrValidation::findIndex(GEMDetId id_, bool bIsFindCopad = false) {
+int gemcrValidation::findIndex(GEMDetId id_) {
   int index=-1;
-  for(int c =0;c<n_ch;c++){
-    if((gemChambers[c].id().chamber() == id_.chamber())&&(bIsFindCopad ^ ( gemChambers[c].id().layer() == id_.layer() )) ){index = c;}
+  for ( int c=0 ; c<n_ch ; c++ )
+  {
+    if ( gemChambers[c].id().chamber() == id_.chamber() && gemChambers[c].id().layer() == id_.layer() ){index = c;}
   }
   return index;
 }
 
-int gemcrValidation::findvfat(float x, float a, float b) {
+int gemcrValidation::findVFAT(float x, float a, float b) {
   float step = abs(b-a)/3.0;
   if ( x < (min(a,b)+step) ) { return 1;}
   else if ( x < (min(a,b)+2.0*step) ) { return 2;}
@@ -185,43 +186,20 @@ const GEMGeometry* gemcrValidation::initGeometry(edm::EventSetup const & iSetup)
 }
 
 int g_nEvt = 0;
-int g_nNumRecHit = 0;
-int g_nNumFiredCh = 0;
-int g_nNumFiredChValid = 0;
 int g_nNumTrajHit = 0;
-int g_nNumTrajHit6 = 0;
 int g_nNumMatched = 0;
 
-double g_dMinX = 100000.0, g_dMaxX = -10000000.0;
-double g_dMinY = 100000.0, g_dMaxY = -10000000.0;
-double g_dMinZ = 100000.0, g_dMaxZ = -10000000.0;
-
 gemcrValidation::~gemcrValidation() {
-  printf("res1 : %i\n", g_nEvt);
-  printf("res2 : %i\n", g_nNumRecHit);
-  printf("res3 : %i\n", g_nNumFiredCh);
-  printf("res4 : %i\n", g_nNumFiredChValid);
-  printf("res5 : %i\n", g_nNumTrajHit6);
-  printf("res6 : %i (g_nNumTrajHit)\n", g_nNumTrajHit);
-  printf("res7 : %i (g_nNumMatched)\n", g_nNumMatched);
+  printf("Number of events : %i\n", g_nEvt);
+  printf("Number of trajHits : %i (g_nNumTrajHit)\n", g_nNumTrajHit);
+  printf("Number of matching trajHits : %i (g_nNumMatched)\n", g_nNumMatched);
   if(g_nNumTrajHit>0) printf("eff : %f\n", double(g_nNumMatched)/g_nNumTrajHit);
-  
-  printf("X range : %lf, %lf\n", g_dMinX, g_dMaxX);
-  printf("Y range : %lf, %lf\n", g_dMinY, g_dMaxY);
-  printf("Z range : %lf, %lf\n", g_dMinZ, g_dMaxZ);
 }
 
 int g_nNumTest = 0;
 
 
 void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup){
-
-  double ScintilLowerZ =  -11.485;
-  double ScintilUpperZ =  154.015;
-  double ScintilXMin   = -100.0;
-  double ScintilXMax   =  100.0;
-  double ScintilYMin   =  -60.56;
-  double ScintilYMax   =   63.0;
   
   g_nEvt++;
 
@@ -292,7 +270,6 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     {
       nNumDigi++;
       const GEMDetId& gemId = (*gemdgIt).first;
-      int index = findIndex(gemId);
       const GEMDigiCollection::Range& range = (*gemdgIt).second;
       for ( auto digi = range.first; digi != range.second; ++digi )
       {
@@ -300,17 +277,13 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       }
     }
   }
+  
   e.getByToken( this->InputTagToken_RH, gemRecHits);
   if (!gemRecHits.isValid())
   {
     edm::LogError("gemcrValidation") << "Cannot get strips by Token RecHits Token.\n";
     return ;
   }
-  
-  float fXGenGP1x = 0.0, fXGenGP1y = 0.0, fXGenGP1z = 0.0;
-  float fXGenGP2x = 0.0, fXGenGP2y = 0.0, fXGenGP2z = 0.0;
-  
-  HepMC::GenParticle *genMuon = NULL;
   
   double gen_px = 0;
   double gen_py = 0;
@@ -321,19 +294,17 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
 
   if ( isMC )
   {
+    HepMC::GenParticle *genMuon = NULL;
+  
     edm::Handle<edm::HepMCProduct> genVtx;
     e.getByToken( this->InputTagToken_US, genVtx);
     genMuon = genVtx->GetEvent()->barcode_to_particle(1);
     
     double dUnitGen = 0.1;
     
-    fXGenGP1x = dUnitGen * genMuon->production_vertex()->position().x();
-    fXGenGP1y = dUnitGen * genMuon->production_vertex()->position().y();
-    fXGenGP1z = dUnitGen * genMuon->production_vertex()->position().z();
-    
-    fXGenGP2x = fXGenGP1x + dUnitGen * genMuon->momentum().x();
-    fXGenGP2y = fXGenGP1y + dUnitGen * genMuon->momentum().y();
-    fXGenGP2z = fXGenGP1z + dUnitGen * genMuon->momentum().z();
+    genMuX = dUnitGen * genMuon->production_vertex()->position().x();
+    genMuY = dUnitGen * genMuon->production_vertex()->position().y();
+    genMuZ = dUnitGen * genMuon->production_vertex()->position().z();
 
     gen_px = genMuon->momentum().x();
     gen_py = genMuon->momentum().y();
@@ -345,10 +316,6 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     genMuPt = gen_pt;
     genMuTheta = gen_theta;
     genMuPhi = gen_phi;
-
-    genMuX = fXGenGP1x;
-    genMuY = fXGenGP1y;
-    genMuZ = fXGenGP1z;
 
     for ( GEMRecHitCollection::const_iterator rechit = gemRecHits->begin(); rechit != gemRecHits->end(); ++rechit )
     {
@@ -362,9 +329,6 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       nrecHit++;
     }
   }
-  
-  GlobalPoint genGPos1(fXGenGP1x, fXGenGP1y, fXGenGP1z);
-  GlobalPoint genGPos2(fXGenGP2x, fXGenGP2y, fXGenGP2z);
   
   edm::Handle<std::vector<int>> idxChTraj;
   e.getByToken( this->InputTagToken_TI, idxChTraj);
@@ -467,12 +431,8 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       tsosCurrent = theService->propagator("SteppingHelixPropagatorAny")->propagate(tsosCurrent, bpch);
       if (!tsosCurrent.isValid()) continue;
       Global3DPoint gtrp = tsosCurrent.freeTrajectoryState()->position();
-      Global3DPoint gtrpGEN(
-        fXGenGP1x + ( genMuon->momentum().x() / genMuon->momentum().z() ) * ( gtrp.z() - fXGenGP1z ), 
-        fXGenGP1y + ( genMuon->momentum().y() / genMuon->momentum().z() ) * ( gtrp.z() - fXGenGP1z ),
-        gtrp.z()); 
       Local3DPoint tlp = bpch.toLocal(gtrp);
-      if (!bpch.bounds().inside(tlp)){continue;}
+      if (!bpch.bounds().inside(tlp)) continue;
 
       if (ch==tch)
       {
@@ -504,7 +464,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
             
           if ( ! ( (tlp.x()>(min_x + 1.5)) & (tlp.x() < (max_x - 1.5)) ) )
           {
-            if ( unDiffCol == 1 ) 
+            if ( unDiffCol != 0 ) 
             {
               continue;
             }
@@ -515,30 +475,26 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
           }
           
           int index = findIndex(ch.id());
-          double vfat = findvfat(tlp.x(), min_x, max_x);
+          int vfat = findVFAT(tlp.x(), min_x, max_x);
 
-          int idx = index;
-          int ivfat = (int)vfat - 1;
+          int ivfat = vfat - 1;
           int imRoll = mRoll - 1;
-          vfatI[idx][ivfat][imRoll]=1;
-          vfatF[idx][ivfat][imRoll]=0;
+          vfatI[index][ivfat][imRoll]=1;
+          vfatF[index][ivfat][imRoll]=0;
 
-          int n1 = imRoll;
-          int n2 = 2-ivfat + int(2-idx/10)*3;
-          int n3 = idx%10;
-          hvfatHit_denominator->Fill(n1,n2,n3);
+          hvfatHit_denominator->Fill(imRoll,2-ivfat + int(2-index/10)*3,index%10);
 
-          genHitX[idx][ivfat][imRoll] = genMuX + (gtrp.z()-genMuZ)*(gen_px/gen_pz);
-          genHitY[idx][ivfat][imRoll] = genMuY + (gtrp.z()-genMuZ)*(gen_py/gen_pz);
-          genHitZ[idx][ivfat][imRoll] = gtrp.z();
-          trajHitX[idx][ivfat][imRoll] = gtrp.x();
-          trajHitY[idx][ivfat][imRoll] = gtrp.y();
-          trajHitZ[idx][ivfat][imRoll] = gtrp.z();
-          recHitX[idx][ivfat][imRoll] = 0;
-          recHitY[idx][ivfat][imRoll] = 0;
-          recHitZ[idx][ivfat][imRoll] = 0;
+          genHitX[index][ivfat][imRoll] = genMuX + (gtrp.z()-genMuZ)*(gen_px/gen_pz);
+          genHitY[index][ivfat][imRoll] = genMuY + (gtrp.z()-genMuZ)*(gen_py/gen_pz);
+          genHitZ[index][ivfat][imRoll] = gtrp.z();
+          trajHitX[index][ivfat][imRoll] = gtrp.x();
+          trajHitY[index][ivfat][imRoll] = gtrp.y();
+          trajHitZ[index][ivfat][imRoll] = gtrp.z();
+          recHitX[index][ivfat][imRoll] = 0;
+          recHitY[index][ivfat][imRoll] = 0;
+          recHitZ[index][ivfat][imRoll] = 0;
 
-          int floor = idx%10;
+          int floor = index%10;
           floorHitX[floor] = gtrp.x();
           floorHitY[floor] = gtrp.y();
           floorHitZ[floor] = gtrp.z();
@@ -569,11 +525,11 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
           {
             Global3DPoint recHitGP = tmpRecHit->globalPosition();
             nTrajRecHit++;
-            recHitX[idx][ivfat][imRoll] = recHitGP.x();
-            recHitY[idx][ivfat][imRoll] = recHitGP.y();
-            recHitZ[idx][ivfat][imRoll] = recHitGP.z();
-            vfatF[idx][ivfat][imRoll]=1;
-            hvfatHit_numerator->Fill(n1,n2,n3);
+            recHitX[index][ivfat][imRoll] = recHitGP.x();
+            recHitY[index][ivfat][imRoll] = recHitGP.y();
+            recHitZ[index][ivfat][imRoll] = recHitGP.z();
+            vfatF[index][ivfat][imRoll]=1;
+            hvfatHit_numerator->Fill(imRoll,2-ivfat + int(2-index/10)*3,index%10);
             ntrajRecHit++;
             g_nNumMatched++;
           } 

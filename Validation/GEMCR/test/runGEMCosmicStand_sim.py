@@ -162,7 +162,6 @@ process.mix = cms.EDProducer("MixingModule",
             input = cms.VInputTag(cms.InputTag("g4SimHits","MuonGEMHits")),
             type = cms.string('PSimHit'),
             subdets = cms.vstring('MuonGEMHits'),
-            
             )
         ),
     mixTracks = cms.PSet(

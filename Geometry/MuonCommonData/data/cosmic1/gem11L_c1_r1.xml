@@ -25,6 +25,7 @@
   </PosPart>
   <PosPart copyNumber="2">
     <rParent name="gembox:GEMBox"/>
+    <rChild name="gem11:GEMBox11L"/>
     <rRotation name="RotTypeA" />
     <Translation x="[dxChamber]" y="22*cm" z="1*[separation]+[dyChamber]" />
   </PosPart>
