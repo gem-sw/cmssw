@@ -31,6 +31,13 @@ MonitorElement* gem_vfat_tot[15][2][2];
 
 MonitorElement* insideChi2;
 MonitorElement* outsideChi2;
+MonitorElement* residualX_[2];
+MonitorElement* residualY_[2];
+MonitorElement* pullX_[2];
+MonitorElement* pullY_[2];
+
+MonitorElement* checkChamber;
+MonitorElement* checkRoll;
 
 edm::EDGetTokenT<reco::TrackCollection> insideOutTracks_, outsideInTracks_;
 edm::EDGetTokenT<vector<TrajectorySeed>> seedInside_, seedOutside_;

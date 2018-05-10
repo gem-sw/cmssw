@@ -62,8 +62,19 @@ void GEMCosmicMuonStandEfficiency::bookHistograms(DQMStore::IBooker & ibooker, e
     }
   }
 
-  insideChi2 = BookHist1D(ibooker, "insideChi2", "insideChi2", 1000, 0, 100);
-  outsideChi2 = BookHist1D(ibooker, "outsideChi2", "outsideChi2", 1000, 0, 100);
+  insideChi2 = BookHist1D(ibooker, "insideChi2", "insideChi2", 100, 0, 10);
+  outsideChi2 = BookHist1D(ibooker, "outsideChi2", "outsideChi2", 100, 0, 10);
+  residualX_[0] = BookHist1D(ibooker, "inside_residualX", "inside_residualX", 100, -4, 4);
+  residualY_[0] = BookHist1D(ibooker, "inside_residualY", "inside_residualY", 100, -4, 4);
+  pullX_[0] = BookHist1D(ibooker, "inside_pullX", "inside_pullX", 100, -3, 3);
+  pullY_[0] = BookHist1D(ibooker, "inside_pullY", "inside_pullY", 100, -3, 3);
+  residualX_[1] = BookHist1D(ibooker, "outside_residualX", "routside_esidualX", 100, -4, 4);
+  residualY_[1] = BookHist1D(ibooker, "outside_residualY", "outside_residualY", 100, -4, 4);
+  pullX_[1] = BookHist1D(ibooker, "outside_pullX", "outside_pullX", 100, -3, 3);
+  pullY_[1] = BookHist1D(ibooker, "outside_pullY", "outside_pullY", 100, -3, 3);
+
+  checkChamber = BookHist1D(ibooker, "checkChamber", "checkChamber", 30, -0.5, 29.5);
+  checkRoll = BookHist1D(ibooker, "checkRoll", "checkRoll", 8, -0.5, 7.5);
 
   LogDebug("GEMCosmicMuonStandEfficiency")<<"Booking End.\n";
 }
@@ -98,10 +109,11 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
     GEMDetId secondHit(seed->rawId());
 
     //if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
-    if(track->normalizedChi2() > 1.) continue;
+    //if(track->normalizedChi2() > 1.) continue;
+    auto residuals_ = track->residuals();
     
     insideChi2->Fill(track->normalizedChi2());
-
+    int count = 0;
     for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit)
     {
       GEMDetId gemId((*recHit)->rawId());
@@ -119,8 +131,21 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
       int idxLayer = layer-1;
       int vfat = (8-roll)+int(strip/nStrips*3)*8;
       
-      if((*recHit)->isValid()) gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
+      if((*recHit)->isValid())
+      {
+        gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
+	residualX_[0]->Fill(residuals_.residualX(count));
+	residualY_[0]->Fill(residuals_.residualY(count));
+	pullX_[0]->Fill(residuals_.pullX(count));
+	pullY_[0]->Fill(residuals_.pullY(count));
+	if(residuals_.residualY(count)>3.2)
+	{
+	  checkChamber->Fill(chamber+layer-2);
+	  checkRoll->Fill(roll-1);
+	}
+      }
       gem_vfat_tot[idxChamber][idxLayer][0]->Fill(vfat);
+      count++;
     }
   }
  
@@ -136,10 +161,11 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
     GEMDetId secondHit(seed->rawId());
 
     //if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
-    if(track->normalizedChi2() > 1.) continue;
+    //if(track->normalizedChi2() > 1.) continue;
+    auto residuals_ = track->residuals();
 
     outsideChi2->Fill(track->normalizedChi2());
-
+    int count = 0;
     for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit)
     {
       GEMDetId gemId((*recHit)->rawId());
@@ -157,8 +183,20 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
       int idxLayer = layer-1;
       int vfat = (8-roll)+int(strip/nStrips*3)*8;
       
-      if((*recHit)->isValid()) gem_vfat_eff[idxChamber][idxLayer][1]->Fill(vfat);
+      if((*recHit)->isValid())
+      {
+        gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
+	/*residualX_[1]->Fill(residuals_.residualX(count));
+	residualY_[1]->Fill(residuals_.residualY(count));
+	pullX_[1]->Fill(residuals_.pullX(count));
+	pullY_[1]->Fill(residuals_.pullY(count));*/
+      }
+      residualX_[1]->Fill(residuals_.residualX(count));
+      residualY_[1]->Fill(residuals_.residualY(count));
+      pullX_[1]->Fill(residuals_.pullX(count));
+      pullY_[1]->Fill(residuals_.pullY(count));
       gem_vfat_tot[idxChamber][idxLayer][1]->Fill(vfat);
+      count++;
     }
   }
 }
