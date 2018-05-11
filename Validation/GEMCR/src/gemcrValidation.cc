@@ -130,11 +130,6 @@ void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const
   printf("End of gemcrValidation::bookHistograms() at %s\n", asctime(localtime(&rawTime)));
 }
 
-int gemcrValidation::findIndex(GEMDetId id_) {
-  int index = id_.chamber() + id_.layer() - 2 ;
-  return index;
-}
-
 int gemcrValidation::findVFAT(float x, float a, float b) {
   float step = abs(b-a)/3.0;
   if ( x < (min(a,b)+step) ) { return 1;}
@@ -383,8 +378,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
 
         if ( (tlp.x()>(min_x)) & (tlp.x() < (max_x)) )
         {
-
-          // For testing the edge eta partition on the top and bottom layers only vertical seeds are allowed!
+          // For testing the edge eta partition on the top and bottom layers only vertical seeds are allowed
           if ( ( vecChamType[ countTC - 1 ] == 2 || vecChamType[ countTC - 1 ] == 1 ) &&
                ( mRoll == 1 || mRoll == 8 ) &&
                ( unTypeSeed & QC8FLAG_SEEDINFO_MASK_REFVERTROLL18 ) == 0 ) continue;
@@ -403,7 +397,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
             }
           }
 
-          int index = findIndex(ch.id());
+          int index = id_.chamber() + id_.layer() - 2 ;
           int vfat = findVFAT(tlp.x(), min_x, max_x);
 
           int ivfat = vfat - 1;
