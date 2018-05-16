@@ -13,6 +13,8 @@
 #include "DataFormats/GEMRecHit/interface/GEMRecHit.h"
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
+
 using namespace std;
 
 class GEMCosmicMuonStandEfficiency : public DQMEDAnalyzer
@@ -36,10 +38,8 @@ MonitorElement* residualY_[2];
 MonitorElement* pullX_[2];
 MonitorElement* pullY_[2];
 
-MonitorElement* checkChamber;
-MonitorElement* checkRoll;
-
 edm::EDGetTokenT<reco::TrackCollection> insideOutTracks_, outsideInTracks_;
+edm::EDGetTokenT<vector<Trajectory>> insideOutTrajs_, outsideInTrajs_;
 edm::EDGetTokenT<vector<TrajectorySeed>> seedInside_, seedOutside_;
 
 };

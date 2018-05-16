@@ -6,6 +6,7 @@
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHitFwd.h"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
 
+#include "GEMResiduals.h"
 #include <iostream>
 
 using namespace std;
@@ -14,6 +15,8 @@ GEMCosmicMuonStandEfficiency::GEMCosmicMuonStandEfficiency(const edm::ParameterS
 {
   insideOutTracks_ = consumes<reco::TrackCollection>(cfg.getParameter<edm::InputTag>("insideOutTracks"));
   outsideInTracks_ = consumes<reco::TrackCollection>(cfg.getParameter<edm::InputTag>("outsideInTracks"));
+  insideOutTrajs_ = consumes<vector<Trajectory>>(cfg.getParameter<edm::InputTag>("insideOutTracks"));
+  outsideInTrajs_ = consumes<vector<Trajectory>>(cfg.getParameter<edm::InputTag>("outsideInTracks"));
   seedInside_ = consumes<vector<TrajectorySeed>>(cfg.getParameter<edm::InputTag>("insideOutTracks"));
   seedOutside_ = consumes<vector<TrajectorySeed>>(cfg.getParameter<edm::InputTag>("outsideInTracks"));
 }
@@ -46,35 +49,40 @@ void GEMCosmicMuonStandEfficiency::bookHistograms(DQMStore::IBooker & ibooker, e
   // for( auto& region : GEMGeometry_->regions() ){
   //   int re = region->region();
   // }
+  std::string temp1;
   for(int i = 0; i < 15; i++)
   {
-    std::string temp1;
     for(int j = 0; j < 2; j++)
     {
-      temp1 = "vfat_Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_inside";
+      temp1 = "Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_inside";
       gem_vfat_eff[i][j][0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "vfat_Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside"; 
+      temp1 = "Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside"; 
       gem_vfat_eff[i][j][1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "vfat_Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) +"_inside";
+      temp1 = "Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) +"_inside";
       gem_vfat_tot[i][j][0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "vfat_Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside";
+      temp1 = "Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside";
       gem_vfat_tot[i][j][1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
     }
   }
 
   insideChi2 = BookHist1D(ibooker, "insideChi2", "insideChi2", 100, 0, 10);
   outsideChi2 = BookHist1D(ibooker, "outsideChi2", "outsideChi2", 100, 0, 10);
-  residualX_[0] = BookHist1D(ibooker, "inside_residualX", "inside_residualX", 100, -4, 4);
-  residualY_[0] = BookHist1D(ibooker, "inside_residualY", "inside_residualY", 100, -4, 4);
-  pullX_[0] = BookHist1D(ibooker, "inside_pullX", "inside_pullX", 100, -3, 3);
-  pullY_[0] = BookHist1D(ibooker, "inside_pullY", "inside_pullY", 100, -3, 3);
-  residualX_[1] = BookHist1D(ibooker, "outside_residualX", "routside_esidualX", 100, -4, 4);
-  residualY_[1] = BookHist1D(ibooker, "outside_residualY", "outside_residualY", 100, -4, 4);
-  pullX_[1] = BookHist1D(ibooker, "outside_pullX", "outside_pullX", 100, -3, 3);
-  pullY_[1] = BookHist1D(ibooker, "outside_pullY", "outside_pullY", 100, -3, 3);
-
-  checkChamber = BookHist1D(ibooker, "checkChamber", "checkChamber", 30, -0.5, 29.5);
-  checkRoll = BookHist1D(ibooker, "checkRoll", "checkRoll", 8, -0.5, 7.5);
+  temp1 = "inside_residualX";
+  residualX_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
+  temp1 = "inside_residualY";
+  residualY_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -15, 15);
+  temp1 = "inside_pullX";
+  pullX_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
+  temp1 = "inside_pullY";
+  pullY_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
+  temp1 = "outside_residualX";
+  residualX_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
+  temp1 = "outside_residualY";
+  residualY_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -15, 15);
+  temp1 = "outside_pullX";
+  pullX_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
+  temp1 = "outside_pullY";
+  pullY_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
 
   LogDebug("GEMCosmicMuonStandEfficiency")<<"Booking End.\n";
 }
@@ -92,29 +100,37 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
   edm::Handle<reco::TrackCollection> outsideInTracks;
   e.getByToken( outsideInTracks_, outsideInTracks);
 
+  edm::Handle<vector<Trajectory>> insideOutTrajs;
+  e.getByToken( insideOutTrajs_, insideOutTrajs);
+
+  edm::Handle<vector<Trajectory>> outsideInTrajs;
+  e.getByToken( outsideInTrajs_, outsideInTrajs);
+  
   edm::Handle<vector<TrajectorySeed>> seedInside;
   e.getByToken( seedInside_, seedInside);
 
   edm::Handle<vector<TrajectorySeed>> seedOutside;
   e.getByToken( seedOutside_, seedOutside);
 
+  int count;
 
   // Analysis inside out tracks 
   for (std::vector<reco::Track>::const_iterator track = insideOutTracks->begin(); track != insideOutTracks->end(); ++track)
   {
     vector<TrajectorySeed>::const_iterator seeds = seedInside->begin();
+    vector<Trajectory>::const_iterator traj = insideOutTrajs->begin();
     auto seed = ((*seeds).recHits()).first;
     GEMDetId firstHit(seed->rawId());
     seed++;
     GEMDetId secondHit(seed->rawId());
 
-    //if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
+    if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
     //if(track->normalizedChi2() > 1.) continue;
-    auto residuals_ = track->residuals();
+    auto residuals_ = GEMResidualCalc(*traj);
     
     insideChi2->Fill(track->normalizedChi2());
-    int count = 0;
-    for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit)
+    count = 0;
+    for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit, ++count)
     {
       GEMDetId gemId((*recHit)->rawId());
       if(gemId.chamber() == firstHit.chamber() and gemId.layer() == firstHit.layer()) continue;
@@ -134,39 +150,32 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
       if((*recHit)->isValid())
       {
         gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
-	residualX_[0]->Fill(residuals_.residualX(count));
-	residualY_[0]->Fill(residuals_.residualY(count));
-	pullX_[0]->Fill(residuals_.pullX(count));
-	pullY_[0]->Fill(residuals_.pullY(count));
-	if(residuals_.residualY(count)>3.2)
-	{
-	  checkChamber->Fill(chamber+layer-2);
-	  checkRoll->Fill(roll-1);
-	}
+	residualX_[0]->Fill(residuals_.residualX[count]);
+	residualY_[0]->Fill(residuals_.residualY[count]);
+	pullX_[0]->Fill(residuals_.pullX[count]);
+	pullY_[0]->Fill(residuals_.pullY[count]);
       }
       gem_vfat_tot[idxChamber][idxLayer][0]->Fill(vfat);
-      count++;
     }
   }
  
-
-
   // Analysis outside in tracks 
   for (std::vector<reco::Track>::const_iterator track = outsideInTracks->begin(); track != outsideInTracks->end(); ++track)
   {
     vector<TrajectorySeed>::const_iterator seeds = seedOutside->begin();
+    vector<Trajectory>::const_iterator traj = outsideInTrajs->begin();
     auto seed = ((*seeds).recHits()).first;
     GEMDetId firstHit(seed->rawId());
     seed++;
     GEMDetId secondHit(seed->rawId());
 
-    //if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
+    if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
     //if(track->normalizedChi2() > 1.) continue;
-    auto residuals_ = track->residuals();
+    auto residuals_ = GEMResidualCalc(*traj);
 
     outsideChi2->Fill(track->normalizedChi2());
-    int count = 0;
-    for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit)
+    count = 0;
+    for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit, ++count)
     {
       GEMDetId gemId((*recHit)->rawId());
       if(gemId.chamber() == firstHit.chamber() and gemId.layer() == firstHit.layer()) continue;
@@ -185,18 +194,13 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
       
       if((*recHit)->isValid())
       {
-        gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
-	/*residualX_[1]->Fill(residuals_.residualX(count));
-	residualY_[1]->Fill(residuals_.residualY(count));
-	pullX_[1]->Fill(residuals_.pullX(count));
-	pullY_[1]->Fill(residuals_.pullY(count));*/
+        gem_vfat_eff[idxChamber][idxLayer][1]->Fill(vfat);
+	residualX_[1]->Fill(residuals_.residualX[count]);
+	residualY_[1]->Fill(residuals_.residualY[count]);
+	pullX_[1]->Fill(residuals_.pullX[count]);
+	pullY_[1]->Fill(residuals_.pullY[count]);
       }
-      residualX_[1]->Fill(residuals_.residualX(count));
-      residualY_[1]->Fill(residuals_.residualY(count));
-      pullX_[1]->Fill(residuals_.pullX(count));
-      pullY_[1]->Fill(residuals_.pullY(count));
       gem_vfat_tot[idxChamber][idxLayer][1]->Fill(vfat);
-      count++;
     }
   }
 }
