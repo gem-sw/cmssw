@@ -3,14 +3,14 @@
 NeventsPerJob=$1
 RUN=$2
 JobId=$3
-srcFile=runGEMCosmicStand_sim_new.py
+srcFile=runGEMCosmicStand_sim.py
 
-srcDir=/afs/cern.ch/user/j/jslee/gemcrs/src
+srcDir=/home/home1/institut_3a/mocellin/gemcrs/src
 workDir=$srcDir/Validation/GEMCR/test
 tempDir=/tmp/jslee
 #runDir=$workDir
 #resultDir=$workDir/Tree
-resultDir=/afs/cern.ch/work/j/jslee/QC8
+resultDir=$srcDir/Validation/GEMCR/test/results
 
 runFile=runGEMCosmicStand_sim_temp_${RUN}_${JobId}.py
 

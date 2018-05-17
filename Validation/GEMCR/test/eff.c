@@ -3,8 +3,7 @@
 TString run = "200";
 int drawOn=0;
 int printOn=0;
-int calc_eff_vfat_On=1;
-//If you want to see eff vs layer or eff vs chamber without eff vs vfat then set calc_eff_vfat_On=0.
+int calc_eff_vfat_On=1; //If you want to see eff vs layer or eff vs chamber without eff vs vfat then set calc_eff_vfat_On=0.
 int setMinimumOn=1;
 int makeTreeOn=1;
 int cal_eff_from_tree_On=0;
@@ -46,7 +45,6 @@ if(makeTreeOn)
 	tree->Branch("vfat",&vfat,"vfat/I");
 	tree->Branch("eff",&eff,"eff/F");
 	tree->Branch("error",&error,"error/F");
-	//tree->Branch("",&,"");
 }
 
 f->cd("gemcrValidation");
@@ -106,8 +104,6 @@ if(drawOn)
 TString hname="";
 TString htitle="";
 TString png="";
-//int i=0;
-//for(int i=18;i<20;i++)
 for(int i=0;i<maxNlayer;i++)
 {
 	hname = Form("hvfat_%d",i);
@@ -151,11 +147,9 @@ for(int i=0;i<maxNlayer;i++)
 	{
 		for(int k=0, k2=maxNeta;k<maxNeta;k++, k2--)
 		{
-			int n1 = k; //n1 = 0,1,2,3,4,5,6,7
-			int n2 = 2-j+(int)(2-i/10)*3; // n2 = 8 7 6 5 4 3 2 1 0 for run106 and run>=132
-			//int n2 = j+(int)(2-i/10)*3; // n2 = 6 7 8 3 4 5 0 1 2 for 107<=run<=131
-			int n3 = i%10; // n3 = 0,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9
-			//int vfatId = i*100 + j*10 + k;
+			int n1 = k;
+			int n2 = 2-j+(int)(2-i/10)*3;
+			int n3 = i%10;
 			TString cutI = Form("vfatI[%d][%d][%d]==1",i,j,k);
 			TString cutF = cutI+"&&"+Form("vfatF[%d][%d][%d]==1",i,j,k);
 			if(cal_eff_from_tree_On)
@@ -179,10 +173,6 @@ for(int i=0;i<maxNlayer;i++)
 
 				if(makeTreeOn)
 				{
-//					layer = i;
-//					phi = j;
-//					eta = k;
-//					n2 = 2-j+(int)(2-i/10)*3; //for 107<=run<=131
 					layer = n3;
 					phi = n2;
 					eta = n1;
@@ -191,7 +181,6 @@ for(int i=0;i<maxNlayer;i++)
 					error = vfatEffError[i][j][k];
 					vfat++;
 					tree->Fill();
-					//cout<<"n3 "<<n3<<", n2 "<<n2<<", n1 "<<n1<<", vfatF "<<vfatF[i][j][k]<<", vfatI "<<vfatI[i][j][k]<<", eff "<<vfatEff[i][j][k]<<" +- "<<vfatEffError[i][j][k]<<endl;
 				}
 			}
 
@@ -202,21 +191,14 @@ for(int i=0;i<maxNlayer;i++)
 
 			hvfatEff[i]->SetBinContent(nvfat+1, vfatEff[i][j][k]);
 			hvfatEff[i]->SetBinError(nvfat+1, vfatEffError[i][j][k]);
-//			hvfatEff2[i]->SetBinContent(j2+1,k2+1, vfatEff[i][j][k]);
-//			hvfatNumerator[i]->SetBinContent(j2+1,k2+1,vfatF[i][j][k]);
-//			hvfatDenominator[i]->SetBinContent(j2+1,k2+1,vfatI[i][j][k]);
 			hvfatEff2[i]->SetBinContent(j+1,k+1, vfatEff[i][j][k]);
 			hvfatNumerator[i]->SetBinContent(j+1,k+1,vfatF[i][j][k]);
 			hvfatDenominator[i]->SetBinContent(j+1,k+1,vfatI[i][j][k]);
-//			hvfatNumerator[i]->SetBinContent(j2,k+1,vfatF[i][j][k]);
-//			hvfatDenominator[i]->SetBinContent(j2,k+1,vfatI[i][j][k]);
 
 			if(maxVfatNumerator < vfatF[i][j][k]) maxVfatNumerator = vfatF[i][j][k];			
 			if(minVfatNumerator > vfatF[i][j][k]) minVfatNumerator = vfatF[i][j][k];			
 			if(maxVfatDenominator < vfatI[i][j][k]) maxVfatDenominator = vfatI[i][j][k];			
 			if(minVfatDenominator > vfatI[i][j][k]) minVfatDenominator = vfatI[i][j][k];			
-			//cout<<"i "<<i<<", j "<<j<<", k "<<k<<", vfatF "<<vfatF[i][j][k]<<", vfatI "<<vfatI[i][j][k]<<", eff "<<vfatEff[i][j][k]<<" +- "<<vfatEffError[i][j][k]<<", maxVfatNumerator "<<maxVfatNumerator<<", minVfatNumerator "<<minVfatNumerator<<", maxVfatDenominator "<<maxVfatDenominator<<", minVfatDenominator "<<minVfatDenominator<<endl;
-
 			nvfat++;
 		}
 	}
@@ -225,7 +207,6 @@ for(int i=0;i<maxNlayer;i++)
 		c1->cd();
 		hvfatEff[i]->Draw();
 		hvfatEff[i]->Fit("pol0");
-//		func->Draw("same");
 		png = Form(savePngDir+"/eff_VS_vfat_of_chamber%d_layer%d.png",nch*2+1,i%2+1);
 		if(printOn) c1->Print(png);
 
@@ -243,7 +224,6 @@ for(int i=0;i<maxNlayer;i++)
 	}
 	cutLayerI = Form("vfatI[%d]==1",i);
 	cutLayerF = cutLayerI + "&&" + Form("vfatF[%d]==1",i);
-//	cout<<"i "<<i<<", cutLayerF "<<cutLayerF<<", cutLayerI "<<cutLayerI<<endl;
 	if(cal_eff_from_tree_On)
 	{
 		layerI[i] = tree->GetEntries(cutLayerI);
@@ -293,7 +273,6 @@ for(int i=0;i<maxNlayer;i++)
 
 	if(i%2==1)
 	{
-//		cout<<"nch "<<nch<<", cutChamberF "<<cutChamberF<<", cutChamberI "<<cutChamberI<<endl;
 		if(cal_eff_from_tree_On)
 		{
 			chamberI[nch] = tree->GetEntries(cutChamberI);
@@ -341,38 +320,13 @@ for(int i=0;i<maxNlayer;i++)
 
 cout<<endl<<"maxVfatEff "<<maxVfatEff<<", minVfatEff "<<minVfatEff<<", maxVfatNumerator "<<maxVfatNumerator<<", minVfatNumerator "<<minVfatNumerator<<", maxVfatDenominator "<<maxVfatDenominator<<", minVfatDenominator "<<minVfatDenominator<<endl;
 
-/*
-for(int i=0;i<maxNlayer;i++) if(drawOn && calc_eff_vfat_On) 
-{
-	c2->cd();
-	hvfatEff2[i]->SetMaximum(maxVfatEff + (maxVfatEff-minVfatEff)*0.05);
-	hvfatEff2[i]->SetMinimum(minVfatEff - (maxVfatEff-minVfatEff)*0.05);
-	hvfatEff2[i]->Draw("colz");
-	png = Form(savePngDir+"/eff_VS_vfat_of_chamber%d_layer%d_fixRange_2D.png",(i/2)*2+1,i%2+1);
-	if(printOn) c2->Print(png);
-
-	hvfatNumerator[i]->SetMaximum(maxVfatNumerator + (maxVfatNumerator-minVfatNumerator)*0.05);
-	hvfatNumerator[i]->SetMinimum(minVfatNumerator - (maxVfatNumerator-minVfatNumerator)*0.05);
-	hvfatNumerator[i]->Draw("colz");
-	png = Form(savePngDir+"/eff_VS_vfat_of_chamber%d_layer%d_fixRange_Numerator.png",(i/2)*2+1,i%2+1);
-	if(printOn) c2->Print(png);
-	hvfatDenominator[i]->SetMaximum(maxVfatDenominator + (maxVfatDenominator-minVfatDenominator)*0.05);
-	hvfatDenominator[i]->SetMinimum(minVfatDenominator - (maxVfatDenominator-minVfatDenominator)*0.05);
-	hvfatDenominator[i]->Draw("colz");
-	png = Form(savePngDir+"/eff_VS_vfat_of_chamber%d_layer%d_fixRange_Denominator.png",(i/2)*2+1,i%2+1);
-	if(printOn) c2->Print(png);
-}
-*/
-
 if(drawOn) 
 {
 	c1->cd();
 	hlayerEff->Draw();
-//	hlayerEff->Fit("pol0");
 	png =savePngDir+"/eff_VS_layer.png";
 	if(printOn) c1->Print(png);
 	hchamberEff->Draw();
-//	hchamberEff->Fit("pol0");
 	png = savePngDir+"/eff_VS_chamber.png";
 	if(printOn) c1->Print(png);
 
@@ -400,10 +354,8 @@ if(drawOn)
 
 TCanvas *c3 = new TCanvas("c3","c3",700,500);
 fEff->cd();
-//tree->Draw("eff>>h1(40,0.9,1)");
 int nBad = tree->GetEntries("eff<0.97");
 cout<<"number of bad vfats with eff<0.97 : "<<nBad<<endl;
-//tree->Draw("eff>>h1(40,0.96,0.99)");
 tree->Draw("eff>>h1(40,0.80.1.05)");
 htitle = Form("number of vfats VS efficiency (nBadVfats : %d)",nBad);
 h1->SetTitle(htitle);
@@ -412,31 +364,19 @@ h1->GetYaxis()->SetTitle("number of vfats");
 h1->Draw();
 png = savePngDir+"/run"+run+"_number_of_vfats_VS_efficiency02.png";
 c3->Print(png);
-//tree->Draw("eff>>h2(40,0.9,1)","phi==2||phi==6"); //for run106 and 107<=run<=131
-//tree->Draw("eff>>h2(40,0.9,1)","phi==0||phi==8"); //for run>=132
-//tree->Draw("eff>>h2(40,0.9,1)","(layer==0||layer==9||layer==10||layer==19||layer==20||layer==29)&&(eta==0||eta==7)"); //for run==133
-//tree->Draw("eff>>h2(40,0.9,1)","(floor==0||floor==9)&&(eta==0||eta==7)"); //for run==133
-//tree->Draw("eff>>h2(40,0.96,0.99)","(floor==0||floor==9)&&(eta==0||eta==7)"); //for run==133
-//tree->Draw("eff>>h2(40,0.80,1.05)","(floor==0||floor==9)&&(eta==0||eta==7)"); //for run==133
-tree->Draw("eff>>h2(40,0.80,1.05)","(eta==0||eta==7)"); //for run==133
+tree->Draw("eff>>h2(40,0.80,1.05)","(eta==0||eta==7)");
 h2->SetLineColor(2);
 h1->Draw();
 h2->Draw("same");
 TLegend *leg = new TLegend(0.20,0.65,0.70,0.85);
 leg->AddEntry(h1,"all vfats","l");
-//leg->AddEntry(h2,"vfats at the edge of QC8","l");
-//leg->AddEntry(h2,"overlapped vfats under center chamber","l");
-//leg->AddEntry(h2,"vfats in i#eta=1 or 8 when floor=0 and 9","l");
 leg->AddEntry(h2,"vfats in i#eta=1 or 8","l");
 leg->Draw();
 png = savePngDir+"/run"+run+"_number_of_vfats_VS_efficiency01.png";
 c3->Print(png);
-//png = savePngDir+"/eff_VS_chamber_2D.png";
-//c3->Print(png);
 
 TCanvas *c4 = new TCanvas("c4","c4",700,500);
 c4->SetRightMargin(0.15);
-//TCanvas *c5[2];
 TCanvas *c5 = new TCanvas("c5","c5",1442,437*2);
 c5->Divide(3,4,0,0);
 
@@ -449,18 +389,8 @@ line2->SetLineWidth(2);
 
 for(int i=0;i<maxNlayer/3;i++)
 {
-//	if(i%5==0)
-//	{
-		//c5[i/5] = new TCanvas(Form("c5_%d",i/5),Form("c5_%d",i/5),2100,1000);
-		//c5[i/5]->Divide(3,2,0,0);
-		// 2100/36.97cm=56.8028/cm, 1000/17.15cm=58.3090/cm ==> 25.4cm - 1442.79, 7.5cm - 437.318
-//	}
 	hname = Form("hvfatEff3_%d",i);
-	//htitle = Form("Efficiency VS VFAT (floor%d)",i);
-	//htitle = Form("Efficiency VS VFAT (floor%d, ROW%d/",i,(i/2)+1);
 	htitle = Form("Efficiency VS VFAT (%d/X/",(i/2)+1)+TB[i%2]+")";
-        //if(i%2==0) htitle += "B)";
-	//else htitle += "T)";
 	hvfatEff3[i] = new TH2D(hname,htitle,maxNphi*3,1,maxNphi*3+1,maxNeta,1,maxNeta+1);
 	hvfatEff3[i]->GetXaxis()->SetTitle("ith-#phi");
 	hvfatEff3[i]->GetYaxis()->SetTitle("ith-#eta");
@@ -482,20 +412,6 @@ for(int i=0;i<maxNlayer/3;i++)
 	line2->Draw();
 	png = savePngDir+"/run"+run+Form("_eff_VS_vfat_floor%d.png",i);
 	c4->Print(png);
-
-//	int n0 = 11-i;
-//	if(i>=5) n0--;
-//	c5->cd(n0)->SetRightMargin(0.15);
-//	hvfatEff3[i]->Draw("colz");
-
-//	c5[i/5]->cd(i%5+1)->SetRightMargin(0.15);
-//	c5[i/5]->cd(5-i%5)->SetRightMargin(0.15);
-//	hvfatEff3[i]->Draw("colz");
-//	if(i%5==4)
-//	{
-//		png = savePngDir+"/run"+run+Form("_eff_VS_vfat_all0%d.png",i/5+1);
-//		c5[i/5]->Print(png);
-//	}
 }
 
 gStyle->SetTitleFontSize(0.1);
@@ -506,21 +422,9 @@ for(int i=0;i<maxNlayer/3;i++)
 	int n0 = 11-i;
 	if(i>=5) n0--;
 	c5->cd(n0)->SetRightMargin(0.15);
-	//htitle = Form("floor%d",i);
-	htitle = Form("%d/X/",(i/2)+1)+TB[i%2];;
-        //if(i%2==0) htitle += "B)";
-	//else htitle += "T)";
+	htitle = Form("%d/X/",(i/2)+1)+TB[i%2];
 	hvfatEff3[i]->SetTitle(htitle);
 	hvfatEff3[i]->Draw("colz");
-
-	//for bug fix at line width in ROOT
-//	if(n0%3==1) line1->SetLineWidth(5);
-//	else line1->SetLineWidth(2);
-//	if(n0%3==0) line1->SetLineWidth(5);
-//	else line1->SetLineWidth(2);
-
-	//if(n0==10) line1->SetLineWidth(5);
-	//else line1->SetLineWidth(2);
 	line1->Draw();
 	line2->Draw();
 }

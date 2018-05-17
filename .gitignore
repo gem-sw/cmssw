@@ -4,3 +4,5 @@ __init__.py
 .#*
 #*#
 *~
+CondFormats/DataRecord/interface/L1TMuonEndCapParamsRcd.h
+CondFormats/DataRecord/src/L1TMuonEndCapParamsRcd.cc

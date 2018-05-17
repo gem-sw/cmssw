@@ -1,19 +1,21 @@
-// L1TMuonEndCapParamsRcd                                                                                            
-// Description: Record for L1TMuonEndCapParams
+#ifndef L1TEMTFParamsRcd_L1TEMTFParamsRcd_h
+#define L1TEMTFParamsRcd_L1TEMTFParamsRcd_h
+// -*- C++ -*-
 //
-// automatically generate by make_records.pl
+// Class  :     L1TMuonEndcapParamsRcd
 //
-#ifndef CondFormatsDataRecord_L1TMuonEndCapParams_h
-#define CondFormatsDataRecord_L1TMuonEndCapParams_h
+// Author:      Matthew Carver
+// Created:
+//
+
+//#include "FWCore/Framework/interface/EventSetupRecordImplementation.h"
+//#include "CondFormats/DataRecord/interface/L1TriggerKeyListExtRcd.h"
+//#include "CondFormats/DataRecord/interface/L1TriggerKeyExtRcd.h"
+
+//class L1TMuonEndcapParamsRcd : public edm::eventsetup::DependentRecordImplementation<L1TMuonEndcapParamsRcd, boost::mpl::vector<L1TriggerKeyListExtRcd,L1TriggerKeyExtRcd> > {};
 
 #include "FWCore/Framework/interface/EventSetupRecordImplementation.h"
 
-class L1TMuonEndCapParamsRcd : public edm::eventsetup::EventSetupRecordImplementation<L1TMuonEndCapParamsRcd> {};
-
-// Dependent record implmentation:
-//#include "FWCore/Framework/interface/DependentRecordImplementation.h"
-//#include "CondFormats/DataRecord/interface/L1TriggerKeyListRcd.h"
-//#include "CondFormats/DataRecord/interface/L1TriggerKeyRcd.h"
-//class L1TMuonEndCapParamsRcd : public edm::eventsetup::DependentRecordImplementation<L1TMuonEndCapParamsRcd, boost::mpl::vector<L1TriggerKeyListRcd,L1TriggerKeyRcd> > {};
+class L1TMuonEndcapParamsRcd : public edm::eventsetup::EventSetupRecordImplementation<L1TMuonEndcapParamsRcd> {};
 
 #endif
