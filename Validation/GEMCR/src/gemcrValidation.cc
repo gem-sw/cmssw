@@ -397,7 +397,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
             }
           }
 
-          int index = id_.chamber() + id_.layer() - 2 ;
+          int index = ch.id().chamber() + ch.id().layer() - 2 ;
           int vfat = findVFAT(tlp.x(), min_x, max_x);
 
           int ivfat = vfat - 1;

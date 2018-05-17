@@ -4,14 +4,14 @@ universe   = vanilla
 arguments  = $(Process)
 requirements = OpSysMajorVer == 6
 
-log = res_40153098/condor.log
+log = res_1/condor.log
 
 getenv     = True
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-output = res_40153098/job_$(Process).log
-error = res_40153098/job_$(Process).err
+output = res_1/job_$(Process).log
+error = res_1/job_$(Process).err
 transfer_input_files = job.tar.gz
 transfer_output_files =  gemcr/src/Validation/GEMCR/test/out_reco_MC.root
-transfer_output_remaps = "out_reco_MC.root=res_40153098/out_reco_MC_$(Process).root"
+transfer_output_remaps = "out_reco_MC.root=res_1/out_reco_MC_$(Process).root"
 queue 200
