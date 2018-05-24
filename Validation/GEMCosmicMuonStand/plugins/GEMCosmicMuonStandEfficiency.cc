@@ -49,40 +49,37 @@ void GEMCosmicMuonStandEfficiency::bookHistograms(DQMStore::IBooker & ibooker, e
   // for( auto& region : GEMGeometry_->regions() ){
   //   int re = region->region();
   // }
-  std::string temp1;
   for(int i = 0; i < 15; i++)
   {
     for(int j = 0; j < 2; j++)
     {
-      temp1 = "Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_inside";
-      gem_vfat_eff[i][j][0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "Valid_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside"; 
-      gem_vfat_eff[i][j][1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) +"_inside";
-      gem_vfat_tot[i][j][0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
-      temp1 = "Total_Hit_Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1) + "_outside";
-      gem_vfat_tot[i][j][1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
+      std::string chamber = "Chamber" + to_string(2*i+1) + "_layer" + to_string(j+1);
+      std::string temp1;
+      temp1 = "Valid_Hit_" + chamber;
+      gem_vfat_eff[i][j] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
+      temp1 = "Total_Hit_" + chamber;
+      gem_vfat_tot[i][j] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 24, -0.5, 23.5);
+      for(int k = 0; k < 24; k++)
+      {
+        std::string vfat = chamber + "_" + to_string(k);
+        temp1 = "residualX_" + vfat;
+        residualX_[i][j][k] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
+        temp1 = "residualY_" + vfat;
+        residualY_[i][j][k] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -15, 15);
+        temp1 = "pullX_" + vfat;
+        pullX_[i][j][k] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
+        temp1 = "pullY_" + vfat;
+        pullY_[i][j][k] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
+      }
     }
   }
 
-  insideChi2 = BookHist1D(ibooker, "insideChi2", "insideChi2", 100, 0, 10);
-  outsideChi2 = BookHist1D(ibooker, "outsideChi2", "outsideChi2", 100, 0, 10);
-  temp1 = "inside_residualX";
-  residualX_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
-  temp1 = "inside_residualY";
-  residualY_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -15, 15);
-  temp1 = "inside_pullX";
-  pullX_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
-  temp1 = "inside_pullY";
-  pullY_[0] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
-  temp1 = "outside_residualX";
-  residualX_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -5, 5);
-  temp1 = "outside_residualY";
-  residualY_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -15, 15);
-  temp1 = "outside_pullX";
-  pullX_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
-  temp1 = "outside_pullY";
-  pullY_[1] = BookHist1D(ibooker, temp1.c_str(), temp1.c_str(), 100, -4, 4);
+  chi2[0] = BookHist1D(ibooker, "insideChi2", "insideChi2", 1000, 0, 100);
+  chi2[1] = BookHist1D(ibooker, "outsideChi2", "outsideChi2", 1000, 0, 100);
+  residualX_tot = BookHist1D(ibooker, "residualX", "residualX", 1000, 0, 200);
+  residualY_tot = BookHist1D(ibooker, "residualY", "residualY", 1000, 0, 200);
+  pullX_tot = BookHist1D(ibooker, "pullX", "pullX", 1000, 0, 200);
+  pullY_tot = BookHist1D(ibooker, "pullY", "pullY", 1000, 0, 200);
 
   LogDebug("GEMCosmicMuonStandEfficiency")<<"Booking End.\n";
 }
@@ -112,75 +109,39 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
   edm::Handle<vector<TrajectorySeed>> seedOutside;
   e.getByToken( seedOutside_, seedOutside);
 
-  int count;
-
   // Analysis inside out tracks 
-  for (std::vector<reco::Track>::const_iterator track = insideOutTracks->begin(); track != insideOutTracks->end(); ++track)
-  {
-    vector<TrajectorySeed>::const_iterator seeds = seedInside->begin();
-    vector<Trajectory>::const_iterator traj = insideOutTrajs->begin();
-    auto seed = ((*seeds).recHits()).first;
-    GEMDetId firstHit(seed->rawId());
-    seed++;
-    GEMDetId secondHit(seed->rawId());
+  analyzeTrk(true, GEMGeometry_, insideOutTracks, insideOutTrajs, seedInside);
+  // Analysis outside in tracks 
+  analyzeTrk(false, GEMGeometry_, outsideInTracks, outsideInTrajs, seedOutside);
+}
 
-    if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
-    //if(track->normalizedChi2() > 1.) continue;
+void GEMCosmicMuonStandEfficiency::analyzeTrk(bool isInside, 
+                                              const GEMGeometry* GEMGeometry_,
+                                              const edm::Handle<reco::TrackCollection> &tracks, 
+                                              const edm::Handle<vector<Trajectory>> &trajectorys, 
+                                              const edm::Handle<vector<TrajectorySeed>> &seed)
+{
+  vector<TrajectorySeed>::const_iterator seeds = seed->begin();
+  vector<Trajectory>::const_iterator traj = trajectorys->begin();
+
+  for (std::vector<reco::Track>::const_iterator track = tracks->begin(); track != tracks->end(); ++track, ++seeds, ++traj)
+  {
     auto residuals_ = GEMResidualCalc(*traj);
     
-    insideChi2->Fill(track->normalizedChi2());
-    count = 0;
-    for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit, ++count)
-    {
-      GEMDetId gemId((*recHit)->rawId());
-      if(gemId.chamber() == firstHit.chamber() and gemId.layer() == firstHit.layer()) continue;
-      if(gemId.chamber() == secondHit.chamber() and gemId.layer() == secondHit.layer()) continue;
-      
-      auto etaPartition = GEMGeometry_->etaPartition(gemId);
-      int chamber = etaPartition->id().chamber();
-      int layer = etaPartition->id().layer();
-      int roll = etaPartition->id().roll();
-      int nStrips = etaPartition->nstrips();
-      float strip = etaPartition->strip((*recHit)->localPosition());
-
-      int idxChamber = (chamber-1)/2;
-      int idxLayer = layer-1;
-      int vfat = (8-roll)+int(strip/nStrips*3)*8;
-      
-      if((*recHit)->isValid())
-      {
-        gem_vfat_eff[idxChamber][idxLayer][0]->Fill(vfat);
-	residualX_[0]->Fill(residuals_.residualX[count]);
-	residualY_[0]->Fill(residuals_.residualY[count]);
-	pullX_[0]->Fill(residuals_.pullX[count]);
-	pullY_[0]->Fill(residuals_.pullY[count]);
-      }
-      gem_vfat_tot[idxChamber][idxLayer][0]->Fill(vfat);
-    }
-  }
- 
-  // Analysis outside in tracks 
-  for (std::vector<reco::Track>::const_iterator track = outsideInTracks->begin(); track != outsideInTracks->end(); ++track)
-  {
-    vector<TrajectorySeed>::const_iterator seeds = seedOutside->begin();
-    vector<Trajectory>::const_iterator traj = outsideInTrajs->begin();
     auto seed = ((*seeds).recHits()).first;
     GEMDetId firstHit(seed->rawId());
     seed++;
     GEMDetId secondHit(seed->rawId());
-
     if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
-    //if(track->normalizedChi2() > 1.) continue;
-    auto residuals_ = GEMResidualCalc(*traj);
 
-    outsideChi2->Fill(track->normalizedChi2());
-    count = 0;
+    //if (track->normalizedChi2() > 10.) continue;
+    if(isInside) chi2[0]->Fill(track->normalizedChi2());
+    else         chi2[1]->Fill(track->normalizedChi2());
+
+    int count = 0;
     for (trackingRecHit_iterator recHit = track->recHitsBegin(); recHit != track->recHitsEnd(); ++recHit, ++count)
     {
       GEMDetId gemId((*recHit)->rawId());
-      if(gemId.chamber() == firstHit.chamber() and gemId.layer() == firstHit.layer()) continue;
-      if(gemId.chamber() == secondHit.chamber() and gemId.layer() == secondHit.layer()) continue;
-      
       auto etaPartition = GEMGeometry_->etaPartition(gemId);
       int chamber = etaPartition->id().chamber();
       int layer = etaPartition->id().layer();
@@ -191,16 +152,23 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
       int idxChamber = (chamber-1)/2;
       int idxLayer = layer-1;
       int vfat = (8-roll)+int(strip/nStrips*3)*8;
+
+      if(chamber == firstHit.chamber() and layer == firstHit.layer()) continue;
+      if(chamber == secondHit.chamber() and layer == secondHit.layer()) continue;
       
-      if((*recHit)->isValid())
+      if((*recHit)->isValid()) 
       {
-        gem_vfat_eff[idxChamber][idxLayer][1]->Fill(vfat);
-	residualX_[1]->Fill(residuals_.residualX[count]);
-	residualY_[1]->Fill(residuals_.residualY[count]);
-	pullX_[1]->Fill(residuals_.pullX[count]);
-	pullY_[1]->Fill(residuals_.pullY[count]);
+        gem_vfat_eff[idxChamber][idxLayer]->Fill(vfat);
+        residualX_[idxChamber][idxLayer][vfat]->Fill(residuals_.residualX[count]);
+        residualY_[idxChamber][idxLayer][vfat]->Fill(residuals_.residualY[count]);
+        pullX_[idxChamber][idxLayer][vfat]->Fill(residuals_.pullX[count]);
+        pullY_[idxChamber][idxLayer][vfat]->Fill(residuals_.pullY[count]);
+        residualX_tot->Fill(std::abs(residuals_.residualX[count]));
+        residualY_tot->Fill(std::abs(residuals_.residualY[count]));
+        pullX_tot->Fill(std::abs(residuals_.pullX[count]));
+        pullY_tot->Fill(std::abs(residuals_.pullY[count]));
       }
-      gem_vfat_tot[idxChamber][idxLayer][1]->Fill(vfat);
+      gem_vfat_tot[idxChamber][idxLayer]->Fill(vfat);
     }
   }
 }
