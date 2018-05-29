@@ -169,8 +169,8 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
   for (auto seed : *trajectorySeedCands){
     Trajectory smoothed = makeTrajectory(seed, gemRecHits.product());
     if (smoothed.isValid()){
-      cout << "GEMCosmicMuon::Trajectory " << smoothed.foundHits() << endl;
-      cout << "GEMCosmicMuon::Trajectory chiSquared/ndof " << smoothed.chiSquared()/float(smoothed.ndof()) << endl;
+      //cout << "GEMCosmicMuon::Trajectory " << smoothed.foundHits() << endl;
+      //cout << "GEMCosmicMuon::Trajectory chiSquared/ndof " << smoothed.chiSquared()/float(smoothed.ndof()) << endl;
       //if (( maxChi2 > smoothed.chiSquared()/float(smoothed.ndof())) and ( smoothed.chiSquared()/float(smoothed.ndof()) > 7.0)){
       if (maxChi2 > smoothed.chiSquared()/float(smoothed.ndof())){
         maxChi2 = smoothed.chiSquared()/float(smoothed.ndof());
@@ -188,8 +188,8 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
     return;
   }
   //cout << maxChi2 << endl;
-  cout << "GEMCosmicMuon::bestTrajectory " << bestTrajectory.foundHits() << endl;
-  cout << "GEMCosmicMuon::bestTrajectory chiSquared/ ndof " << bestTrajectory.chiSquared()/float(bestTrajectory.ndof()) << endl;
+  //cout << "GEMCosmicMuon::bestTrajectory " << bestTrajectory.foundHits() << endl;
+  //cout << "GEMCosmicMuon::bestTrajectory chiSquared/ ndof " << bestTrajectory.chiSquared()/float(bestTrajectory.ndof()) << endl;
   //cout << maxChi2 << endl;
   // make track
   const FreeTrajectoryState* ftsAtVtx = bestTrajectory.geometricalInnermostState().freeState();
@@ -294,6 +294,7 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
   TrackingRecHit::ConstRecHitContainer consRecHits;
   
   float previousLayer = -200;//skip first layer
+  cout << "   EEEE" << endl;
   for (auto chmap : detLayerMap_){
     //// skip same layers
     if (chmap.first == previousLayer) continue;
@@ -308,7 +309,7 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
     }
     
     GlobalPoint tsosGP = tsos.globalPosition();
-    cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
+    //cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
     
     float maxR = 500;
     // find best in all layers
@@ -325,19 +326,23 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
         
           LocalPoint tsosLP = etaPart->toLocal(tsosGP);
           LocalPoint rhLP = (*rechit).localPosition();
-          double x_err = (*rechit).localPositionError().xx();
-          double y_err = (*rechit).localPositionError().yy();
-/*          cout << "EtaPartition " << etaPartID.roll() << endl;
-          cout << "Residual X " << abs(rhLP.x() - tsosLP.x()) << "Pull X " << abs(rhLP.x() - tsosLP.x())/x_err << endl;
-          cout << "Residual Y " << abs(rhLP.y() - tsosLP.y()) << "Pull Y " << abs(rhLP.y() - tsosLP.y())/y_err << endl;
-          cout << "ClusterSize " << rechit->clusterSize() << endl; */
-          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
-          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
+          
+          double x_err = sqrt((*rechit).localPositionError().xx());
+          double y_err = sqrt((*rechit).localPositionError().yy());
+          
+          cout << "Chamber " << etaPartID.chamber() << " :::: Layer " << etaPartID.layer() << endl;
+          cout << "EtaPartition " << etaPartID.roll() << " :::: ClusterSize " << rechit->clusterSize() << endl;
+          cout << "Residual X " << abs(rhLP.x() - tsosLP.x()) << " :::: Pull X " << abs(rhLP.x() - tsosLP.x())/x_err << endl;
+          cout << "Residual Y " << abs(rhLP.y() - tsosLP.y()) << " :::: Pull Y " << abs(rhLP.y() - tsosLP.y())/y_err << endl;
+//          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
+//          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
+          if (abs(rhLP.x() - tsosLP.x()) / x_err > 4.) continue;
+//          if (abs(rhLP.y() - tsosLP.y()) / y_err > 4.) continue;
           // need to find best hits per chamber
           float deltaR = (rhLP - tsosLP).mag();
           if (maxR > deltaR){
         
-            cout << " found hit   "<< etaPartID << " pos = "<< rhLP << " R = "<<deltaR <<endl;
+            //cout << " found hit   "<< etaPartID << " pos = "<< rhLP << " R = "<<deltaR <<endl;
             const GeomDet* geomDet(etaPart);
             tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit);
             maxR = deltaR;
@@ -408,8 +413,8 @@ TrackingRecHit::ConstRecHitContainer GEMCosmicMuon::findMissingHits(Trajectory& 
         const BoundPlane& bps(etaPart->surface());
           
         if(abs(pos.y()) < 17 && abs(pos.x()) < 40 )
-          cout << " missing hit "<< etaPart->id() << " pos = "<<pos<< " R = "<<pos.mag() <<" inside "
-               <<  bps.bounds().inside(pos2D) <<endl;
+          //cout << " missing hit "<< etaPart->id() << " pos = "<<pos<< " R = "<<pos.mag() <<" inside "
+          //     <<  bps.bounds().inside(pos2D) <<endl;
           
         if (bps.bounds().inside(pos2D)){
             
@@ -431,7 +436,7 @@ TrackingRecHit::ConstRecHitContainer GEMCosmicMuon::findMissingHits(Trajectory& 
       ++nmissing;
     }
   }
-  cout << "found "<<nmissing <<" missing hits"<<endl;
+  //cout << "found "<<nmissing <<" missing hits"<<endl;
   
   return recHits;
 }
