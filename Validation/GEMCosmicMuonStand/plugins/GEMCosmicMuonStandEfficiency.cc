@@ -110,7 +110,7 @@ void GEMCosmicMuonStandEfficiency::analyze(const edm::Event& e,const edm::EventS
   e.getByToken( seedOutside_, seedOutside);
 
   // Analysis inside out tracks 
-  analyzeTrk(true, GEMGeometry_, insideOutTracks, insideOutTrajs, seedInside);
+  // analyzeTrk(true, GEMGeometry_, insideOutTracks, insideOutTrajs, seedInside);
   // Analysis outside in tracks 
   analyzeTrk(false, GEMGeometry_, outsideInTracks, outsideInTrajs, seedOutside);
 }

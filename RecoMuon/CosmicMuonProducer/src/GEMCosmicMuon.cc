@@ -60,10 +60,10 @@ private:
   KFUpdator* theUpdator_;
 
   MuonTransientTrackingRecHit::MuonRecHitContainer getHitsFromLayer(vector<const GEMChamber*> &chambers,
-								    const GEMRecHitCollection* gemHits);
+                                                                    const GEMRecHitCollection* gemHits);
   
   unique_ptr<vector<TrajectorySeed> > findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer topSeeds,
-						MuonTransientTrackingRecHit::MuonRecHitContainer bottomSeeds);
+                                                MuonTransientTrackingRecHit::MuonRecHitContainer bottomSeeds);
   Trajectory makeTrajectory(TrajectorySeed& seed, const GEMRecHitCollection* gemHits);
   TrackingRecHit::ConstRecHitContainer findMissingHits(Trajectory& track);
   
@@ -173,8 +173,8 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
       cout << "GEMCosmicMuon::Trajectory chiSquared/ndof " << smoothed.chiSquared()/float(smoothed.ndof()) << endl;
       //if (( maxChi2 > smoothed.chiSquared()/float(smoothed.ndof())) and ( smoothed.chiSquared()/float(smoothed.ndof()) > 7.0)){
       if (maxChi2 > smoothed.chiSquared()/float(smoothed.ndof())){
-	maxChi2 = smoothed.chiSquared()/float(smoothed.ndof());
-	bestTrajectory = smoothed;
+        maxChi2 = smoothed.chiSquared()/float(smoothed.ndof());
+        bestTrajectory = smoothed;
         bestSeed = seed;
       }
     }
@@ -200,11 +200,11 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
   math::XYZVector persistentMomentum(p.x(),p.y(),p.z());
   
   reco::Track track(bestTrajectory.chiSquared(), 
-		    bestTrajectory.ndof(true),
-		    persistentPCA,
-		    persistentMomentum,
-		    ftsAtVtx->charge(),
-		    ftsAtVtx->curvilinearError());
+                    bestTrajectory.ndof(true),
+                    persistentPCA,
+                    persistentMomentum,
+                    ftsAtVtx->charge(),
+                    ftsAtVtx->curvilinearError());
  
   reco::TrackExtra tx;
   //adding rec hits
@@ -239,7 +239,7 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
 }
 
 unique_ptr<vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer topSeeds,
-							     MuonTransientTrackingRecHit::MuonRecHitContainer bottomSeeds)
+                                                             MuonTransientTrackingRecHit::MuonRecHitContainer bottomSeeds)
 {
   unique_ptr<vector<TrajectorySeed> > trajectorySeeds( new vector<TrajectorySeed>());
   if (topSeeds.size() > 0 && bottomSeeds.size() > 0){
@@ -247,36 +247,36 @@ unique_ptr<vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonTransientTracki
     for (auto tophit : topSeeds){
       //cout << "GEMCosmicMuon::tophit       " << tophit->globalPosition() << endl;
       for (auto bottomhit : bottomSeeds){
-	//cout << "GEMCosmicMuon::bottomhit    " << bottomhit->globalPosition() << endl;
-	
-	GlobalVector segDirGV = tophit->globalPosition() - bottomhit->globalPosition();
-
-	int charge= 1;
-	AlgebraicSymMatrix mat(5,0);
-	mat = tophit->parametersError().similarityT( tophit->projectionMatrix() );
-	// mat[0][0] = 0.5;
-	// mat[1][1] = 10;
-	// mat[2][2] = 0.5;
-	LocalTrajectoryError error(asSMatrix<5>(mat));
-	// get first hit	
-	LocalPoint segPos = tophit->localPosition();
-	LocalVector segDir = tophit->det()->toLocal(segDirGV);
-	LocalTrajectoryParameters param(segPos, segDir, charge);
-	TrajectoryStateOnSurface tsos(param, error, tophit->det()->surface(), &*theService_->magneticField());
-
-	//auto tsosBot = theService_->propagator("StraightLinePropagator")->propagate(tsos,bottomhit->det()->surface());
-	//cout << "GEMCosmicMuon::tsos        " << tsos << endl;
-	//tsos = theUpdator_->update(tsosBot, *bottomhit);
-	cout << "GEMCosmicMuon::tsos update " << tsos << endl;
-	  
-	PTrajectoryStateOnDet seedTSOS = trajectoryStateTransform::persistentState(tsos, tophit->rawId());
-	
-	edm::OwnVector<TrackingRecHit> seedHits;
-	seedHits.push_back(tophit->cloneHit());
-	seedHits.push_back(bottomhit->cloneHit());
-
-	TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
-	trajectorySeeds->emplace_back(seed);
+        //cout << "GEMCosmicMuon::bottomhit    " << bottomhit->globalPosition() << endl;
+  
+        GlobalVector segDirGV = tophit->globalPosition() - bottomhit->globalPosition();
+   
+        int charge= 1;
+        AlgebraicSymMatrix mat(5,0);
+        mat = tophit->parametersError().similarityT( tophit->projectionMatrix() );
+        // mat[0][0] = 0.5;
+        // mat[1][1] = 10;
+        // mat[2][2] = 0.5;
+        LocalTrajectoryError error(asSMatrix<5>(mat));
+        // get first hit
+        LocalPoint segPos = tophit->localPosition();
+        LocalVector segDir = tophit->det()->toLocal(segDirGV);
+        LocalTrajectoryParameters param(segPos, segDir, charge);
+        TrajectoryStateOnSurface tsos(param, error, tophit->det()->surface(), &*theService_->magneticField());
+   
+        //auto tsosBot = theService_->propagator("StraightLinePropagator")->propagate(tsos,bottomhit->det()->surface());
+        //cout << "GEMCosmicMuon::tsos        " << tsos << endl;
+        //tsos = theUpdator_->update(tsosBot, *bottomhit);
+        //cout << "GEMCosmicMuon::tsos update " << tsos << endl;
+        
+        PTrajectoryStateOnDet seedTSOS = trajectoryStateTransform::persistentState(tsos, tophit->rawId());
+        
+        edm::OwnVector<TrackingRecHit> seedHits;
+        seedHits.push_back(tophit->cloneHit());
+        seedHits.push_back(bottomhit->cloneHit());
+        
+        TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
+        trajectorySeeds->emplace_back(seed);
       }
     }
   }
@@ -284,7 +284,7 @@ unique_ptr<vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonTransientTracki
 }
 
 Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
-					 const GEMRecHitCollection* gemHits)
+                                         const GEMRecHitCollection* gemHits)
 {
   PTrajectoryStateOnDet ptsd1(seed.startingState());
   DetId did(ptsd1.detId());
@@ -317,27 +317,32 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
       if (chmap.first != col.first) continue;      
       auto ch = col.second;
       for (auto etaPart : ch->etaPartitions()){
-	GEMDetId etaPartID = etaPart->id();
-	
-	GEMRecHitCollection::range range = gemHits->get(etaPartID);
-	//cout<< "Number of GEM rechits available , from chamber: "<< etaPartID<<endl;
-	for (GEMRecHitCollection::const_iterator rechit = range.first; rechit!=range.second; ++rechit){
-
-	  LocalPoint tsosLP = etaPart->toLocal(tsosGP);
-	  LocalPoint rhLP = (*rechit).localPosition();
-	  //double y_err = (*rechit).localPositionError().yy();	
-	  //if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;	
-	  //if (abs(rhLP.y() - tsosLP.y()) > y_err*trackResY_) continue;
-	  // need to find best hits per chamber
-	  float deltaR = (rhLP - tsosLP).mag();
-	  if (maxR > deltaR){
-	  
-	    cout << " found hit   "<< etaPartID << " pos = "<< rhLP << " R = "<<deltaR <<endl;
-	    const GeomDet* geomDet(etaPart);	  
-	    tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit);
-	    maxR = deltaR;
-	  }
-	}
+        GEMDetId etaPartID = etaPart->id();
+        
+        GEMRecHitCollection::range range = gemHits->get(etaPartID);
+        //cout<< "Number of GEM rechits available , from chamber: "<< etaPartID<<endl;
+        for (GEMRecHitCollection::const_iterator rechit = range.first; rechit!=range.second; ++rechit){
+        
+          LocalPoint tsosLP = etaPart->toLocal(tsosGP);
+          LocalPoint rhLP = (*rechit).localPosition();
+          double x_err = (*rechit).localPositionError().xx();
+          double y_err = (*rechit).localPositionError().yy();
+/*          cout << "EtaPartition " << etaPartID.roll() << endl;
+          cout << "Residual X " << abs(rhLP.x() - tsosLP.x()) << "Pull X " << abs(rhLP.x() - tsosLP.x())/x_err << endl;
+          cout << "Residual Y " << abs(rhLP.y() - tsosLP.y()) << "Pull Y " << abs(rhLP.y() - tsosLP.y())/y_err << endl;
+          cout << "ClusterSize " << rechit->clusterSize() << endl; */
+          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
+          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
+          // need to find best hits per chamber
+          float deltaR = (rhLP - tsosLP).mag();
+          if (maxR > deltaR){
+        
+            cout << " found hit   "<< etaPartID << " pos = "<< rhLP << " R = "<<deltaR <<endl;
+            const GeomDet* geomDet(etaPart);
+            tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit);
+            maxR = deltaR;
+          }
+        }
       }
     }
     
@@ -370,11 +375,11 @@ TrackingRecHit::ConstRecHitContainer GEMCosmicMuon::findMissingHits(Trajectory& 
     bool hasHit = false;
     for (auto hit : recHits){
       // cout <<" chmap.first "<< chmap.first
-      // 	   << " -1*hit->globalPosition().y() "<< -1*hit->globalPosition().y()
-      // 	   <<endl;
+      //    << " -1*hit->globalPosition().y() "<< -1*hit->globalPosition().y()
+      //    <<endl;
       if (abs(chmap.first + hit->globalPosition().y()) < 1. ){
-	hasHit = true;
-	break;
+        hasHit = true;
+        break;
       }
     }
     if (hasHit) continue;
@@ -388,7 +393,7 @@ TrackingRecHit::ConstRecHitContainer GEMCosmicMuon::findMissingHits(Trajectory& 
     
     GlobalPoint tsosGP = tsos.globalPosition();
 
-    cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
+    //cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
     //cout << "tsos error "<< tsos.localError().positionError() << endl;
     
     shared_ptr<MuonTransientTrackingRecHit> tmpRecHit;
@@ -397,27 +402,27 @@ TrackingRecHit::ConstRecHitContainer GEMCosmicMuon::findMissingHits(Trajectory& 
       // only look in same layer
       if (chmap.first != col.first) continue;
       auto ch = col.second;
-      for (auto etaPart : ch->etaPartitions()){	
-	const LocalPoint pos = etaPart->toLocal(tsosGP);
-	const LocalPoint pos2D(pos.x(), pos.y(), 0);
-	const BoundPlane& bps(etaPart->surface());
-	  
-	if(abs(pos.y()) < 17 && abs(pos.x()) < 40 )
-	  cout << " missing hit "<< etaPart->id() << " pos = "<<pos<< " R = "<<pos.mag() <<" inside "
-	       <<  bps.bounds().inside(pos2D) <<endl;
-	  
-	if (bps.bounds().inside(pos2D)){
-	    
-	    
-	  //if (!bp.bounds().inside(pos)) continue;
-	  //cout << "made missing hit "<<etaPartID   <<endl;
-	    
-	  auto missingHit = make_unique<GEMRecHit>(etaPart->id(), -10, pos2D);
-	  const GeomDet* geomDet(etaPart);	  
-	  tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,missingHit.get());
-	  tmpRecHit->invalidateHit();
-	  break;
-	}
+      for (auto etaPart : ch->etaPartitions()){
+        const LocalPoint pos = etaPart->toLocal(tsosGP);
+        const LocalPoint pos2D(pos.x(), pos.y(), 0);
+        const BoundPlane& bps(etaPart->surface());
+          
+        if(abs(pos.y()) < 17 && abs(pos.x()) < 40 )
+          cout << " missing hit "<< etaPart->id() << " pos = "<<pos<< " R = "<<pos.mag() <<" inside "
+               <<  bps.bounds().inside(pos2D) <<endl;
+          
+        if (bps.bounds().inside(pos2D)){
+            
+            
+          //if (!bp.bounds().inside(pos)) continue;
+          //cout << "made missing hit "<<etaPartID   <<endl;
+            
+          auto missingHit = make_unique<GEMRecHit>(etaPart->id(), -10, pos2D);
+          const GeomDet* geomDet(etaPart);
+          tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,missingHit.get());
+          tmpRecHit->invalidateHit();
+          break;
+        }
       }
     }
     
@@ -442,9 +447,9 @@ MuonTransientTrackingRecHit::MuonRecHitContainer GEMCosmicMuon::getHitsFromLayer
       GEMRecHitCollection::range range = gemHits->get(etaPartID);
       //cout<< "Number of GEM rechits available , from chamber: "<< etaPartID<<endl;
       for (GEMRecHitCollection::const_iterator rechit = range.first; rechit!=range.second; ++rechit){
-	const GeomDet* geomDet(etaPart);
-	//cout <<"getHitsFromLayer "<< etaPartID<< rechit->localPosition()<<endl;
-	hits.push_back(MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit));
+        const GeomDet* geomDet(etaPart);
+        //cout <<"getHitsFromLayer "<< etaPartID<< rechit->localPosition()<<endl;
+        hits.push_back(MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit));
       }
     }
   }
