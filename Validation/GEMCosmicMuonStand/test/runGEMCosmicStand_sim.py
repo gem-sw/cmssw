@@ -22,7 +22,7 @@ process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('SimMuon.GEMDigitizer.muonGEMDigi_cff')
+process.load('SimMuon.GEMCosmicMuon.muonGEMDigi_cff')
 process.load('EventFilter.GEMRawToDigi.gemPacker_cfi')
 process.load('EventFilter.RawDataCollector.rawDataCollector_cfi')
 process.load('EventFilter.GEMRawToDigi.muonGEMDigis_cfi')
@@ -211,9 +211,10 @@ process.gemSegments.preClusteringUseChaining = cms.bool(False)
 
 process.simMuonGEMDigis.averageEfficiency = cms.double(0.98)
 process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0)
-process.simMuonGEMDigis.doBkgNoise = cms.bool(False)
-process.simMuonGEMDigis.doNoiseCLS = cms.bool(False)
-process.simMuonGEMDigis.simulateElectronBkg = cms.bool(False)
+process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(True) #Simulate intrinsic noise
+process.simMuonGEMDigis.doBkgNoise = cms.bool(False)            #Simulate noise
+process.simMuonGEMDigis.simulateElectronBkg = cms.bool(False)   #Simulate electron bkg
+process.simMuonGEMDigis.doNoiseCLS = cms.bool(False)            #Simulate bkg contribution
 
 
 #process.SteppingHelixPropagatorAny.debug = cms.bool(True)
