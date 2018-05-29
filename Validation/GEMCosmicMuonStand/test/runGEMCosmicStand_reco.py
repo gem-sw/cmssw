@@ -78,7 +78,7 @@ process.GEMCosmicMuon = cms.EDProducer("GEMCosmicMuon",
 process.GEMCosmicMuon.ServiceParameters.GEMLayers = cms.untracked.bool(True)
 process.GEMCosmicMuon.ServiceParameters.CSCLayers = cms.untracked.bool(False)
 process.GEMCosmicMuon.ServiceParameters.RPCLayers = cms.bool(False)
-process.GEMCosmicMuonInSide = process.GEMCosmicMuon.clone(doInnerSeeding = cms.bool(True))
+#process.GEMCosmicMuonInSide = process.GEMCosmicMuon.clone(doInnerSeeding = cms.bool(True))
 
 process.DQMStore = cms.Service("DQMStore",
     referenceFileName = cms.untracked.string(''),
@@ -88,7 +88,7 @@ process.load('Validation.GEMCosmicMuonStand.GEMCosmicMuonStandEfficiency_cff')
 process.load('Validation.GEMCosmicMuonStand.GEMCosmicMuonStandSim_cff')
 
 # Path and EndPath definitions
-process.reconstruction_step = cms.Path(process.GEMCosmicMuon+process.GEMCosmicMuonInSide)
+process.reconstruction_step = cms.Path(process.GEMCosmicMuon)#+process.GEMCosmicMuonInSide)
 process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)
 process.validation_step = cms.Path(process.gemCosmicMuonStandSim+process.gemCosmicMuonStandEfficiency)
 process.dqmoffline_step = cms.EndPath(process.DQMOffline)
