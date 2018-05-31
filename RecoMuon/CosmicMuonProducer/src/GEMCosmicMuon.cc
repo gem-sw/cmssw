@@ -166,6 +166,7 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
   Trajectory bestTrajectory;
   TrajectorySeed bestSeed;
   float maxChi2 = trackChi2_;
+  //cout << "Start Event" << endl;
   for (auto seed : *trajectorySeedCands){
     Trajectory smoothed = makeTrajectory(seed, gemRecHits.product());
     if (smoothed.isValid()){
@@ -188,7 +189,7 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
     return;
   }
   //cout << maxChi2 << endl;
-  //cout << "GEMCosmicMuon::bestTrajectory " << bestTrajectory.foundHits() << endl;
+  // cout << "GEMCosmicMuon::bestTrajectory " << bestTrajectory.foundHits() << endl;
   //cout << "GEMCosmicMuon::bestTrajectory chiSquared/ ndof " << bestTrajectory.chiSquared()/float(bestTrajectory.ndof()) << endl;
   //cout << maxChi2 << endl;
   // make track
@@ -294,7 +295,7 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
   TrackingRecHit::ConstRecHitContainer consRecHits;
   
   float previousLayer = -200;//skip first layer
-  cout << "   EEEE" << endl;
+  int count = 0;
   for (auto chmap : detLayerMap_){
     //// skip same layers
     if (chmap.first == previousLayer) continue;
@@ -303,12 +304,12 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
     auto refChamber = chmap.second;
     shared_ptr<MuonTransientTrackingRecHit> tmpRecHit;
 
-    tsos = theService_->propagator("StraightLinePropagator")->propagate(tsos,refChamber->surface());
-    if (!tsos.isValid()){
+    TrajectoryStateOnSurface tsos_ = theService_->propagator("StraightLinePropagator")->propagate(tsos,refChamber->surface());
+    if (!tsos_.isValid()){
       continue;
     }
     
-    GlobalPoint tsosGP = tsos.globalPosition();
+    GlobalPoint tsosGP = tsos_.globalPosition();
     //cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
     
     float maxR = 500;
@@ -330,14 +331,10 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
           double x_err = sqrt((*rechit).localPositionError().xx());
           double y_err = sqrt((*rechit).localPositionError().yy());
           
-          cout << "Chamber " << etaPartID.chamber() << " :::: Layer " << etaPartID.layer() << endl;
-          cout << "EtaPartition " << etaPartID.roll() << " :::: ClusterSize " << rechit->clusterSize() << endl;
-          cout << "Residual X " << abs(rhLP.x() - tsosLP.x()) << " :::: Pull X " << abs(rhLP.x() - tsosLP.x())/x_err << endl;
-          cout << "Residual Y " << abs(rhLP.y() - tsosLP.y()) << " :::: Pull Y " << abs(rhLP.y() - tsosLP.y())/y_err << endl;
-//          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
-//          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
+          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
+          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
           if (abs(rhLP.x() - tsosLP.x()) / x_err > 4.) continue;
-//          if (abs(rhLP.y() - tsosLP.y()) / y_err > 4.) continue;
+          if (abs(rhLP.y() - tsosLP.y()) / y_err > 3.) continue;
           // need to find best hits per chamber
           float deltaR = (rhLP - tsosLP).mag();
           if (maxR > deltaR){
@@ -353,9 +350,10 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
     
     if (tmpRecHit){      
       consRecHits.emplace_back(tmpRecHit);
+      count++;
     }
   }
-  if (consRecHits.size() <3) return Trajectory();
+  if (consRecHits.size() < 5) return Trajectory();
 
   auto firstHit = consRecHits.front();
   tsos = theService_->propagator("StraightLinePropagator")->propagate(tsos,*(firstHit->surface()));

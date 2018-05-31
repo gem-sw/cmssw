@@ -10,6 +10,8 @@
 #include <utility>
 #include <map>
 
+#include <iostream>
+
 GEMSimpleModel::GEMSimpleModel(const edm::ParameterSet& config) :
 GEMDigiModel(config)
 , averageEfficiency_(config.getParameter<double> ("averageEfficiency"))
@@ -164,18 +166,15 @@ void GEMSimpleModel::simulateNoise(const GEMEtaPartition* roll, CLHEP::HepRandom
   //simulate intrinsic noise
   if(simulateIntrinsicNoise_)
   {
-    const double aveIntrinsicNoisePerStrip(averageNoiseRate_);
-    for(int j = 0; j < nstrips; ++j)
+    const double aveIntrinsicNoise(averageNoiseRate_ * nstrips);
+    CLHEP::RandPoissonQ randPoissonQ(*engine, aveIntrinsicNoise);
+    const int n_intrHits(randPoissonQ.fire());
+    for (int k = 0; k < n_intrHits; k++ )
     {
-      CLHEP::RandPoissonQ randPoissonQ(*engine, aveIntrinsicNoisePerStrip);
-      const int n_intrHits(randPoissonQ.fire());
-    
-      for (int k = 0; k < n_intrHits; k++ )
-      {
-        const int time_hit(static_cast<int>(CLHEP::RandFlat::shoot(engine, nBxing)) + minBunch_);
-        std::pair<int, int> digi(k+1,time_hit);
-        strips_.emplace(digi);
-      }
+      const int centralStrip(static_cast<int> (CLHEP::RandFlat::shoot(engine, 1, nstrips)));
+      const int time_hit(static_cast<int>(CLHEP::RandFlat::shoot(engine, nBxing)) + minBunch_);
+      std::pair<int, int> digi(centralStrip,time_hit);
+      strips_.emplace(digi);
     }
   }//end simulate intrinsic noise
 
