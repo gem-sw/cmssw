@@ -1,7 +1,7 @@
 #! /bin/sh
 
-NeventsPerJob=20000
-LastJob=499
+NeventsPerJob=10000
+LastJob=99
 StartJob=0
 #StartJob=0
 #NeventsPerJob=$1
@@ -9,7 +9,7 @@ StartJob=0
 #TrashDir=/tmp/jslee
 
 #for RUN in 1 2 3 4 5
-for RUN in 112
+for RUN in 1
 do
   JobId=$StartJob
   #for JobId in 1 69 72 87 88 90 10 12 13 16 17 19 2 20 24 26 28 33 35 4 48 5 6 61 64 66 70 73 80 85 86 9 91 92 99

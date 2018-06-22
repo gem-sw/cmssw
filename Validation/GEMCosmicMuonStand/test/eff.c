@@ -9,10 +9,10 @@ int setMinimumOn=1;
 int makeTreeOn=1;
 int cal_eff_from_tree_On=0;
 
-TString srcDir = "/afs/cern.ch/work/g/gmocelli/";
-TString savePngDir = "temp";
-TString filename = "temp_out_reco_MC_"+run;
-TFile *f = new TFile(srcDir+"/"+filename+".root");
+TString srcDir = "/afs/cern.ch/work/g/gmocelli/PhD/gemcrs/src/Validation/GEMCosmicMuonStand/test";
+TString savePngDir = "/afs/cern.ch/work/g/gmocelli/PhD/gemcrs/src/Validation/GEMCosmicMuonStand/test";
+TString filename = "out";
+TFile *f = new TFile(srcDir+"/res_1/"+filename+".root");
 
 const int maxNchamber = 15;
 const int maxNlayer = 30;
@@ -37,7 +37,7 @@ int vfat=0, layer=0, phi=0, eta=0, flr=0;
 float eff=0, error=0;
 if(makeTreeOn)
 {
-	fEff = new TFile(srcDir+"/"+filename+"_eff.root","recreate");
+	fEff = new TFile(srcDir+"/res_1/"+filename+"_eff.root","recreate");
 	tree = new TTree("tree","Tree for efficiency of vfat");
 	tree->Branch("floor",&flr,"floor/I");
 	tree->Branch("layer",&layer,"layer/I");

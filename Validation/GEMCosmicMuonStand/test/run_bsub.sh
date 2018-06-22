@@ -5,19 +5,15 @@ RUN=$2
 JobId=$3
 srcFile=runGEMCosmicStand_sim_new.py
 
-srcDir=/afs/cern.ch/user/j/jslee/gemcrs/src
-workDir=$srcDir/Validation/GEMCR/test
-tempDir=/tmp/jslee
-#runDir=$workDir
-#resultDir=$workDir/Tree
-resultDir=/afs/cern.ch/work/j/jslee/QC8
+srcDir=/afs/cern.ch/work/g/gmocelli/PhD/gemcrs/src
+workDir=$srcDir/Validation/GEMCosmicMuonStand/test
+tempDir=/tmp/gmocelli
+resultDir=$workDir/Results
 
-runFile=runGEMCosmicStand_sim_temp_${RUN}_${JobId}.py
+runFile=runGEMCosmicStand_sim_new_temp_${RUN}_${JobId}.py
 
 cd $srcDir
 eval `scramv1 runtime -sh`
-#eval `scramv1 runtime -csh`
-#cmsenv
 cd $workDir
 
 #mkdir $resultDir
@@ -38,7 +34,6 @@ rm ${tempDir}/out_reco_MC_${RUN}_${JobId}.root
 mv ${tempDir}/temp_out_reco_MC_${RUN}_${JobId}.root ${resultDir}
 rm ${runFile}
 
-#sleep 5
 fileName=`find . -type f -name 'core.*'`
 for file in $fileName
 do

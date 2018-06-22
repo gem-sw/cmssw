@@ -1,13 +1,11 @@
 #import sys, opt
 import sys, os
 
-
 strJobNum = sys.argv[ 1 ]
 strJobName = "res_" + strJobNum
 
-#strNumJob = "500" if len(sys.argv) < 3 else sys.argv[ 2 ]
-strNumJob = "200"
-strEvtNum = "50000"
+strNumJob = "400"
+strEvtNum = "25000"
 
 if not os.path.isdir(strJobName): 
   os.mkdir(strJobName)

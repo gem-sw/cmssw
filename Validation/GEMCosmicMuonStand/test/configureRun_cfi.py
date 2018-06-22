@@ -69,7 +69,7 @@ if ratePlot : OutputFileName='Reco_Run%06d_RandomTrigger.root'%RunNumber
 if not tag == "":
   OutputFileName.replace(".root", "_%s.root"%tag)
 
-print OutputFileName, " will be generted."
+print OutputFileName, " will be generated."
 sqlite_file = os.environ['SRT_CMSSW_BASE_SCRAMRTDEL']+'/src/EventFilter/GEMRawToDigi/test/GEMEMap_CosmicStand_8Nov2016.db'
 
 def configureRun(SLOTLIST=[], VFATLIST=[], COLUMNLIST=[], ROWLIST=[], LAYERLIST=[], chamber=[], columnStand=[], rowStand=[], layerSC=[], GE11slot=[], opticallink=[], typechamber=[]):
