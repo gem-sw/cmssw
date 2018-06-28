@@ -134,7 +134,6 @@ void GEMCosmicMuonStandEfficiency::analyzeTrk(bool isInside,
     GEMDetId secondHit(seed->rawId());
     if((firstHit.chamber()-1)/10 != (secondHit.chamber()-1)/10) continue;
 
-    //if (track->normalizedChi2() > 10.) continue;
     if(isInside) chi2[0]->Fill(track->normalizedChi2());
     else         chi2[1]->Fill(track->normalizedChi2());
 

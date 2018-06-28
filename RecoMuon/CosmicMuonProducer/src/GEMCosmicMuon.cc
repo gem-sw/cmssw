@@ -49,6 +49,8 @@ public:
   void produce(edm::Event&, const edm::EventSetup&) override;
   bool doInnerSeeding_;
   double trackChi2_, trackResX_, trackResY_;
+  double trackPullX_, trackPullY_;
+  unsigned int nOfRechits_;
 
   multimap<float,const GEMChamber*> detLayerMap_;
   
@@ -74,6 +76,9 @@ GEMCosmicMuon::GEMCosmicMuon(const edm::ParameterSet& ps) : iev(0) {
   trackChi2_ = ps.getParameter<double>("trackChi2");
   trackResX_ = ps.getParameter<double>("trackResX");
   trackResY_ = ps.getParameter<double>("trackResY");
+  trackPullX_ = ps.getParameter<double>("trackPullX");
+  trackPullY_ = ps.getParameter<double>("trackPullY");
+  nOfRechits_ = ps.getParameter<unsigned int>("nOfRechits");
   theGEMRecHitToken_ = consumes<GEMRecHitCollection>(ps.getParameter<edm::InputTag>("gemRecHitLabel"));
   // register what this produces
   edm::ParameterSet serviceParameters = ps.getParameter<edm::ParameterSet>("ServiceParameters");
@@ -304,15 +309,16 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
     auto refChamber = chmap.second;
     shared_ptr<MuonTransientTrackingRecHit> tmpRecHit;
 
-    TrajectoryStateOnSurface tsos_ = theService_->propagator("StraightLinePropagator")->propagate(tsos,refChamber->surface());
-    if (!tsos_.isValid()){
+    tsos = theService_->propagator("StraightLinePropagator")->propagate(tsos,refChamber->surface());
+    if (!tsos.isValid()){
       continue;
     }
     
-    GlobalPoint tsosGP = tsos_.globalPosition();
+    GlobalPoint tsosGP = tsos.globalPosition();
     //cout << "tsos gp   "<< tsosGP << refChamber->id() <<endl;
     
     float maxR = 500;
+    bool  resCut = false;
     // find best in all layers
     for (auto col : detLayerMap_){
       // only look in same layer
@@ -324,21 +330,21 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
         GEMRecHitCollection::range range = gemHits->get(etaPartID);
         //cout<< "Number of GEM rechits available , from chamber: "<< etaPartID<<endl;
         for (GEMRecHitCollection::const_iterator rechit = range.first; rechit!=range.second; ++rechit){
-        
+          resCut = false; 
           LocalPoint tsosLP = etaPart->toLocal(tsosGP);
           LocalPoint rhLP = (*rechit).localPosition();
           
           double x_err = sqrt((*rechit).localPositionError().xx());
           double y_err = sqrt((*rechit).localPositionError().yy());
           
-          if (abs(rhLP.x() - tsosLP.x()) > trackResX_) continue;
-          if (abs(rhLP.y() - tsosLP.y()) > trackResY_) continue;
-          if (abs(rhLP.x() - tsosLP.x()) / x_err > 4.) continue;
-          if (abs(rhLP.y() - tsosLP.y()) / y_err > 3.) continue;
+          resCut = ((abs(rhLP.x() - tsosLP.x()) > trackResX_) || resCut);
+          resCut = ((abs(rhLP.y() - tsosLP.y()) > trackResY_) || resCut);
+          resCut = ((abs(rhLP.x() - tsosLP.x()) / x_err > trackPullX_) || resCut);
+          resCut = ((abs(rhLP.y() - tsosLP.y()) / y_err > trackPullY_) || resCut);
+          if (resCut) continue;
           // need to find best hits per chamber
           float deltaR = (rhLP - tsosLP).mag();
           if (maxR > deltaR){
-        
             //cout << " found hit   "<< etaPartID << " pos = "<< rhLP << " R = "<<deltaR <<endl;
             const GeomDet* geomDet(etaPart);
             tmpRecHit = MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit);
@@ -353,7 +359,7 @@ Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed& seed,
       count++;
     }
   }
-  if (consRecHits.size() < 5) return Trajectory();
+  if (consRecHits.size() <= nOfRechits_) return Trajectory();
 
   auto firstHit = consRecHits.front();
   tsos = theService_->propagator("StraightLinePropagator")->propagate(tsos,*(firstHit->surface()));

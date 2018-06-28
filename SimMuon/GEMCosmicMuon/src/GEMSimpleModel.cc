@@ -10,8 +10,6 @@
 #include <utility>
 #include <map>
 
-#include <iostream>
-
 GEMSimpleModel::GEMSimpleModel(const edm::ParameterSet& config) :
 GEMDigiModel(config)
 , averageEfficiency_(config.getParameter<double> ("averageEfficiency"))
@@ -157,27 +155,110 @@ void GEMSimpleModel::simulateNoise(const GEMEtaPartition* roll, CLHEP::HepRandom
 {
   const GEMDetId& gemId(roll->id());
   const int nstrips(roll->nstrips());
+  double trArea(0.0);
+  double trStripArea(0.0);
   if (gemId.region() == 0)
   {
     throw cms::Exception("Geometry")
         << "GEMSynchronizer::simulateNoise() - this GEM id is from barrel, which cannot happen.";
   }
+  const TrapezoidalStripTopology* top_(dynamic_cast<const TrapezoidalStripTopology*>(&(roll->topology())));
+  const float striplength(top_->stripLength());
+  trStripArea = (roll->pitch()) * striplength;
+  trArea = trStripArea * nstrips;
   const int nBxing(maxBunch_ - minBunch_ + 1);
+  const float rollRadius(fixedRollRadius_ ? top_->radius() : 
+  			 top_->radius() + CLHEP::RandFlat::shoot(engine, -1.*top_->stripLength()/2., top_->stripLength()/2.));
+
   //simulate intrinsic noise
   if(simulateIntrinsicNoise_)
   {
-    const double aveIntrinsicNoise(averageNoiseRate_ * nstrips);
-    CLHEP::RandPoissonQ randPoissonQ(*engine, aveIntrinsicNoise);
-    const int n_intrHits(randPoissonQ.fire());
-    for (int k = 0; k < n_intrHits; k++ )
+    const double aveIntrHits(averageNoiseRate_ * nBxing * bxwidth_ * trArea);
+    CLHEP::RandPoissonQ randPoissonQ(*engine, aveIntrHits);
+    const int nIntrHits(randPoissonQ.fire());
+    for (int k = 0; k < nIntrHits; k++ )
     {
       const int centralStrip(static_cast<int> (CLHEP::RandFlat::shoot(engine, 1, nstrips)));
       const int time_hit(static_cast<int>(CLHEP::RandFlat::shoot(engine, nBxing)) + minBunch_);
-      std::pair<int, int> digi(centralStrip,time_hit);
-      strips_.emplace(digi);
+      strips_.emplace(centralStrip, time_hit);
     }
   }//end simulate intrinsic noise
+  
+  //simulate bkg contribution
+  if (!doBkgNoise_)
+    return;
+  //calculate noise from model
+  double averageNeutralNoiseRatePerRoll = 0.;
+  double averageNoiseElectronRatePerRoll = 0.;
+  double averageNoiseRatePerRoll = 0.;
+  if (gemId.station() == 1)
+  {
+    //simulate neutral background for GE1/1
+    averageNeutralNoiseRatePerRoll = (GE11ModNeuBkgParam0_
+				      + GE11ModNeuBkgParam1_ * rollRadius
+				      + GE11ModNeuBkgParam2_ * rollRadius * rollRadius);    //simulate electron background for GE1/1
+    if (simulateElectronBkg_)
+      averageNoiseElectronRatePerRoll = (GE11ElecBkgParam0_
+					 + GE11ElecBkgParam1_ * rollRadius
+					 + GE11ElecBkgParam2_ * rollRadius * rollRadius);
 
+    // Scale up/down for desired instantaneous lumi (reference is 5E34, double from config is in units of 1E34)
+    averageNoiseRatePerRoll = averageNeutralNoiseRatePerRoll + averageNoiseElectronRatePerRoll;
+    averageNoiseRatePerRoll *= instLumi_*rateFact_*1.0/referenceInstLumi_;
+  }
+  if (gemId.station() == 2)
+  {
+    //simulate neutral background for GE2/1
+    averageNeutralNoiseRatePerRoll = (GE21ModNeuBkgParam0_
+				      + GE21ModNeuBkgParam1_ * rollRadius
+				      + GE21ModNeuBkgParam2_ * rollRadius * rollRadius);
+    //simulate electron background for GE2/1
+    if (simulateElectronBkg_)
+      averageNoiseElectronRatePerRoll = (GE21ElecBkgParam0_
+					 + GE21ElecBkgParam1_ * rollRadius
+					 + GE21ElecBkgParam2_ * rollRadius * rollRadius);
+
+    // Scale up/down for desired instantaneous lumi (reference is 5E34, double from config is in units of 1E34)
+    averageNoiseRatePerRoll = averageNeutralNoiseRatePerRoll + averageNoiseElectronRatePerRoll;
+    averageNoiseRatePerRoll *= instLumi_*rateFact_*1.0/referenceInstLumi_;
+  }
+
+  const double averageNoise(averageNoiseRatePerRoll * nBxing * bxwidth_ * trArea * 1.0e-9);
+  CLHEP::RandPoissonQ randPoissonQ(*engine, averageNoise);
+  const int n_hits(randPoissonQ.fire());
+  for (int i = 0; i < n_hits; ++i)
+  {
+    const int centralStrip(static_cast<int> (CLHEP::RandFlat::shoot(engine, 1, nstrips)));
+    const int time_hit(static_cast<int>(CLHEP::RandFlat::shoot(engine, nBxing)) + minBunch_);
+    if (doNoiseCLS_)
+    {
+      std::vector < std::pair<int, int> > cluster_;
+      cluster_.clear();
+      cluster_.emplace_back(centralStrip, time_hit);
+      int clusterSize((CLHEP::RandFlat::shoot(engine)) <= 0.53 ? 1 : 2);
+      if (clusterSize == 2)
+      {
+        if(CLHEP::RandFlat::shoot(engine) < 0.5)
+        {
+          if (CLHEP::RandFlat::shoot(engine) < averageEfficiency_ && (centralStrip - 1 > 0))
+            cluster_.emplace_back(centralStrip - 1, time_hit);
+        }
+        else
+        {
+          if (CLHEP::RandFlat::shoot(engine) < averageEfficiency_ && (centralStrip + 1 <= nstrips))
+            cluster_.emplace_back(centralStrip + 1, time_hit);
+        }
+      }
+      for (const auto& digi : cluster_)
+      {
+        strips_.emplace(digi);
+      }
+    } //end doNoiseCLS_
+    else
+    {
+      strips_.emplace(centralStrip, time_hit);
+    }
+  }
   return;
 }
 
