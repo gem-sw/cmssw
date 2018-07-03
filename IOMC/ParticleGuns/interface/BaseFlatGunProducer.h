@@ -31,7 +31,7 @@ namespace edm
   
   public:
     BaseFlatGunProducer(const ParameterSet &);
-    ~BaseFlatGunProducer() override;
+    virtual ~BaseFlatGunProducer();
     void beginRun(const edm::Run & r, const edm::EventSetup&) override;
     void endRun(edm::Run const& r, const edm::EventSetup&) override;
     void endRunProduce(edm::Run& r, const edm::EventSetup&) override;
@@ -46,10 +46,14 @@ namespace edm
     
     // gun particle(s) characteristics
     std::vector<int> fPartIDs ;
-    double           fMinEta ;
-    double           fMaxEta ;
     double           fMinPhi ;
     double           fMaxPhi ;
+    double           fMinEta ;
+    double           fMaxEta ;
+    double           fMinTheta ;
+    double           fMaxTheta ;
+    bool	     	 fIsThetaFlat ; // If 'True': theta distribution is flat. If 'False': theta distribution is a cos^2
+    
 
     // the event format itself
     HepMC::GenEvent* fEvt;

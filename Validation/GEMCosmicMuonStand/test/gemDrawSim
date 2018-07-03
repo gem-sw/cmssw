@@ -1,0 +1,230 @@
+#!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from gemdrawtools import BasePainter
+from gemdrawtools import BaseHistPainter
+from gemdrawtools import BaseEffPainter
+from gemdrawtools import Hist1DPainter
+from gemdrawtools import Directory
+from gemdrawtools import make_det_suffix
+from gemdrawtools import loop_over_chamber_layer
+
+from gemdrawconfig import *
+
+import ROOT
+from ROOT import gROOT
+from ROOT import gStyle
+
+from datetime import datetime
+import argparse
+
+class VFATOccPainter(BaseHistPainter):
+    def __init__(self,
+                 sim_dir,
+                 out_dir,
+                 chamber_id,
+                 layer_id):
+        suffix = make_det_suffix(chamber_id, layer_id, as_name=True)
+        name = "occupancy" + suffix
+        super(VFATOccPainter, self).__init__(
+            name, sim_dir, out_dir,
+            chamber_id, layer_id, None, None)
+
+    def _makeup(self):
+        self.hist.GetXaxis().SetTitle("Strip")
+        self.hist.GetYaxis().SetTitle("iEta")
+        for bin_ in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+            label = str(bin_)
+            self.hist.GetYaxis().SetBinLabel(bin_, label)
+        self.hist.Draw("colz")
+        gStyle.SetOptStat(False)
+        self.hist.SetMarkerSize(2)
+
+
+class OverallOccPainter(BaseHistPainter):
+    def __init__(self,
+                 sim_dir,
+                 out_dir):
+        name = "occupancy_ver2"
+        super(OverallOccPainter, self).__init__(
+            name, sim_dir, out_dir)
+
+    def _makeup(self):
+      self.hist.GetXaxis().SetTitle("Chamber Id")
+      for chamber_id in range(MIN_CHAMBER_ID, MAX_CHAMBER_ID + 1, 2):
+          bin_ = int((chamber_id -1) / 2) + 1
+          self.hist.GetXaxis().SetBinLabel(bin_, "{}".format(chamber_id))
+      self.hist.GetYaxis().SetTitle("Roll & VFAT Id")
+      for roll_id in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+          for vfat in range(MIN_VFAT_ID, MAX_VFAT_ID + 1):
+              bin_ = 3 * roll_id + vfat - 3
+              if vfat == 1:
+                  label = "Roll {}, VFAT {}".format(roll_id, vfat)
+              else:
+                  label = "VFAT {}".format(vfat)
+              self.hist.GetYaxis().SetBinLabel(bin_, label)
+      self.can.SetLeftMargin(0.175)
+      gStyle.SetOptStat(False)
+      self.hist.SetMarkerSize(1)
+      self.hist.Draw("colz")
+       
+
+class VFATEffPainter(BaseEffPainter):
+    def __init__(self,
+                 sim_dir,
+                 out_dir,
+                 chamber_id,
+                 layer_id):
+        suffix = make_det_suffix(chamber_id, layer_id, as_name=True)
+        passed_name = "the_number_of_passed_events" + suffix
+        total_name = "the_number_of_total_events" + suffix
+        name = "vfat_efficiency" + suffix
+        super(VFATEffPainter, self).__init__(
+            passed_name, total_name, name,
+            sim_dir, out_dir,
+            chamber_id, layer_id)
+
+    def _makeup(self):
+        title = "Efficiency" + make_det_suffix(**self.det_id)
+        self.hist.SetTitle(title)
+        self.hist.GetXaxis().SetTitle("VFAT Id")
+        self.hist.GetYaxis().SetTitle("iEta")
+        for vfat_id in range(MIN_VFAT_ID, MAX_VFAT_ID + 1):
+            self.hist.GetXaxis().SetBinLabel(vfat_id, "VFAT {}".format(vfat_id))
+        for roll_id in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+            self.hist.GetYaxis().SetBinLabel(roll_id, "{}".format(roll_id))
+        self.hist.Draw("colz TEXT")
+        self.hist.SetMarkerSize(2)
+        self.hist.SetMaximum(1.0)
+        self.hist.SetMinimum(0.9)
+        gStyle.SetPaintTextFormat(".3f")
+
+
+class OverallEffPainter(BaseEffPainter):
+    def __init__(self,
+                 sim_dir,
+                 out_dir):
+        passed_name = "the_number_of_passed_events"
+        total_name = "the_number_of_total_events"    
+        name = "vfat_efficiency"
+        super(OverallEffPainter, self).__init__(
+            passed_name, total_name, name, sim_dir, out_dir)
+
+    def _makeup(self):
+        self.hist.SetTitle("Efficiency")
+        self.hist.GetXaxis().SetTitle("Chamber Id")
+        for chamber_id in range(MIN_CHAMBER_ID, MAX_CHAMBER_ID + 1, 2):
+            bin_ = int((chamber_id -1) / 2) + 1
+            self.hist.GetXaxis().SetBinLabel(bin_, "{}".format(chamber_id))
+        self.hist.GetYaxis().SetTitle("Roll & VFAT Id")
+        for roll_id in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+            for vfat_id in range(MIN_VFAT_ID, MAX_VFAT_ID + 1):
+                bin_ = 3 * roll_id + vfat_id - 3
+                if vfat_id == 1:
+                    label = "Roll {}, VFAT {}".format(roll_id, vfat_id)
+                else:
+                    label = "VFAT {}".format(vfat_id)
+                self.hist.GetYaxis().SetBinLabel(bin_, label)
+        self.can.SetLeftMargin(0.175)
+        gStyle.SetPaintTextFormat(".3f")
+        self.hist.SetMarkerSize(1)
+        self.hist.SetMaximum(1.0)
+        self.hist.SetMinimum(0.9)
+        self.hist.Draw("colz TEXT")
+
+
+class OverallRezPainter(BaseHistPainter):
+    """
+    Resolution: Resolution or Pull
+    """
+    def _makeup(self):
+        self.hist.Draw("hist E")
+        var, coord = self.name.split("_")
+        var = var.title()
+        self.hist.GetXaxis().SetTitle("{} in Local {}".format(var, coord))
+        self.hist.GetYaxis().SetTitle("Entries")
+        self.hist.SetLineWidth(3)
+ 
+
+
+class VFATRezPainter(BasePainter):
+    def __init__(self, 
+                 name,
+                 sim_dir,
+                 out_dir,
+                 chamber_id,
+                 layer_id):
+        suffix = make_det_suffix(chamber_id, layer_id, as_name=True)
+        self.name = name + suffix
+        super(VFATRezPainter, self).__init__(
+            sim_dir, out_dir, chamber_id, layer_id)
+
+    def _draw(self):
+        self.hist = ROOT.TH1D(self.name, self.name, 24, 1 - 0.5, 24 + 0.5)
+
+        in_fmt = self.name + "_roll_{}_vfat_{}"
+        for roll_id in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+            for vfat_id in range(MIN_VFAT_ID, MAX_VFAT_ID + 1):
+                in_name = in_fmt.format(roll_id, vfat_id)
+                in_hist = self.sim_dir.Get(in_name)
+                mean = in_hist.GetMean()
+                stddev = in_hist.GetStdDev()
+                bin_ = 3 * roll_id + vfat_id - 3
+                self.hist.SetBinContent(bin_, mean)
+                self.hist.SetBinError(bin_, stddev)
+
+    def _makeup(self):
+        for roll_id in range(MIN_ROLL_ID, MAX_ROLL_ID + 1):
+            for vfat_id in range(MIN_VFAT_ID, MAX_VFAT_ID + 1):
+                bin_ = 3 * roll_id + vfat_id - 3
+                label = "({}, {})".format(roll_id, vfat_id)
+                self.hist.GetXaxis().SetBinLabel(bin_, label)
+        self.hist.GetXaxis().SetTitle("(Roll Id, VFAT Id)")
+        self.hist.Draw("hist E2")
+        # Mean
+        self.hist.SetLineColor(46)
+        self.hist.SetLineWidth(2)
+        # Error Band
+        self.hist.SetFillColorAlpha(46, 0.33)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--in_path", default="./DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root", type=str)
+    parser.add_argument("-o", "--out_dir", default="DQM_{}".format(datetime.now().strftime("%y%m%d-%H%M%S")), type=str)
+    args = parser.parse_args()
+
+    #
+    root_file = ROOT.TFile.Open(args.in_path, "READ")
+    sim_dir = root_file.Get("DQMData/Run 1/GEMCosmicMuonStandSim/Run summary")
+
+    #
+    out_dir = Directory(args.out_dir, True)
+    out_dir.make_subdir("efficiency")
+    out_dir.make_subdir("occupancy")
+    out_dir.make_subdir("resolution")
+    out_dir.make_subdir("others")
+
+    #
+    OverallEffPainter(sim_dir, out_dir.efficiency.path)
+    loop_over_chamber_layer(VFATEffPainter, sim_dir=sim_dir, out_dir=out_dir.efficiency.path)
+
+    OverallOccPainter(sim_dir, out_dir.occupancy.path)
+    loop_over_chamber_layer(VFATOccPainter, sim_dir=sim_dir, out_dir=out_dir.occupancy.path) 
+
+    for name in ["residual_x", "residual_y", "residual_phi", "pull_x", "pull_y"]:
+        OverallRezPainter(name, sim_dir, out_dir.resolution.path)
+        loop_over_chamber_layer(VFATRezPainter, name=name, sim_dir=sim_dir, out_dir=out_dir.resolution.path) 
+
+    Hist1DPainter("the_cluster_size_of_rechit",
+                  sim_dir,
+                  out_dir.others.path,
+                  log_y=True,
+                  grid=True)
+
+
+if __name__ == "__main__":
+    gROOT.SetBatch(True)
+    main()
