@@ -1,6 +1,6 @@
 {
 
-TString run = "111";
+TString run = "000";
 int drawOn=0;
 int printOn=0;
 int calc_eff_vfat_On=1;
@@ -10,7 +10,7 @@ int makeTreeOn=1;
 int cal_eff_from_tree_On=0;
 
 TString srcDir = "/afs/cern.ch/work/g/gmocelli/PhD";
-TString savePngDir = "/afs/cern.ch/work/g/gmocelli/PhD";
+TString savePngDir = srcDir+"/res_"+run;
 TString filename = "out";
 TFile *f = new TFile(srcDir+"/res_"+run+"/"+filename+".root");
 

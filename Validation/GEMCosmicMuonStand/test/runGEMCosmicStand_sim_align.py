@@ -16,7 +16,7 @@ options.register("runNum",1,
                  VarParsing.VarParsing.varType.int,
                  "Run number")
                  
-options.register("eventsPerJob",10000,
+options.register("eventsPerJob",20000,
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "The number of events (in each file)")
@@ -51,6 +51,24 @@ for j in range (0,3):
 			SuperChSeedingLayers[i*2+1]=2
 			break
 			
+# Alignment of chambers
+trueDx = [0.4,-0.1,-0.2,-0.5,0.2,\
+          -0.4,0.1,0.3,-0.3,0.2,\
+          0.1,-0.1,0.1,0.3,-0.4] # cm
+
+trueRz = [-0.8,-0.2,-0.3,0.3,-0.3,\
+          -0.1,-0.5,0.1,0.2,-0.2,\
+          0.5,0.7,-0.1,-0.3,0.6] # degrees
+
+# First step
+shiftX = [0,0,0,0,0,\
+          0,0,0,0,0,\
+          0,0,0,0,0]
+
+rotationZ = [0,0,0,0,0,\
+             0,0,0,0,0,\
+             0,0,0,0,0]
+
 from Configuration.StandardSequences.Eras import eras
 
 process = cms.Process('RECO',eras.phase2_muon)
@@ -183,7 +201,7 @@ process.simSiStripDigis = cms.EDAlias()
 process.load('RecoMuon.TrackingTools.MuonServiceProxy_cff')
 process.MuonServiceProxy.ServiceParameters.Propagators.append('StraightLinePropagator')
 
-process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
+process.AlignmentTrackRecoQC8 = cms.EDProducer("AlignmentTrackRecoQC8",
                                        process.MuonServiceProxy,
                                        gemRecHitLabel = cms.InputTag("gemRecHits"),
                                        maxClusterSize = cms.double(runConfig.maxClusterSize),
@@ -199,14 +217,20 @@ process.GEMCosmicMuonForQC8 = cms.EDProducer("GEMCosmicMuonForQC8",
                                            PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
                                            RescalingFactor = cms.double(5.0)
                                            ),
+                                       isMC = cms.bool(True),
+                                       genVtx = cms.InputTag("generator","unsmeared", "RECO"),
+                                       shiftX = cms.vdouble(shiftX),
+                                       rotationZ = cms.vdouble(rotationZ),
+                                       trueDx = cms.vdouble(trueDx),
+                                       trueRz = cms.vdouble(trueRz),
                                        )
-process.GEMCosmicMuonForQC8.ServiceParameters.GEMLayers = cms.untracked.bool(True)
-process.GEMCosmicMuonForQC8.ServiceParameters.CSCLayers = cms.untracked.bool(False)
-process.GEMCosmicMuonForQC8.ServiceParameters.RPCLayers = cms.bool(False)
+process.AlignmentTrackRecoQC8.ServiceParameters.GEMLayers = cms.untracked.bool(True)
+process.AlignmentTrackRecoQC8.ServiceParameters.CSCLayers = cms.untracked.bool(False)
+process.AlignmentTrackRecoQC8.ServiceParameters.RPCLayers = cms.bool(False)
 
 fScale = 1.0
 
-process.gemcrValidation = cms.EDProducer('gemcrValidation',
+process.AlignmentValidationQC8 = cms.EDProducer('AlignmentValidationQC8',
     process.MuonServiceProxy,
     verboseSimHit = cms.untracked.int32(1),
     simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
@@ -215,12 +239,12 @@ process.gemcrValidation = cms.EDProducer('gemcrValidation',
     # edmHepMCProduct_generator_unsmeared_RECO
     recHitsInputLabel = cms.InputTag('gemRecHits'),
     # GEMDetIdGEMRecHitsOwnedRangeMap_gemRecHits__RECO
-    tracksInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-    seedInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-    trajInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-    chNoInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-    seedTypeInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
-    # *_GEMCosmicMuonForQC8_*_RECO
+    tracksInputLabel = cms.InputTag('AlignmentTrackRecoQC8','','RECO'),
+    seedInputLabel = cms.InputTag('AlignmentTrackRecoQC8','','RECO'),
+    trajInputLabel = cms.InputTag('AlignmentTrackRecoQC8','','RECO'),
+    chNoInputLabel = cms.InputTag('AlignmentTrackRecoQC8','','RECO'),
+    seedTypeInputLabel = cms.InputTag('AlignmentTrackRecoQC8','','RECO'),
+    # *_AlignmentTrackRecoQC8_*_RECO
     genParticleLabel = cms.InputTag('genParticles','','RECO'),
     # *_genParticles_*_RECO
     gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
@@ -245,6 +269,10 @@ process.gemcrValidation = cms.EDProducer('gemcrValidation',
                       PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
                       RescalingFactor = cms.double(5.0)
                       ),
+    shiftX = cms.vdouble(shiftX),
+    rotationZ = cms.vdouble(rotationZ),
+    trueDx = cms.vdouble(trueDx),
+    trueRz = cms.vdouble(trueRz),
 )
 
 process.TFileService = cms.Service("TFileService",
@@ -256,11 +284,11 @@ process.rawDataCollector.RawCollectionList = cms.VInputTag(cms.InputTag("gemPack
 process.generation_step = cms.Path(process.generator+process.pgen)
 process.simulation_step = cms.Path(process.psim)
 process.digitisation_step = cms.Path(process.mix+process.simMuonGEMDigis)
-process.reconstruction_step = cms.Path(process.gemPacker+process.rawDataCollector+process.muonGEMDigis+process.gemLocalReco+process.GEMCosmicMuonForQC8)
+process.reconstruction_step = cms.Path(process.gemPacker+process.rawDataCollector+process.muonGEMDigis+process.gemLocalReco+process.AlignmentTrackRecoQC8)
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)
-process.validation_step = cms.Path(process.gemcrValidation)
+process.validation_step = cms.Path(process.AlignmentValidationQC8)
 process.digitisation_step.remove(process.simEcalTriggerPrimitiveDigis)
 process.digitisation_step.remove(process.simEcalDigis)
 process.digitisation_step.remove(process.simEcalPreshowerDigis)
@@ -302,7 +330,7 @@ process.gemSegments.preClustering = cms.bool(False)
 process.gemSegments.preClusteringUseChaining = cms.bool(False)
 
 process.simMuonGEMDigis.averageEfficiency = cms.double(0.98)
-process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0000001)
+process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0)
 process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(True)
 process.simMuonGEMDigis.doBkgNoise = cms.bool(False)
 process.simMuonGEMDigis.doNoiseCLS = cms.bool(False)
