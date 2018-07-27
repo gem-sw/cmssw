@@ -5,7 +5,7 @@ if [ $# != 1 ]; then
     echo "JOB SECTION NUMBER IS MISSING!!!"
     exit 1
 fi
-SECTION=`printf %03d $1`
+SECTION=`printf %%03d $1`
 
 if [ _$CMS_PATH == _ ]; then
   export CMS_PATH=/cvmfs/cms.cern.ch
@@ -22,7 +22,7 @@ eval `scram runtime -sh`
 echo BEGIN `date` cmsRun job_${SECTION}_cfg.py #>> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
 mkdir results
 ls -al
-time cmsRun runGEMCosmicStand_sim.py runNum=061 eventsPerJob=25000 idxJob=${SECTION}
+time cmsRun runGEMCosmicStand_sim_align.py runNum=%(runnumber)s eventsPerJob=%(samplesize)s idxJob=${SECTION}
 EXITCODE=$?
 ls -al
 if [ $EXITCODE == 0 ]; then

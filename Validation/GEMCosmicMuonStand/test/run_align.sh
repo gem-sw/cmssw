@@ -22,7 +22,7 @@ eval `scram runtime -sh`
 echo BEGIN `date` cmsRun job_${SECTION}_cfg.py #>> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
 mkdir results
 ls -al
-time cmsRun runGEMCosmicStand_sim.py runNum=061 eventsPerJob=25000 idxJob=${SECTION}
+time cmsRun runGEMCosmicStand_sim_align.py runNum=123 eventsPerJob=1000 idxJob=${SECTION}
 EXITCODE=$?
 ls -al
 if [ $EXITCODE == 0 ]; then

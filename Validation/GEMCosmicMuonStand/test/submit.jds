@@ -4,14 +4,14 @@ universe   = vanilla
 arguments  = $(Process)
 requirements = OpSysMajorVer == 6
 
-log = res_111/condor.log
+log = res_123/condor.log
 
 getenv     = True
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-output = res_111/job_$(Process).log
-error = res_111/job_$(Process).err
+output = res_123/job_$(Process).log
+error = res_123/job_$(Process).err
 transfer_input_files = job.tar.gz
 transfer_output_files =  gemcr/src/Validation/GEMCosmicMuonStand/test/temp_out_reco_MC.root
-transfer_output_remaps = "temp_out_reco_MC.root=res_111/out_MC_$(Process).root"
-queue 400
+transfer_output_remaps = "temp_out_reco_MC.root=res_123/out_MC_$(Process).root"
+queue 40
