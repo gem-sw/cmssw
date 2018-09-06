@@ -31,25 +31,7 @@ options.parseArguments()
 # Insert the type 0 , S , L of the superchambers in 15 positions: frontal view, 90 deg rotated
 SuperChType = ['L','L','L','L','L',\
                'L','L','L','L','L',\
-               'L','L','L','L','L']          
-
-# Calculation of SuperChSeedingLayers from SuperChType
-SuperChSeedingLayers = []
-
-for i in range (0,30):
-	SuperChSeedingLayers.append(0)
-
-for j in range (0,3):
-	for i in range (5*j,5*(j+1)):
-		if (SuperChType[i]!='0'):
-			SuperChSeedingLayers[i*2]=1
-			SuperChSeedingLayers[i*2+1]=3
-			break
-	for i in range (5*(j+1)-1,5*j-1,-1):
-		if (SuperChType[i]!='0'):
-			SuperChSeedingLayers[i*2]=4
-			SuperChSeedingLayers[i*2+1]=2
-			break
+               'L','L','L','L','L']
 			
 # Alignment of chambers
 trueDx = [0.4,-0.1,-0.2,-0.5,0.2,\
@@ -211,7 +193,6 @@ process.AlignmentTrackRecoQC8 = cms.EDProducer("AlignmentTrackRecoQC8",
                                        trackResY = cms.double(runConfig.trackResY),
                                        MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
                                        SuperChamberType = cms.vstring(SuperChType),
-                                       SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
                                        MuonSmootherParameters = cms.PSet(
                                            PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                                            PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
@@ -256,14 +237,12 @@ process.AlignmentValidationQC8 = cms.EDProducer('AlignmentValidationQC8',
     maxClusterSize = cms.double(runConfig.maxClusterSize),
     minClusterSize = cms.double(runConfig.minClusterSize),
     maxResidual = cms.double(runConfig.maxResidual),
-    makeTrack = cms.bool(runConfig.makeTrack),
     isMC = cms.bool(True),
     trackChi2 = cms.double(runConfig.trackChi2),
     trackResX = cms.double(runConfig.trackResX),
     trackResY = cms.double(runConfig.trackResY),
     MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
     SuperChamberType = cms.vstring(SuperChType),
-    SuperChamberSeedingLayers = cms.vdouble(SuperChSeedingLayers),
     MuonSmootherParameters = cms.PSet(
                       PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                       PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
@@ -331,7 +310,7 @@ process.gemSegments.preClusteringUseChaining = cms.bool(False)
 
 process.simMuonGEMDigis.averageEfficiency = cms.double(0.98)
 process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0)
-process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(True)
+process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(False)
 process.simMuonGEMDigis.doBkgNoise = cms.bool(False)
 process.simMuonGEMDigis.doNoiseCLS = cms.bool(False)
 process.simMuonGEMDigis.simulateElectronBkg = cms.bool(False)
