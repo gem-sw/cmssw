@@ -19,17 +19,17 @@ cd gemcr/src/Validation/GEMCosmicMuonStand/test/
 
 scram build ProjectRename
 eval `scram runtime -sh`
-echo BEGIN `date` cmsRun job_${SECTION}_cfg.py #>> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
+echo BEGIN `date` cmsRun job_${SECTION}_cfg.py
 mkdir results
 ls -al
 time cmsRun runGEMCosmicStand_sim_align.py runNum=%(runnumber)s eventsPerJob=%(samplesize)s idxJob=${SECTION}
 EXITCODE=$?
 ls -al
 if [ $EXITCODE == 0 ]; then
-    echo ENDED `date` cmsRun job_${SECTION}_cfg.py #>> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
+    echo ENDED `date` cmsRun job_${SECTION}_cfg.py
 else
     rm -f core.*
-    echo TERMINATED_$EXITCODE `date` cmsRun job_${SECTION}_cfg.py #>> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
+    echo TERMINATED_$EXITCODE `date` cmsRun job_${SECTION}_cfg.py
     exit 1
 fi
-echo FINISHED `date` # >> /cms/scratch/quark2930/Work/gemcr/gemcr/src/Validation/GEMCR/test/submit.log
+echo FINISHED `date`
