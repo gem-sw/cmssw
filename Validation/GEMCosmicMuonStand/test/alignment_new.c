@@ -52,7 +52,10 @@ void alignment_new(int run)
 	double YposLong[8] = {72.747497,53.292499,35.486499,19.329500,4.4980001,-9.008000,-21.43950,-32.79650};
 	double YposShort[8] = {0,0,0,0,0,0,0,0}; // modify this when you know where they are...
 	
-	bool sameCol = true;
+	bool sameCol = false;
+	int hitsOK = 0;
+	int hitsTOT = 0;
+	int evtCol;
   	
   	// Histogram declaration
   	
@@ -70,18 +73,18 @@ void alignment_new(int run)
     // Column inclination histograms
     
     TH1F *TrackAngleX_perCol[3];
-    for (int i_col=0; i_col<8; i_col++)
+    for (int i_col=0; i_col<3; i_col++)
     {
         sprintf(histname,"TrackAngleX_Column_%u",i_col+1);
-        TrackAngleX_perCol[i_col] = new TH1F(histname,"",400,-4,4);
+        TrackAngleX_perCol[i_col] = new TH1F(histname,"",200,-2,2);
     }
     
     // Residuals per SC
 	
 	cout << "Starting the analysis of run " << run << endl;
 	
-	for (int evt=0; evt<evt_tot_number; evt++)
-	//for (int evt=0; evt<200000; evt++)
+	//for (int evt=0; evt<evt_tot_number; evt++)
+	for (int evt=0; evt<500000; evt++)
 	{
 		if (evt%50000 == 0) cout << "Event " << evt << endl;
 		//cout << "Event " << evt << endl;
@@ -98,27 +101,30 @@ void alignment_new(int run)
 		trajAngleX = double(trackPx->GetValue())/double(trackPz->GetValue());
 		trajAngleY = double(trackPy->GetValue())/double(trackPz->GetValue());
 		
-		/*sameCol = true;
+		hitsOK = 0; hitsTOT = 0;
+		
 		for (int ch_num=0; ch_num<30; ch_num++)
 	 	{
 	 		if (trajHx->GetValue(ch_num) != 0)
 	 		{
+	 			evtCol = int(ch_num/10);
+	 			
 	 			for (int ch_num_2=0; ch_num_2<30; ch_num_2++)
 	 			{
-	 				if (int((trajHx->GetValue(ch_num_2))/28) != int((trajHx->GetValue(ch_num))/28)) sameCol = false;
-	 				break;
+	 				if (trajHx->GetValue(ch_num_2) != 0 && int(ch_num/10)==int(ch_num_2/10)) hitsOK++;
+	 				if (trajHx->GetValue(ch_num_2) != 0) hitsTOT++;
 	 			}
 	 			break;
 	 		}
-	 	}*/
-		
-		/*for (int ch_num=0; ch_num<30; ch_num++)
-	 	{
-	 		cout << "trajHitX chamber" << ch_num << " = " << trajHx->GetValue(ch_num) << endl;
-	 	}*/
+	 	}
+	 	
+	 	if(hitsOK == hitsTOT) sameCol=true;
+	 	if(hitsOK != hitsTOT) sameCol=false;
 		
 		if (sameCol == true)
-		{
+		{			
+			TrackAngleX_perCol[evtCol]->Fill(trajAngleX);
+			
 			for (int ch_num=0; ch_num<30; ch_num++)
 	 		{
 	 			recHitX = recHx->GetValue(ch_num);
@@ -144,8 +150,6 @@ void alignment_new(int run)
 	 			}
 			}
 		}
-		
-		//TrackAngleX_perCol[]->Fill(trajAngleX);
 	}
 	
 	double resEtaY[8];
@@ -157,6 +161,8 @@ void alignment_new(int run)
 	
 	double dx[15];
 	double rz[15];
+	
+	double columnIncl[3];
 	
 	for (int i_SC=0; i_SC<15; i_SC++)
     {
@@ -191,6 +197,19 @@ void alignment_new(int run)
     	delete LinFit;
     }
     
+    TCanvas *cnvTrajAng = new TCanvas("TrackAngleX","TrackAngleX",0,0,1000,600);
+    cnvTrajAng->Divide(3);
+    for (int i_col=0; i_col<3; i_col++)
+    {
+    	cnvTrajAng->cd(i_col+1);
+    	TrackAngleX_perCol[i_col]->Draw();
+    	TF1 *GaussFit = new TF1("GaussFit","gaus",-4,4);
+        TrackAngleX_perCol[i_col]->Fit(GaussFit,"Q");
+       	GaussFit->Draw("SAME");
+       	columnIncl[i_col] = GaussFit->GetParameter(1);
+       	delete GaussFit;
+    }
+    
     cout << "shiftX = [";
     for (int i_SC=0; i_SC<15; i_SC++)
     {
@@ -208,4 +227,9 @@ void alignment_new(int run)
     	if (i_SC == 4 || i_SC == 9) cout << "\\" << endl;
     	if (i_SC == 14) cout << "]\n" << endl;
     }
+    
+    for (int i_col=0; i_col<3; i_col++)
+    {
+    	cout << "Column " << i_col << " inclination = " << columnIncl[i_col]*180/3.14159 << " deg" << endl;
+   	}
 }
