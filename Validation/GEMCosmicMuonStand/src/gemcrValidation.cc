@@ -61,11 +61,6 @@ gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidatio
   minCLS = cfg.getParameter<double>("minClusterSize"); 
   maxCLS = cfg.getParameter<double>("maxClusterSize");
   maxRes = cfg.getParameter<double>("maxResidual");
-  makeTrack = cfg.getParameter<bool>("makeTrack");
-  trackChi2 = cfg.getParameter<double>("trackChi2");
-  trackResY = cfg.getParameter<double>("trackResY"); 
-  trackResX = cfg.getParameter<double>("trackResX");
-  MulSigmaOnWindow = cfg.getParameter<double>("MulSigmaOnWindow");
   SuperChamType = cfg.getParameter<vector<string>>("SuperChamberType");
   vecChamType = cfg.getParameter<vector<double>>("SuperChamberSeedingLayers");
   edm::ParameterSet smootherPSet = cfg.getParameter<edm::ParameterSet>("MuonSmootherParameters");
@@ -349,8 +344,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
   genTree->Fill();
 
   if ( idxChTraj->size() == 0 ) return;
-
-  if (!makeTrack) return; 
+ 
   int countTC = 0;
 
   for (auto tch : gemChambers)
