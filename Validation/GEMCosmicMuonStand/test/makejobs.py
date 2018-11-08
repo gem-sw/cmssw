@@ -4,8 +4,8 @@ import sys, os
 strJobNum = sys.argv[ 1 ]
 strJobName = "res_" + strJobNum
 
-strNumJob = "400"
-strEvtNum = "25000"
+strNumJob = "1000"
+strEvtNum = "10000"
 
 if not os.path.isdir(strJobName): 
   os.mkdir(strJobName)

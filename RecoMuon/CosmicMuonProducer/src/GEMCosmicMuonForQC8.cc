@@ -1,9 +1,3 @@
-/** \class GEMCosmicMuonForQC8
- * Produces a collection of tracks's in GEM cosmic ray stand. 
- *
- * \author Jason Lee
- */
-
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -201,8 +195,6 @@ void GEMCosmicMuonForQC8::produce(edm::Event& ev, const edm::EventSetup& setup)
     }
     if (muRecHits.size()<3) continue;
     if (TCN < 3) continue;
-    
-    cout << "Number of recHits: " << muRecHits.size() << endl;
 
     vector<TrajectorySeed> trajSeedsBody;
     std::vector<TrajectorySeed> *trajSeeds = &trajSeedsBody;
