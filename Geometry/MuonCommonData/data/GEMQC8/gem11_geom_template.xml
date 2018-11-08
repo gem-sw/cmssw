@@ -3,15 +3,15 @@
     
     <ConstantsSection label="gembox.xml" eval="true">
         <Constant name="layers"       value="5"/>
-        <Constant name="dxSC"         value="56.0*cm"/>
-        <Constant name="dySC"         value="22.0*cm"/>
-        <Constant name="dzSC"         value="69.0*cm"/>
+        <Constant name="dxSC"         value="0*cm"/>
+        <Constant name="dySC"         value="0*cm"/>
+        <Constant name="dzSC"         value="0*cm"/>
         <Constant name="separationSC" value="3.47*cm"/>
         <Constant name="dyBox"        value="150*cm"/>
         <Constant name="dxBox"        value="200*cm"/>
         <Constant name="dzBox"        value="200*cm"/>
-        <Constant name="dx"           value="0.0*cm"/>
-        <Constant name="rz"           value="0.0*deg"/>
+        <Constant name="dx"           value="0*cm"/>
+        <Constant name="rz"           value="0*deg"/>
     </ConstantsSection>
     
     <RotationSection label="gembox.xml">
@@ -21,16 +21,16 @@
     
     <PosPartSection label="gembox.xml">
         
-        <PosPart copyNumber="5">
+        <PosPart copyNumber="(first_ch_num)">
             <rParent name="gembox:GEMBox"/>
-            <rChild name="gem11:GEMBox11L"/>
-            <rRotation name="RotationLrz" />
+            <rChild name="gem11:GEMBox11(type)"/>
+            <rRotation name="Rotation(type)rz" />
             <Translation x="[dxSC]+[dx]" y="[dySC]" z="[dzSC]" />
         </PosPart>
-        <PosPart copyNumber="6">
+        <PosPart copyNumber="(second_ch_num)">
             <rParent name="gembox:GEMBox"/>
-            <rChild name="gem11:GEMBox11L"/>
-            <rRotation name="RotationLrz" />
+            <rChild name="gem11:GEMBox11(type)"/>
+            <rRotation name="Rotation(type)rz" />
             <Translation x="[dxSC]+[dx]" y="[dySC]" z="[dzSC]+[separationSC]" />
         </PosPart>
         

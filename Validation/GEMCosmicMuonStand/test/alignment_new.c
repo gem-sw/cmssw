@@ -16,8 +16,7 @@ void alignment_new(int run)
 {
 	// Getting the file
 	
-	string path = "/afs/cern.ch/work/g/gmocelli/PhD/res_"+to_string(run);
-	string filename = path+"/out.root";
+	string filename = "out_run_00000001.root";
 	const char *file = filename.c_str();
 	TFile *infile = new TFile(file);
 	

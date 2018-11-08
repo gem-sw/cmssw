@@ -6,6 +6,7 @@
 import datetime
 print datetime.datetime.now()
 import FWCore.ParameterSet.Config as cms
+import configureRun_cfi as runConfig
 
 # options
 import FWCore.ParameterSet.VarParsing as VarParsing
@@ -28,10 +29,10 @@ options.register("idxJob","-1",
 
 options.parseArguments()
 
-# Insert the type 0 , S , L of the superchambers in 15 positions: frontal view, 90 deg rotated
-SuperChType = ['L','L','L','L','L',\
-               'L','L','L','L','L',\
-               'L','L','L','L','L']          
+# The superchambers in the 15 slots
+SuperChType = runConfig.StandConfiguration
+
+print(SuperChType)
 
 # Calculation of SuperChSeedingLayers from SuperChType
 SuperChSeedingLayers = []
@@ -79,16 +80,17 @@ process.load('SimMuon.GEMCosmicMuon.muonGEMDigi_cff')
 process.load('RecoLocalMuon.GEMRecHit.gemLocalReco_cff')
 
 # DEFINITION OF THE SUPERCHAMBERS INSIDE THE STAND
-for i in range(len(SuperChType)):
+for i in xrange(len(SuperChType)):
     column_row = '_c%d_r%d' % ((i/5)+1, i%5+1)
     if SuperChType[i]=='L' : size = 'L'
     if SuperChType[i]=='S' : size = 'S'
     if SuperChType[i]!='0' : geomFile = 'Geometry/MuonCommonData/data/GEMQC8/gem11'+size+column_row+'.xml'
+    print(geomFile)
     if SuperChType[i]!='0' : process.XMLIdealGeometryESSource.geomXMLFiles.append(geomFile)
+    print('-> Appended')
 
 # Config importation & settings
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.eventsPerJob))
-import configureRun_cfi as runConfig
 nIdxJob = int(options.idxJob)
 strOutput = "out_reco_MC.root" if nIdxJob >= 0 else runConfig.OutputFileName
 if nIdxJob < 0: nIdxJob = 0
@@ -219,6 +221,8 @@ process.gemcrValidation = cms.EDProducer('gemcrValidation',
     seedTypeInputLabel = cms.InputTag('GEMCosmicMuonForQC8','','RECO'),
     genParticleLabel = cms.InputTag('genParticles','','RECO'),
     gemDigiLabel = cms.InputTag("muonGEMDigis","","RECO"),
+    nBinGlobalZR = cms.untracked.vdouble(200,200,200,150,180,250),
+    RangeGlobalZR = cms.untracked.vdouble(564,572,786,794,786,802,110,260,170,350,100,350),
     maxClusterSize = cms.double(runConfig.maxClusterSize),
     minClusterSize = cms.double(runConfig.minClusterSize),
     maxResidual = cms.double(runConfig.maxResidual),
@@ -287,8 +291,8 @@ process.gemSegments.preClustering = cms.bool(False)
 process.gemSegments.preClusteringUseChaining = cms.bool(False)
 
 process.simMuonGEMDigis.averageEfficiency = cms.double(0.98)
-process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0000001)
-process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(True)
+process.simMuonGEMDigis.averageNoiseRate = cms.double(0.0)
+process.simMuonGEMDigis.simulateIntrinsicNoise = cms.bool(False)
 process.simMuonGEMDigis.doBkgNoise = cms.bool(False)
 process.simMuonGEMDigis.doNoiseCLS = cms.bool(False)
 process.simMuonGEMDigis.simulateElectronBkg = cms.bool(False)
