@@ -1,0 +1,9 @@
+<library file="*.cc" name="ValidationGEMCosmicMuonStandPlugin">
+  <use name="FWCore/Framework"/>
+  <use name="Validation/GEMCosmicMuonStand"/>
+  <use name="Validation/MuonGEMHits"/>
+  <use name="Validation/MuonGEMRecHits"/>
+  <use name="DQMServices/Core"/>
+  <use name="HepMC"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
