@@ -5,18 +5,30 @@ import io
 import subprocess
 import time
 
-import config_creator
-import geometry_files_creator
-
 if __name__ == '__main__':
+
     run_number = sys.argv[1]
     xlsx_csv_conversion_flag = sys.argv[2]
+    
+    # Different paths definition
+    srcPath = os.path.abspath("launcher_sim.py").split('gemcrs')[0]+'gemcrs/src/'
+    pyhtonModulesPath = os.path.abspath("launcher_sim.py").split('gemcrs')[0]+'gemcrs/src/Validation/GEMCosmicMuonStand/python/'
+    runPath = os.path.abspath("launcher_sim.py").split('gemcrs')[0] + 'gemcrs/src/Validation/GEMCosmicMuonStand/test/'
+    resDirPath = os.path.abspath("launcher_sim.py").split('gemcrs')[0]
+    
+    sys.path.insert(0,pyhtonModulesPath)
+    
+    import configureRun_cfi as runConfig
+    import config_creator
+    import geometry_files_creator
     
     # Conversion from excel to csv files
     if (xlsx_csv_conversion_flag == "xlsxTOcsv=ON"):
     	import excel_to_csv
-    	excel_to_csv.conversion('StandGeometryConfiguration_run%u.xlsx'%int(run_number))
-    	excel_to_csv.conversion('StandAlignmentValues_run%u.xlsx'%int(run_number))
+    	fileToBeConverted = runPath + "StandGeometryConfiguration_run" + run_number + ".xlsx"
+    	excel_to_csv.conversion(fileToBeConverted)
+    	fileToBeConverted = runPath + "StandAlignmentValues_run" + run_number + ".xlsx"
+    	excel_to_csv.conversion(fileToBeConverted)
     
     # Generate configuration file
     config_creator.configMaker(run_number)
@@ -28,7 +40,6 @@ if __name__ == '__main__':
     
     # Compiling after the generation of the geometry files
     scramCommand = "scramv1 b -j 8"
-    srcPath = os.path.abspath("launcher.py").split('gemcrs')[0]+'gemcrs/src'
     scramming = subprocess.Popen(scramCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=srcPath)
     while scramming.poll() is None:
     	line = scramming.stdout.readline()
@@ -39,7 +50,6 @@ if __name__ == '__main__':
     
     # Running the CMSSW code
     runCommand = "cmsRun runGEMCosmicStand_sim.py"
-    runPath = os.path.abspath("launcher.py").split('gemcrs')[0] + 'gemcrs/src/Validation/GEMCosmicMuonStand/test'
     running = subprocess.Popen(runCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=runPath)
     while running.poll() is None:
     	line = running.stdout.readline()
@@ -50,7 +60,6 @@ if __name__ == '__main__':
     
     # Creating folder outside the CMMSW release to put the output files and plots
     outDirName = "Results_QC8_run_"+run_number
-    resDirPath = os.path.abspath("launcher.py").split('gemcrs')[0]
     #---# Remove old version if want to recreate
     if (os.path.exists(resDirPath+outDirName)):
     	rmDirCommand = "rm -rf "+outDirName
@@ -63,9 +72,8 @@ if __name__ == '__main__':
     time.sleep(1)
     
     # Create folders for ouput plots per chamber
-    import configureRun_cfi as runConfig
     SuperChType = runConfig.StandConfiguration
-    effoutDir = os.path.abspath("launcher.py").split('gemcrs')[0] + outDirName
+    effoutDir = os.path.abspath("launcher_sim.py").split('gemcrs')[0] + outDirName
     for i in range (0,30):
     	if (SuperChType[int(i/2)] != '0'):
     		plotsDirCommand = "mkdir outPlots_Chamber_Pos_" + str(i)
@@ -79,22 +87,18 @@ if __name__ == '__main__':
         out_name = out_name + '0'
     out_name = out_name + run_number + '.root'
     
-    outFilePath = os.path.abspath("launcher.py").split('gemcrs')[0] + 'gemcrs/src/Validation/GEMCosmicMuonStand/test'
-    
     mvCommand = "mv temp_" + out_name + " " + out_name
-    moving = subprocess.Popen(mvCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=outFilePath)
+    moving = subprocess.Popen(mvCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=runPath)
     moving.communicate()
     time.sleep(1)
     
     mvToDirCommand = "mv " + out_name + " " + resDirPath+outDirName + "/" + out_name
-    movingToDir = subprocess.Popen(mvToDirCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=outFilePath)
+    movingToDir = subprocess.Popen(mvToDirCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=runPath)
     movingToDir.communicate()
     time.sleep(1)
     
     # Efficiency computation & output
-    effcalcPath = os.path.abspath("launcher.py").split('gemcrs')[0] + 'gemcrs/src/Validation/GEMCosmicMuonStand/test/'
-    effoutDir = os.path.abspath("launcher.py").split('gemcrs')[0] + outDirName
-    effCommand = "root -l -q " + effcalcPath + "efficiency_calculation.c(" + run_number + ",\"" + effcalcPath + "\")"
+    effCommand = "root -l -q " + runPath + "efficiency_calculation.c(" + run_number + ",\"" + runPath + "\")"
     efficiency = subprocess.Popen(effCommand.split(),stdout=subprocess.PIPE,universal_newlines=True,cwd=effoutDir)
     while efficiency.poll() is None:
     	line = efficiency.stdout.readline()
