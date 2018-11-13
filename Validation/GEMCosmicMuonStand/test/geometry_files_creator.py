@@ -2,7 +2,7 @@ import csv
 import os.path
 import os, sys, io
 
-def geometry_files_creator(run_number):
+def geomMaker(run_number):
     import configureRun_cfi as runConfig
     
     if (runConfig.RunNumber!=int(run_number)):
@@ -78,6 +78,6 @@ def geometry_files_creator(run_number):
 
 if __name__ == '__main__':
     run_num = sys.argv[1]
-    geometry_files_creator(run_num)
+    geomMaker(run_num)
 
 

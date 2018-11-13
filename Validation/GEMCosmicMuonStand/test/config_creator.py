@@ -1,7 +1,7 @@
 import csv
 import os, sys, io
 
-def config_creator(run_number):
+def configMaker(run_number):
     with open("StandGeometryConfiguration_run%u.csv"%int(run_number)) as infile:
         for line in infile:
             line = line.split('\n')[0]
@@ -69,4 +69,4 @@ def config_creator(run_number):
 
 if __name__ == '__main__':
     run_num = sys.argv[1]
-    config_creator(run_num)
+    configMaker(run_num)

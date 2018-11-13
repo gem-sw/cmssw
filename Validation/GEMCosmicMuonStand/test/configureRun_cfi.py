@@ -15,6 +15,6 @@ MulSigmaOnWindow = 5
 
 # Stand configuration definition
 StandConfiguration = [\
+'S','S','S','S','S',\
 'L','L','L','L','L',\
-'0','0','0','0','0',\
-'0','0','0','0','0']
+'L','L','L','L','0']
