@@ -2,7 +2,7 @@ import xlrd, openpyxl
 import csv
 import os, sys, io
 
-def excel_to_csv(in_name):
+def conversion(in_name):
     if in_name.endswith('.xls'):
         with xlrd.open_workbook(in_name) as infile:
             sh = infile.sheet_by_index(0)  # or wb.sheet_by_name('name_of_the_sheet_here')
@@ -39,4 +39,4 @@ def excel_to_csv(in_name):
 
 if __name__ == '__main__':
     input_file = sys.argv[1]
-    excel_to_csv(input_file)
+    conversion(input_file)

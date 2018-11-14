@@ -52,6 +52,8 @@ for j in range (0,3):
 			SuperChSeedingLayers[i*2+1]=2
 			break
 			
+print(SuperChSeedingLayers)
+
 from Configuration.StandardSequences.Eras import eras
 
 process = cms.Process('RECO',eras.phase2_muon)
@@ -84,10 +86,12 @@ for i in xrange(len(SuperChType)):
     column_row = '_c%d_r%d' % ((i/5)+1, i%5+1)
     if SuperChType[i]=='L' : size = 'L'
     if SuperChType[i]=='S' : size = 'S'
-    if SuperChType[i]!='0' : geomFile = 'Geometry/MuonCommonData/data/GEMQC8/gem11'+size+column_row+'.xml'
-    print(geomFile)
-    if SuperChType[i]!='0' : process.XMLIdealGeometryESSource.geomXMLFiles.append(geomFile)
-    print('-> Appended')
+    if SuperChType[i]!='0' :
+    	geomFile = 'Geometry/MuonCommonData/data/GEMQC8/gem11'+size+column_row+'.xml'
+    	print(geomFile)
+    if SuperChType[i]!='0' :
+    	process.XMLIdealGeometryESSource.geomXMLFiles.append(geomFile)
+    	print('-> Appended')
 
 # Config importation & settings
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.eventsPerJob))

@@ -1,7 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
 XMLIdealGeometryESSource = cms.ESSource("XMLIdealGeometryESSource",
-    geomXMLFiles = cms.vstring('Geometry/CMSCommonData/data/materials.xml',
+    geomXMLFiles = cms.vstring(
+    	'Geometry/CMSCommonData/data/materials.xml',
         'Geometry/CMSCommonData/data/rotations.xml',
         'Geometry/MuonCommonData/data/GEMQC8/cms.xml',
         #'Geometry/MuonCommonData/data/GEMQC8/muonBase.xml', # Phase-2 Muon

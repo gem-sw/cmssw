@@ -5,23 +5,25 @@ import io
 import subprocess
 import time
 
-#import excel_to_csv
 import config_creator
 import geometry_files_creator
 
 if __name__ == '__main__':
     run_number = sys.argv[1]
+    xlsx_csv_conversion_flag = sys.argv[2]
     
     # Conversion from excel to csv files
-    #excel_to_csv.excel_to_csv('StandGeometryConfiguration_run%u.xlsx'%int(run_number))
-    #excel_to_csv.excel_to_csv('StandAlignmentValues_run%u.xlsx'%int(run_number))
+    if (xlsx_csv_conversion_flag == "xlsxTOcsv=ON"):
+    	import excel_to_csv
+    	excel_to_csv.conversion('StandGeometryConfiguration_run%u.xlsx'%int(run_number))
+    	excel_to_csv.conversion('StandAlignmentValues_run%u.xlsx'%int(run_number))
     
     # Generate configuration file
-    config_creator.config_creator(run_number)
+    config_creator.configMaker(run_number)
     time.sleep(1)
     
     # Generate geometry files
-    geometry_files_creator.geometry_files_creator(run_number)
+    geometry_files_creator.geomMaker(run_number)
     time.sleep(1)
     
     # Compiling after the generation of the geometry files

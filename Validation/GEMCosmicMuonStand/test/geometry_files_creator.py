@@ -2,7 +2,7 @@ import csv
 import os.path
 import os, sys, io
 
-def geometry_files_creator(run_number):
+def geomMaker(run_number):
     import configureRun_cfi as runConfig
     
     if (runConfig.RunNumber!=int(run_number)):
@@ -46,30 +46,31 @@ def geometry_files_creator(run_number):
     for i in xrange(15):
         column = int(i/5)+1
         row = int(i%5)+1
-        outfile_name = geom_path + 'gem11' + str(runConfig.StandConfiguration[i]) + '_c' + str(column) + '_r' + str(row) + '.xml'
-        with open(outfile_name,"w+") as outfile:
-            with open(geom_path + "gem11_geom_template.xml") as template:
-                for line in template:
-                    if ('"dxSC"' in line):
-                        line = line.split('0')[0] + str((2-column)*56.0) + line.split('0')[1]
-                    if ('"dySC"' in line):
-                        if (runConfig.StandConfiguration[i] == 'S'):
-                            line = line.split('0')[0] + str(30.0) + line.split('0')[1]
-                        if (runConfig.StandConfiguration[i] == 'L'):
-                            line = line.split('0')[0] + str(22.0) + line.split('0')[1]
-                    if ('"dzSC"' in line):
-                        line = line.split('0')[0] + str(row*23.0) + line.split('0')[1]
-                    if ('"dx"' in line):
-                        line = line.split('0')[0] + str(dx[i]) + line.split('0')[1]
-                    if ('"rz"' in line):
-                        line = line.split('0')[0] + str(rz[i]) + line.split('0')[1]
-                    if ('(first_ch_num)' in line):
-                        line = line.split('(first_ch_num)')[0] + str((i+1)*2-1) + line.split('(first_ch_num)')[1]
-                    if ('(second_ch_num)' in line):
-                        line = line.split('(second_ch_num)')[0] + str((i+1)*2) + line.split('(second_ch_num)')[1]
-                    if ('(type)' in line):
-                        line = line.split('(type)')[0] + str(runConfig.StandConfiguration[i]) + line.split('(type)')[1]
-                    outfile.write(line)
+        if (runConfig.StandConfiguration[i] != '0'):
+		    outfile_name = geom_path + 'gem11' + str(runConfig.StandConfiguration[i]) + '_c' + str(column) + '_r' + str(row) + '.xml'
+		    with open(outfile_name,"w+") as outfile:
+		        with open(geom_path + "gem11_geom_template.xml") as template:
+		            for line in template:
+		                if ('"dxSC"' in line):
+		                    line = line.split('0')[0] + str((2-column)*56.0) + line.split('0')[1]
+		                if ('"dySC"' in line):
+		                    if (runConfig.StandConfiguration[i] == 'S'):
+		                        line = line.split('0')[0] + str(30.0) + line.split('0')[1]
+		                    if (runConfig.StandConfiguration[i] == 'L'):
+		                        line = line.split('0')[0] + str(22.0) + line.split('0')[1]
+		                if ('"dzSC"' in line):
+		                    line = line.split('0')[0] + str(row*23.0) + line.split('0')[1]
+		                if ('"dx"' in line):
+		                    line = line.split('0')[0] + str(dx[i]) + line.split('0')[1]
+		                if ('"rz"' in line):
+		                    line = line.split('0')[0] + str(rz[i]) + line.split('0')[1]
+		                if ('(first_ch_num)' in line):
+		                    line = line.split('(first_ch_num)')[0] + str((i+1)*2-1) + line.split('(first_ch_num)')[1]
+		                if ('(second_ch_num)' in line):
+		                    line = line.split('(second_ch_num)')[0] + str((i+1)*2) + line.split('(second_ch_num)')[1]
+		                if ('(type)' in line):
+		                    line = line.split('(type)')[0] + str(runConfig.StandConfiguration[i]) + line.split('(type)')[1]
+		                outfile.write(line)
                     
     print("\n")
     print("Success: geometry files created for run " + run_number)
@@ -77,6 +78,6 @@ def geometry_files_creator(run_number):
 
 if __name__ == '__main__':
     run_num = sys.argv[1]
-    geometry_files_creator(run_num)
+    geomMaker(run_num)
 
 
