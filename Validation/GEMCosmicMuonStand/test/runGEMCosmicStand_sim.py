@@ -87,7 +87,7 @@ for i in xrange(len(SuperChType)):
     if SuperChType[i]=='L' : size = 'L'
     if SuperChType[i]=='S' : size = 'S'
     if SuperChType[i]!='0' :
-    	geomFile = 'Geometry/MuonCommonData/data/GEMQC8/gem11'+size+column_row+'.xml'
+    	geomFile = 'Validation/GEMCosmicMuonStand/data/gem11'+size+column_row+'.xml'
     	print(geomFile)
     if SuperChType[i]!='0' :
     	process.XMLIdealGeometryESSource.geomXMLFiles.append(geomFile)
