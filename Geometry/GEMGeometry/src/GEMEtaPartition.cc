@@ -53,7 +53,7 @@ GEMEtaPartition::nstrips() const
 LocalPoint
 GEMEtaPartition::centreOfStrip(int strip) const
 {
-  float s = static_cast<float>(strip) + 0.5f;
+  float s = static_cast<float>(strip) - 0.5;
   return this->specificTopology().localPosition(s);
 }
 
@@ -97,7 +97,7 @@ GEMEtaPartition::npads() const
 LocalPoint
 GEMEtaPartition::centreOfPad(int pad) const
 {
-  float p = static_cast<float>(pad) + 0.5f;
+  float p = static_cast<float>(pad) - 0.5;
   return specificPadTopology().localPosition(p);
 }
 
@@ -136,16 +136,16 @@ GEMEtaPartition::padOfStrip(int strip) const
 int
 GEMEtaPartition::firstStripInPad(int pad) const
 {
-  float p = static_cast<float>(pad) - 0.9999f;
+  float p = static_cast<float>(pad) - 0.9999;
   LocalPoint lp = specificPadTopology().localPosition(p);
-  return static_cast<int>(strip(lp));
+  return static_cast<int>(strip(lp)) + 1;
 }
 
 int
 GEMEtaPartition::lastStripInPad(int pad) const
 {
-  float p = static_cast<float>(pad) - 0.0001f;
+  float p = static_cast<float>(pad) - 0.0001;
   LocalPoint lp = specificPadTopology().localPosition(p);
-  return static_cast<int>(strip(lp));
+  return static_cast<int>(strip(lp)) + 1;
 }
 
