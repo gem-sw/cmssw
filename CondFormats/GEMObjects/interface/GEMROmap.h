@@ -28,11 +28,11 @@ class GEMROmap{
   struct dCoord{
     int vfatType;
     GEMDetId gemDetId;
-    int iPhi;
+    int locPhi;
     bool operator < (const dCoord& r) const{
       if (vfatType == r.vfatType){
         if (gemDetId == r.gemDetId){
-	  return iPhi < r.iPhi;
+	  return locPhi < r.locPhi;
         }
 	else{
           return gemDetId < r.gemDetId;

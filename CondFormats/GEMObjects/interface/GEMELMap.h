@@ -60,5 +60,7 @@ class GEMELMap {
   static const int maxVFatGE21_= 6;      // vFat per eta partition in GE21
   static const int maxChan_    = 128;    // channels per vFat
   static const int amcBX_      = 25;     // amc BX to get strip bx
+  static const int maxEtaPartition_ = 8; // etaPartitions in chamber
+
 };
 #endif // GEMELMap_H

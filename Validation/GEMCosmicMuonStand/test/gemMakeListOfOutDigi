@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import os
+import argparse
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--in_path", required=True, type=str)
+    parser.add_argument("-o", "--out_path", default="./listOfOutDigi.txt", type=str)
+    args = parser.parse_args()
+
+    entries = os.listdir(args.in_path)
+    entries = [each for each in entries if each.endswith(".root")]
+    entries = [each for each in entries if each.startswith("out_digi")]
+    entries = [os.path.join(args.in_path, each) for each in entries]
+
+    if os.environ["HOSTNAME"] in {"ui10.sdfarm.kr", "ui20.sdfarm.kr"}:
+        entries = [each.replace("/xrootd", "root://cms-xrdr.sdfarm.kr:1094///xrd") for each in entries]
+
+    with open(args.out_path, "w") as txt_file:
+        for each in entries:
+            line = each + "\n"
+            txt_file.write(line)
+
+
+    print("{} files".format(len(entries)))
+
+
+if __name__ == "__main__":
+    main()
