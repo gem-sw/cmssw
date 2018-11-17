@@ -28,11 +28,14 @@
 #include "DataFormats/GEMDigi/interface/GEMVfatStatusDigi.h"
 #include "DataFormats/GEMDigi/interface/GEMVfatStatusDigiCollection.h"
 
-#include "DataFormats/GEMDigi/interface/GEMGEBStatusDigi.h"
-#include "DataFormats/GEMDigi/interface/GEMGEBStatusDigiCollection.h"
+#include "EventFilter/GEMRawToDigi/interface/GEBdata.h"
+#include "DataFormats/GEMDigi/interface/GEMGEBdataCollection.h"
 
-#include "DataFormats/GEMDigi/interface/GEMAMCStatusDigi.h"
-#include "DataFormats/GEMDigi/interface/GEMAMCStatusDigiCollection.h"
+#include "EventFilter/GEMRawToDigi/interface/AMCdata.h"
+#include "DataFormats/GEMDigi/interface/GEMAMCdataCollection.h"
+
+#include "EventFilter/GEMRawToDigi/interface/AMC13Event.h"
+#include "DataFormats/GEMDigi/interface/GEMAMC13EventCollection.h"
 
 #include "DataFormats/Common/interface/Wrapper.h"
 #include <vector>
@@ -46,24 +49,29 @@ namespace DataFormats_GEMDigi {
     GEMDigiCollection gcol;
     edm::Wrapper<GEMDigiCollection> wg;
 
-
     GEMVfatStatusDigi gvs;
     std::vector<GEMVfatStatusDigi> vgvs;
     std::vector<std::vector<GEMVfatStatusDigi> > vvgvs;
     GEMVfatStatusDigiCollection gvscol;
     edm::Wrapper<GEMVfatStatusDigiCollection> wgvs;
 
-    GEMGEBStatusDigi ggs;
-    std::vector<GEMGEBStatusDigi> vggs;
-    std::vector<std::vector<GEMGEBStatusDigi> > vvggs;
-    GEMGEBStatusDigiCollection ggscol;
-    edm::Wrapper<GEMGEBStatusDigiCollection> wggs;
+    gem::GEBdata ggs;
+    std::vector<gem::GEBdata> vggs;
+    std::vector<std::vector<gem::GEBdata> > vvggs;
+    GEMGEBdataCollection ggscol;
+    edm::Wrapper<GEMGEBdataCollection> wggs;
 
-    GEMAMCStatusDigi gas;
-    std::vector<GEMAMCStatusDigi> vgas;
-    std::vector<std::vector<GEMAMCStatusDigi> > vvgas;
-    GEMAMCStatusDigiCollection gascol;
-    edm::Wrapper<GEMAMCStatusDigiCollection> wgas;
+    gem::AMCdata gas;
+    std::vector<gem::AMCdata> vgas;
+    std::vector<std::vector<gem::AMCdata> > vvgas;
+    GEMAMCdataCollection gascol;
+    edm::Wrapper<GEMAMCdataCollection> wgas;
+
+    gem::AMC13Event ga13s;
+    std::vector<gem::AMC13Event> vga13s;
+    std::vector<std::vector<gem::AMC13Event> > vvga13s;
+    GEMAMC13EventCollection ga13scol;
+    edm::Wrapper<GEMAMC13EventCollection> wga13s;
 
     GEMPadDigi gc;
     std::vector<GEMPadDigi>  vgc;

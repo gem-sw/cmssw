@@ -16,8 +16,9 @@
 #include "DataFormats/FEDRawData/interface/FEDRawDataCollection.h"
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
 #include "DataFormats/GEMDigi/interface/GEMVfatStatusDigiCollection.h"
-#include "DataFormats/GEMDigi/interface/GEMGEBStatusDigiCollection.h"
-#include "DataFormats/GEMDigi/interface/GEMAMCStatusDigiCollection.h"
+#include "DataFormats/GEMDigi/interface/GEMGEBdataCollection.h"
+#include "DataFormats/GEMDigi/interface/GEMAMCdataCollection.h"
+#include "DataFormats/GEMDigi/interface/GEMAMC13EventCollection.h"
 
 #include "CondFormats/DataRecord/interface/GEMELMapRcd.h"
 #include "CondFormats/GEMObjects/interface/GEMELMap.h"
